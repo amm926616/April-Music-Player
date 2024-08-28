@@ -30,7 +30,6 @@ class MusicPlayer:
                 self.in_pause_state = True
             else:
                 # Pre-buffer the next part before playing
-                self.player.setPosition(max(0, self.player.position() - 100))
                 self.player.play()
                 self.in_pause_state = False
 

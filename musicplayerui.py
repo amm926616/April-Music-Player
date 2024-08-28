@@ -18,7 +18,7 @@ from mutagen.mp3 import MP3
 from PyQt6.QtGui import QPixmap
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
-
+from clickable_progressbar import DoubleClickableProgressBar
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -78,6 +78,7 @@ class MusicPlayerUI(QMainWindow):
         super().__init__()
 
         # Define the config path
+        self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.central_widget = None
         self.songTableWidget = None
         self.songListWidget = None
@@ -154,11 +155,8 @@ class MusicPlayerUI(QMainWindow):
         self.setWindowTitle("April Music Player - Digest Lyrics")
         self.setGeometry(100, 100, 800, 400)
 
-        # Get the directory where the script is located
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-
         # Construct the full path to the icon file
-        icon_path = os.path.join(script_dir, 'icons', 'karina.png')
+        icon_path = os.path.join(self.script_path, 'icons', 'karina.png')
 
         self.setWindowIcon(QIcon(icon_path))
         self.createMenuBar()
@@ -431,11 +429,16 @@ class MusicPlayerUI(QMainWindow):
             print(f"File path: {file_path}")
             self.music_file = file_path
             self.on_item_double_clicked(file_path)
+            
+    def on_progress_bar_double_click(self):
+        print("Progress bar was double-clicked!")
+        self.lrcPlayer.startUI(self, self.lrc_file)
+        # Add your desired functionality here
 
     def setupMediaPlayerControlsPanel(self, right_layout):
         # Store progress bar in a class variable
         # Create a QProgressBar
-        self.progress_bar = QProgressBar(self)
+        self.progress_bar = DoubleClickableProgressBar(self)
         self.progress_bar.setValue(0)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
@@ -449,6 +452,9 @@ class MusicPlayerUI(QMainWindow):
                 width: 10px;
             }
         """)
+        
+        # Connect the custom double-click signal to a function
+        self.progress_bar.doubleClicked.connect(self.on_progress_bar_double_click)
 
         # Create a QSlider
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
@@ -467,23 +473,28 @@ class MusicPlayerUI(QMainWindow):
         right_layout.addWidget(self.slider)
 
         controls_layout = QHBoxLayout()
-        self.prev_button = QPushButton('Backward')
-        self.play_pause_button = QPushButton("Play/Pause")
-        self.forw_button = QPushButton('Forward')
-        lrc_button = QPushButton()
-        # Set an icon for the button
-        lrc_button.setIcon(QIcon("icons/icon.ico"))
+        self.prev_button = QPushButton()
+        self.play_pause_button = QPushButton()
+        self.forw_button = QPushButton()
+        
+        self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "previous-song.ico")))
+        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))
+        self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "next-song.ico")))
+        
+        # lrc_button = QPushButton()
+        # # Set an icon for the button
+        # lrc_button.setIcon(QIcon(os.path.join(self.script_path, "icons", "icon.ico")))
 
-        # Optionally set the size of the icon
-        lrc_button.setIconSize(QSize(32, 32))  # Adjust size as needed
+        # # Optionally set the size of the icon
+        # lrc_button.setIconSize(QSize(30, 30))  # Adjust size as needed
 
 
         self.prev_button.clicked.connect(self.seekBack)
         self.play_pause_button.clicked.connect(self.play_pause)
         self.forw_button.clicked.connect(self.seekForward)
-        lrc_button.clicked.connect(lambda: self.lrcPlayer.startUI(self, self.lrc_file))
+        # lrc_button.clicked.connect(lambda: self.lrcPlayer.startUI(self, self.lrc_file))
 
-        controls_layout.addWidget(lrc_button)
+        # controls_layout.addWidget(lrc_button)
 
         controls_layout.addWidget(self.prev_button)
         controls_layout.addWidget(self.play_pause_button)
