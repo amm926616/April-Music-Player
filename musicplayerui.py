@@ -620,8 +620,8 @@ class MusicPlayerUI(QMainWindow):
             pixmap = QPixmap()
             pixmap.loadFromData(album_image_data)
 
-            target_width = 250
-            target_height = 250
+            target_width = 350
+            target_height = 350
             scaled_pixmap = pixmap.scaled(target_width, target_height,
                                           aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
                                           transformMode=Qt.TransformationMode.SmoothTransformation)
