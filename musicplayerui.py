@@ -1,6 +1,7 @@
 import json
 from base64 import b64decode
 import os
+import platform
 from collections import defaultdict
 
 from PyQt6.QtGui import QAction, QIcon, QColor
@@ -91,7 +92,10 @@ class MusicPlayerUI(QMainWindow):
         self.prev_button = None
         self.play_pause_button = None
         self.forw_button = None
-        config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player', "config.json")
+        if platform.system() == "Windows":
+            config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player', 'config.json')
+        else:
+            config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player', "config.json")
 
         # Ensure the directory exists
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
