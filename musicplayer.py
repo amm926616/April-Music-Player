@@ -1,4 +1,6 @@
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtGui import QIcon
+import os
 from PyQt6.QtCore import QUrl
 
 
@@ -23,15 +25,18 @@ class MusicPlayer:
         self.player.play()
         self.started_playing = True
 
-    def play_pause_music(self):
-        if self.started_playing:
+    def play_pause_music(self, button):
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        if self.started_playing: # pause state activating
             if not self.in_pause_state:
                 self.player.pause()
                 self.in_pause_state = True
+                button.setIcon(QIcon(os.path.join(script_path, "media-icons", "play.ico")))
             else:
-                # Pre-buffer the next part before playing
+                # continue playing
                 self.player.play()
                 self.in_pause_state = False
+                button.setIcon(QIcon(os.path.join(script_path, "media-icons", "pause.ico")))
 
     def pause(self):
         self.player.pause()
