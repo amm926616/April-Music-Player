@@ -370,10 +370,10 @@ class MusicPlayerUI(QMainWindow):
                 album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
 
                 # Set the text color to your desired color (e.g., blue)
-                # album_name_item.setForeground(QColor('white'))
+                album_name_item.setForeground(QColor('#403e3e'))
 
                 # Optionally, set the background color too
-                album_name_item.setBackground(QColor('#2a2e32'))
+                album_name_item.setBackground(QColor('#302121'))
 
                 self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
                 self.songTableWidget.setItem(row_position, 0, album_name_item)

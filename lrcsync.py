@@ -31,7 +31,7 @@ class LRCSync:
         self.lyric_label = None
         self.lyrics = None
         self.current_time = 0.0
-        self.media_lyric = QLabel("media lyric")
+        self.media_lyric = QLabel()
         self.media_lyric.setWordWrap(True)
         # self.music_player = MusicPlayer()  # Placeholder for the MusicPlayer instance
 
