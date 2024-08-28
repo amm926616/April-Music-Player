@@ -6,9 +6,9 @@ from collections import defaultdict
 from PyQt6.QtGui import QAction, QIcon, QColor
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox,
-    QLabel, QPushButton, QProgressBar, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
+    QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
 )
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
@@ -222,6 +222,10 @@ class MusicPlayerUI(QMainWindow):
 
     def setupSongListWidget(self, left_layout):
         self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Search...")
+        # Connect search bar returnPressed signal to the search method
+        self.search_bar.returnPressed.connect(self.filterSongs)
+
         self.songListWidget = QListWidget()
         left_layout.addWidget(self.search_bar)
         self.loadSongs(False)
@@ -231,6 +235,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Create and configure the track display label
         self.track_display = QLabel("No Track Playing")
+        self.track_display.setWordWrap(True)
         self.track_display.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.track_display.setStyleSheet("font-size: 20px")
 
@@ -255,18 +260,26 @@ class MusicPlayerUI(QMainWindow):
         metadata = self.get_metadata()
         minutes = metadata["duration"] // 60
         seconds = metadata["duration"] % 60
+        # Define the bold HTML tag
+        BOLD = '<b>'
+        END = '</b>'
+        
         updated_text = (
-            '\n[Track Details]\n'
-            f'Title: {metadata["title"]}\n'
-            f'Artist: {metadata["artist"]}\n'
-            f'Album: {metadata["album"]}\n'
-            f'Release Date: {metadata["year"]}\n'
-            f'Genre: {metadata["genre"]}\n'
-            f'Track Number: {metadata["track_number"]}\n'
-            f'Comment: {metadata["comment"]}\n'
-            f'Duration: {minutes}:{seconds:02d}'
+            f'<div>[Track Details]</div>'
+            f'<div>{BOLD}Title{END}: {metadata["title"]}</div>'
+            f'<div>{BOLD}Artist{END}: {metadata["artist"]}</div>'
+            f'<div>{BOLD}Album{END}: {metadata["album"]}</div>'
+            f'<div>{BOLD}Release Date{END}: {metadata["year"]}</div>'
+            f'<div>{BOLD}Genre{END}: {metadata["genre"]}</div>'
+            f'<div>{BOLD}Track Number{END}: {metadata["track_number"]}</div>'
+            f'<div>{BOLD}Comment{END}: {metadata["comment"]}</div>'
+            f'<div>{BOLD}Duration{END}: {minutes}:{seconds:02d}</div>'
         )
+    
         self.song_details.setText(updated_text)
+        # Set text interaction to allow text selection
+        self.song_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.song_details.setWordWrap(True)
 
     def get_metadata(self):
         file_extension = self.music_file.lower().split('.')[-1]
@@ -319,7 +332,26 @@ class MusicPlayerUI(QMainWindow):
             print(f"Error reading metadata: {e}")
 
         return metadata
+    
+    def filterSongs(self):
+        search_text = self.search_bar.text().lower()
+        
+        for row in range(self.songTableWidget.rowCount()):
+            match = False
+            
+            for column in range(self.songTableWidget.columnCount() - 1):
+                item = self.songTableWidget.item(row, column)
+                if item and search_text in item.text().lower():
+                    match = True
+                    break
+            
+            self.songTableWidget.setRowHidden(row, not match)
+            
+        # Clear the search bar and reset the placeholder text
+        self.search_bar.clear()
+        self.search_bar.setPlaceholderText("Search...")
 
+        
     def loadSongs(self, load_again=False):
         if load_again:
             # Clear the table before loading new items
@@ -363,14 +395,14 @@ class MusicPlayerUI(QMainWindow):
                 # Insert a row with the album name
                 row_position = self.songTableWidget.rowCount()
                 self.songTableWidget.insertRow(row_position)
-                album_name_item = QTableWidgetItem(f"Album Title: {album}")
+                album_name_item = QTableWidgetItem(f"[Album Title: {album}]")
                 album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
 
                 # Disable item interaction
                 album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
 
                 # Set the text color to your desired color (e.g., blue)
-                album_name_item.setForeground(QColor('#403e3e'))
+                # album_name_item.setForeground(QColor('#403e3e'))
 
                 # Optionally, set the background color too
                 album_name_item.setBackground(QColor('#302121'))
@@ -477,9 +509,9 @@ class MusicPlayerUI(QMainWindow):
         self.play_pause_button = QPushButton()
         self.forw_button = QPushButton()
         
-        self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "previous-song.ico")))
-        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))
-        self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "next-song.ico")))
+        self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
+        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
+        self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-forward.ico")))
         
         # lrc_button = QPushButton()
         # # Set an icon for the button
@@ -510,7 +542,7 @@ class MusicPlayerUI(QMainWindow):
         self.player.seek_forward()
 
     def play_pause(self):
-        self.player.play_pause_music()
+        self.player.play_pause_music(self.play_pause_button)
 
     def connect_progressbar_signals(self):
         # Connect signals for the progress bar and slider
