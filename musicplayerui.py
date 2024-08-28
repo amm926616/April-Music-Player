@@ -399,7 +399,7 @@ class MusicPlayerUI(QMainWindow):
                 # Insert a row with the album name
                 row_position = self.songTableWidget.rowCount()
                 self.songTableWidget.insertRow(row_position)
-                album_name_item = QTableWidgetItem(f"[Album Title: {album}]")
+                album_name_item = QTableWidgetItem(f"    [Album Title: {album}]")
                 album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
 
                 # Disable item interaction
