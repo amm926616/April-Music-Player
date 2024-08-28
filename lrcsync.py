@@ -91,7 +91,7 @@ class LRCSync:
 
         # Add widgets to the main layout
         main_layout.addWidget(self.lyric_label)
-        main_layout.addLayout(button_layout)
+        # main_layout.addLayout(button_layout)
 
     def parse_lrc(self):
         lyrics_dict = {}
