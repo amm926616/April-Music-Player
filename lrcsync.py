@@ -66,7 +66,7 @@ class LRCSync:
 
         self.lrc_display.closeEvent = handle_close_event
 
-        self.lrc_display.exec()
+        self.lrc_display.show()
 
     def setup_button_layout(self, main_layout):
         # Initialize lyric label as a class attribute for potential updates
