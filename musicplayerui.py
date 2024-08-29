@@ -483,27 +483,34 @@ class MusicPlayerUI(QMainWindow):
         
     def play_song(self):
         self.player.play()
-        self.lrcPlayer.sync_lyrics(self.lrc_file)        
+        self.lrcPlayer.sync_lyrics(self.lrc_file)      
+        
+        """
+        
+        """  
         
     def get_file_path_from_click(self, item):
+        row = item.row()
+        file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
+        print(f"Row {row} single clicked")
+        print(f"File path: {file_path}")
+        self.music_file = file_path
+
+    def handleRowDoubleClick(self, item):
         if "Album Title: " in item.text():
             return
         else:
-            row = item.row()
-            file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
-            print(f"Row {row} single clicked")
-            print(f"File path: {file_path}")
-            self.music_file = file_path
-
-    def handleRowDoubleClick(self, item):
-        self.get_file_path_from_click(item)
-        self.updateInformations()
-        self.player.update_files(self.music_file, self.lrc_file)
-        self.play_song()
+            self.get_file_path_from_click(item)
+            self.updateInformations()
+            self.player.update_files(self.music_file, self.lrc_file)
+            self.play_song()
             
     def handleRowSingleClick(self, item):
-        self.get_file_path_from_click(item)
-        self.updateInformations()
+        if "Album Title: " in item.text():
+            return
+        else:
+            self.get_file_path_from_click(item)
+            self.updateInformations()
             
     def on_progress_bar_double_click(self):
         print("Progress bar was double-clicked!")
