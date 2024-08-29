@@ -17,6 +17,7 @@ from mutagen.id3 import ID3
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
 from PyQt6.QtGui import QPixmap
+from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
 from clickable_progressbar import DoubleClickableProgressBar
@@ -162,9 +163,9 @@ class MusicPlayerUI(QMainWindow):
         self.setGeometry(100, 100, 800, 400)
 
         # Construct the full path to the icon file
-        icon_path = os.path.join(self.script_path, 'icons', 'karina.png')
+        self.icon_path = os.path.join(self.script_path, 'icons', 'karina.png')
 
-        self.setWindowIcon(QIcon(icon_path))
+        self.setWindowIcon(QIcon(self.icon_path))
         self.createMenuBar()
         self.createWidgetAndLayouts()
         self.showMaximized()
@@ -630,8 +631,8 @@ class MusicPlayerUI(QMainWindow):
             self.lrc_file = None
             
     def double_click_on_image(self):
-        print("hello there ", self.click_count)
-        self.click_count += 1
+        album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file)
+        album_window.exec()
 
     def extract_and_set_album_art(self):
         audio_file = File(self.music_file)
@@ -649,6 +650,7 @@ class MusicPlayerUI(QMainWindow):
         if album_image_data:
             pixmap = QPixmap()
             pixmap.loadFromData(album_image_data)
+            self.passing_image = pixmap
             
             image_size = int(self.width() / 5) # extract image size from main window
             
