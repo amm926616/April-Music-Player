@@ -220,7 +220,7 @@ class MusicPlayerUI(QMainWindow):
         rightLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left
         main_layout.addLayout(leftLayout, 4)
         main_layout.addLayout(rightLayout, 1)
-
+        
         self.setupSongListWidget(leftLayout)
         self.setupMediaPlayerWidget(rightLayout)
 
@@ -401,7 +401,7 @@ class MusicPlayerUI(QMainWindow):
                 # Insert a row with the album name
                 row_position = self.songTableWidget.rowCount()
                 self.songTableWidget.insertRow(row_position)
-                album_name_item = QTableWidgetItem(f"Album Title: {album}")
+                album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
                 # Set font that supports emojis
                 font = QFont("Segoe UI Emoji", 10)
                 album_name_item.setFont(font)
@@ -624,9 +624,11 @@ class MusicPlayerUI(QMainWindow):
         if album_image_data:
             pixmap = QPixmap()
             pixmap.loadFromData(album_image_data)
-
-            target_width = 350
-            target_height = 350
+            
+            image_size = int(self.width() / 5) # extract image size from main window
+            
+            target_width = image_size
+            target_height = image_size
             scaled_pixmap = pixmap.scaled(target_width, target_height,
                                           aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
                                           transformMode=Qt.TransformationMode.SmoothTransformation)
