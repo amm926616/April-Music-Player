@@ -4,7 +4,7 @@ import os
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QColor
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
@@ -227,6 +227,8 @@ class MusicPlayerUI(QMainWindow):
     def setupSongListWidget(self, left_layout):
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.setFocus()  # Place the cursor in the search bar
+
         # Connect search bar returnPressed signal to the search method
         self.search_bar.returnPressed.connect(self.filterSongs)
 
@@ -399,7 +401,10 @@ class MusicPlayerUI(QMainWindow):
                 # Insert a row with the album name
                 row_position = self.songTableWidget.rowCount()
                 self.songTableWidget.insertRow(row_position)
-                album_name_item = QTableWidgetItem(f"    [Album Title: {album}]")
+                album_name_item = QTableWidgetItem(f"Album Title: {album}")
+                # Set font that supports emojis
+                font = QFont("Segoe UI Emoji", 10)
+                album_name_item.setFont(font)
                 album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
 
                 # Disable item interaction
