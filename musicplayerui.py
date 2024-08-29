@@ -404,7 +404,8 @@ class MusicPlayerUI(QMainWindow):
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
                 
                 # funcky cool font for album title
-                font = QFont("Segoe UI Emoji", 10)
+                QFontDatabase.addApplicationFont("fonts/KOMIKAX_.ttf")
+                font = QFont("Komika Axis", 10)
 
                 album_name_item.setFont(font)
                 album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
