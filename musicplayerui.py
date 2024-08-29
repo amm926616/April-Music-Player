@@ -405,7 +405,7 @@ class MusicPlayerUI(QMainWindow):
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
                 
                 # funcky cool font for album title
-                QFontDatabase.addApplicationFont("fonts/KOMIKAX_.ttf")
+                QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))
                 font = QFont("Komika Axis", 10)
 
                 album_name_item.setFont(font)
