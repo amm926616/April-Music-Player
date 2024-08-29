@@ -361,8 +361,12 @@ class MusicPlayerUI(QMainWindow):
         
     def loadSongs(self, load_again=False):
         if load_again:
+            # clear the remaining from previous play
             self.lrcPlayer.file = None
             self.player.player.stop()
+            self.track_display.setText("No Track Playing")
+            self.image_display.clear()
+            self.song_details.setText("")
             # Clear the table before loading new items
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)
