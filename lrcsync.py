@@ -35,7 +35,6 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(50)
-        # self.music_player = MusicPlayer()  # Placeholder for the MusicPlayer instance
 
     def updateFileandParse(self, file):
         if file is None:
@@ -44,6 +43,11 @@ class LRCSync:
             self.file = file
 
         self.parse_lrc()
+
+    def closeEvent(self, event):
+        print("QDialog closed")
+        self.lrc_display = None
+        event.accept()  # To accept the close event
 
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
@@ -58,7 +62,7 @@ class LRCSync:
         self.lrc_display.setWindowIcon(QIcon(icon_path))
         parent_width = int(parent.width() * 0.9)
         parent_height = int(parent.height() * 0.8)
-        self.lrc_display.setGeometry(20, 50, parent_width, parent_height) 
+        self.lrc_display.setGeometry(20, 50, parent_width, parent_height)
 
         self.player.player.positionChanged.connect(self.update_lyrics)
 
@@ -68,7 +72,8 @@ class LRCSync:
         self.updateFileandParse(file)
         self.update_lyrics()
 
-        self.lrc_display.closeEvent = handle_close_event
+        # Properly connect the close event
+        self.lrc_display.closeEvent = self.closeEvent
 
         self.lrc_display.show()
 
