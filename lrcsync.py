@@ -56,7 +56,9 @@ class LRCSync:
         icon_path = os.path.join(script_dir, 'icons', 'lrc.png')
 
         self.lrc_display.setWindowIcon(QIcon(icon_path))
-        self.lrc_display.setGeometry(200, 200, 400, 200)  # Consider removing this to let layout handle the size
+        parent_width = int(parent.width() * 0.9)
+        parent_height = int(parent.height() * 0.8)
+        self.lrc_display.setGeometry(20, 50, parent_width, parent_height) 
 
         self.player.player.positionChanged.connect(self.update_lyrics)
 
@@ -76,6 +78,7 @@ class LRCSync:
         
         # Initialize lyric label as a class attribute for potential updates
         self.lyric_label = QLabel("Current Lyrics")
+        self.lyric_label.setWordWrap(True)
         self.lyric_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         prev_button = QPushButton("Previous Line")
