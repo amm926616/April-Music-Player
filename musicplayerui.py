@@ -241,14 +241,14 @@ class MusicPlayerUI(QMainWindow):
 
         # Create and configure the track display label
         self.track_display = QLabel("No Track Playing")
-        self.track_display.setFont(QFont(("Komika Axis")))
+        self.track_display.setFont(QFont("Komika Axis"))
         self.track_display.setWordWrap(True)
         self.track_display.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.track_display.setStyleSheet("font-size: 20px")
 
         # Create and configure the image display label
-        self.image_display = QLabel("")
-        self.song_details = QLabel("")
+        self.image_display = QLabel()
+        self.song_details = QLabel()
 
         # Add widgets to the vertical layout
         mediaLayout.addWidget(self.track_display)
