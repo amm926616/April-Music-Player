@@ -475,8 +475,11 @@ class MusicPlayerUI(QMainWindow):
             
     def on_progress_bar_double_click(self):
         print("Progress bar was double-clicked!")
-        self.lrcPlayer.startUI(self, self.lrc_file)
-        # Add your desired functionality here
+        if self.lrcPlayer.lrc_display is not None: 
+            pass 
+        else:
+            self.lrcPlayer.startUI(self, self.lrc_file)
+            # Add your desired functionality here
 
     def setupMediaPlayerControlsPanel(self, right_layout):
         # Store progress bar in a class variable
