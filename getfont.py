@@ -16,7 +16,7 @@ class GetFont:
     def __init__(self, font_size=14):
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.language_dict = {
-            "korean": {"font_name": "Noto Serif CJK KR", "file_path": os.path.join(self.script_path , "fonts/NotoSerifKR-Bold.otf"), "size": font_size},
+            "korean": {"font_name": "Noto Serif KR Bold", "file_path": os.path.join(self.script_path , "fonts/NotoSerifKR-Bold.otf"), "size": font_size},
             "english": {"font_name": "Positive Forward", "file_path": os.path.join(self.script_path , "fonts/PositiveForward.otf"), "size": font_size},
             "japanese": {"font_name": "NotoSans JP Bold", "file_path": os.path.join(self.script_path , "fonts/NotoSansJP-Bold.otf"), "size": font_size},
         }
@@ -62,7 +62,7 @@ class GetFont:
 
         for char in text:
             language = self.detect_language(char) or "english"
-            cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
+            cursor.setCharFormat(self.formats.get(language, self.formats[language]))
             cursor.insertText(char)
 
         return doc.toHtml()

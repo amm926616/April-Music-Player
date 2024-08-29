@@ -4,7 +4,7 @@ import os
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
@@ -402,8 +402,10 @@ class MusicPlayerUI(QMainWindow):
                 row_position = self.songTableWidget.rowCount()
                 self.songTableWidget.insertRow(row_position)
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
-                # Set font that supports emojis
+                
+                # funcky cool font for album title
                 font = QFont("Segoe UI Emoji", 10)
+
                 album_name_item.setFont(font)
                 album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
 
