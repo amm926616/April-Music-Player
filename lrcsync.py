@@ -8,7 +8,6 @@ from getfont import GetFont
 def handle_close_event(event):
     event.accept()
 
-
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
     if match:
@@ -17,11 +16,9 @@ def extract_time_and_lyric(line):
         return time_str, lyric
     return None, None
 
-
 def convert_time_to_seconds(time_str):
     minutes, seconds = map(float, time_str.split(":"))
     return minutes * 60 + seconds
-
 
 class LRCSync:
     def __init__(self, player):

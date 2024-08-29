@@ -20,6 +20,7 @@ from PyQt6.QtGui import QPixmap
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
 from clickable_progressbar import DoubleClickableProgressBar
+from clickable_label import ClickableLabel
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -91,6 +92,7 @@ class MusicPlayerUI(QMainWindow):
         self.slider = None
         self.prev_button = None
         self.play_pause_button = None
+        self.click_count = 0
         self.forw_button = None
         if platform.system() == "Windows":
             config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player', 'config.json')
@@ -248,7 +250,8 @@ class MusicPlayerUI(QMainWindow):
         self.track_display.setStyleSheet("font-size: 20px")
 
         # Create and configure the image display label
-        self.image_display = QLabel()
+        self.image_display = ClickableLabel()
+        self.image_display.doubleClicked.connect(self.double_click_on_image)
         self.song_details = QLabel()
 
         # Add widgets to the vertical layout
@@ -565,22 +568,11 @@ class MusicPlayerUI(QMainWindow):
         self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
         self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
         self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-forward.ico")))
-        
-        # lrc_button = QPushButton()
-        # # Set an icon for the button
-        # lrc_button.setIcon(QIcon(os.path.join(self.script_path, "icons", "icon.ico")))
-
-        # # Optionally set the size of the icon
-        # lrc_button.setIconSize(QSize(30, 30))  # Adjust size as needed
-
 
         self.prev_button.clicked.connect(self.seekBack)
         self.play_pause_button.clicked.connect(self.play_pause)
         self.forw_button.clicked.connect(self.seekForward)
-        # lrc_button.clicked.connect(lambda: self.lrcPlayer.startUI(self, self.lrc_file))
-
-        # controls_layout.addWidget(lrc_button)
-
+        
         controls_layout.addWidget(self.prev_button)
         controls_layout.addWidget(self.play_pause_button)
         controls_layout.addWidget(self.forw_button)
@@ -622,13 +614,7 @@ class MusicPlayerUI(QMainWindow):
     def set_position(self, position):
         # Set the media player position when the slider is moved
         self.player.player.setPosition(position)
-
-    # def open_lrc_player(self):
-    #     self.lrc_player = LRCPlayer(self)
-    #     self.lrc_player.setupFile(self.music_file, self.lrc_file)
-    #     self.lrc_player.startPlaying()
-    #     self.lrc_player.show()  # Use exec() for modal dialog, or self.lrc_player.show() for non-modal
-
+        
     def get_song_and_lrc_dir(self, file_path):
         self.music_file = file_path
         if self.music_file.endswith(".ogg"):
@@ -642,6 +628,10 @@ class MusicPlayerUI(QMainWindow):
             self.lrc_file = lrc
         else:
             self.lrc_file = None
+            
+    def double_click_on_image(self):
+        print("hello there ", self.click_count)
+        self.click_count += 1
 
     def extract_and_set_album_art(self):
         audio_file = File(self.music_file)
