@@ -357,16 +357,19 @@ class MusicPlayerUI(QMainWindow):
         # Clear the search bar and reset the placeholder text
         self.search_bar.clear()
         self.search_bar.setPlaceholderText("Search...")
+        
+    def cleanDetails(self):
+        # clear the remaining from previous play
+        self.lrcPlayer.file = None
+        self.player.player.stop()
+        self.track_display.setText("No Track Playing")
+        self.image_display.clear()
+        self.song_details.clear()
 
         
     def loadSongs(self, load_again=False):
         if load_again:
-            # clear the remaining from previous play
-            self.lrcPlayer.file = None
-            self.player.player.stop()
-            self.track_display.setText("No Track Playing")
-            self.image_display.clear()
-            self.song_details.setText("")
+            self.cleanDetails()
             # Clear the table before loading new items
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)
