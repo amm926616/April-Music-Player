@@ -241,6 +241,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Create and configure the track display label
         self.track_display = QLabel("No Track Playing")
+        self.track_display.setFont(QFont(("Komika Axis")))
         self.track_display.setWordWrap(True)
         self.track_display.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.track_display.setStyleSheet("font-size: 20px")
