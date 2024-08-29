@@ -1,48 +1,40 @@
-from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
-from PyQt6.QtGui import QTextCursor, QTextCharFormat, QFont, QTextDocument
+import sys
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMainWindow
+from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtCore import QCoreApplication
 
-def apply_fonts_to_text(text, font_english, font_korean):
-    doc = QTextDocument()
-    cursor = QTextCursor(doc)
+class MainApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-    format_english = QTextCharFormat()
-    format_english.setFont(font_english)
+        # Set up the system tray icon
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon('path/to/your/icon.png'))
+        self.tray_icon.setVisible(True)
 
-    format_korean = QTextCharFormat()
-    format_korean.setFont(font_korean)
+        # Create a context menu for the system tray icon
+        self.tray_menu = QMenu()
+        
+        # Add an "Open" action
+        open_action = QAction("Open", self)
+        open_action.triggered.connect(self.show)
+        self.tray_menu.addAction(open_action)
+        
+        # Add an "Exit" action
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(QCoreApplication.instance().quit)
+        self.tray_menu.addAction(exit_action)
+        
+        # Set the context menu
+        self.tray_icon.setContextMenu(self.tray_menu)
 
-    for char in text:
-        if 'a' <= char <= 'z' or 'A' <= char <= 'Z':
-            cursor.setCharFormat(format_english)
-        elif '\uAC00' <= char <= '\uD7A3':
-            cursor.setCharFormat(format_korean)
-        cursor.insertText(char)
-
-    return doc.toHtml()
-
-def main():
-    app = QApplication([])
-
-    widget = QWidget()
-    layout = QVBoxLayout(widget)
-
-    label = QLabel()
-
-    # Fonts for English and Korean
-    font_english = QFont("Noto Sans", 14)
-    font_korean = QFont("Noto Serif CJK KR", 20)
-
-    # Mixed language text
-    mixed_text = "안녕하세요, Hello, 이건 한국어 텍스트입니다, this is English text."
-
-    # Apply fonts based on language
-    html_text = apply_fonts_to_text(mixed_text, font_english, font_korean)
-
-    label.setText(html_text)
-    layout.addWidget(label)
-
-    widget.show()
-    app.exec()
+    def closeEvent(self, event):
+        # Hide the window instead of quitting the application
+        self.hide()
+        event.ignore()
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    main_window = MainApp()
+    main_window.show()
+    sys.exit(app.exec())
