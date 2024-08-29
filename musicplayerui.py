@@ -214,7 +214,8 @@ class MusicPlayerUI(QMainWindow):
         leftLayout.addWidget(self.songTableWidget)
 
         # Connect the itemClicked signal to the custom slot
-        self.songTableWidget.itemDoubleClicked.connect(self.handleRowClick)
+        self.songTableWidget.itemDoubleClicked.connect(self.handleRowDoubleClick)
+        self.songTableWidget.itemClicked.connect(self.handleRowSingleClick)
 
         rightLayout = QVBoxLayout()
         rightLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left
@@ -263,7 +264,7 @@ class MusicPlayerUI(QMainWindow):
         updated_text = f'{metadata["artist"]} - {metadata["title"]}'
         self.track_display.setText(updated_text)
 
-    def updateDetails(self):
+    def updateSongDetails(self):
         metadata = self.get_metadata()
         minutes = metadata["duration"] // 60
         seconds = metadata["duration"] % 60
@@ -472,17 +473,37 @@ class MusicPlayerUI(QMainWindow):
                     file_path_item = QTableWidgetItem(item_path)
                     file_path_item.setFlags(file_path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.songTableWidget.setItem(row_position, 7, file_path_item)
-
-    def handleRowClick(self, item):
+                    
+    def updateInformations(self):
+        self.get_song_and_lrc_dir(self.music_file)
+        self.updateDisplayData()
+        self.extract_and_set_album_art()
+        self.updateSongDetails()                                        
+                           
+        
+    def play_song(self):
+        self.player.play()
+        self.lrcPlayer.sync_lyrics(self.lrc_file)        
+        
+    def get_file_path_from_click(self, item):
         if "Album Title: " in item.text():
             return
         else:
             row = item.row()
             file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
-            print(f"Row {row} clicked")
+            print(f"Row {row} single clicked")
             print(f"File path: {file_path}")
             self.music_file = file_path
-            self.on_item_double_clicked(file_path)
+
+    def handleRowDoubleClick(self, item):
+        self.get_file_path_from_click(item)
+        self.updateInformations()
+        self.player.update_files(self.music_file, self.lrc_file)
+        self.play_song()
+            
+    def handleRowSingleClick(self, item):
+        self.get_file_path_from_click(item)
+        self.updateInformations()
             
     def on_progress_bar_double_click(self):
         print("Progress bar was double-clicked!")
@@ -594,15 +615,6 @@ class MusicPlayerUI(QMainWindow):
     def set_position(self, position):
         # Set the media player position when the slider is moved
         self.player.player.setPosition(position)
-
-    def on_item_double_clicked(self, item_path):
-        self.get_song_and_lrc_dir(item_path)
-        self.updateDisplayData()
-        self.extract_and_set_album_art()
-        self.updateDetails()
-        self.player.update_files(self.music_file, self.lrc_file)
-        self.player.play()
-        self.lrcPlayer.sync_lyrics(self.lrc_file)
 
     # def open_lrc_player(self):
     #     self.lrc_player = LRCPlayer(self)
