@@ -3,7 +3,7 @@ import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QFont
-
+from getfont import GetFont
 
 def handle_close_event(event):
     event.accept()
@@ -33,6 +33,8 @@ class LRCSync:
         self.current_time = 0.0
         self.media_lyric = QLabel()
         self.media_lyric.setWordWrap(True)
+        self.media_font = GetFont(13)
+        self.lrc_font = GetFont(50)
         # self.music_player = MusicPlayer()  # Placeholder for the MusicPlayer instance
 
     def updateFileandParse(self, file):
@@ -51,7 +53,7 @@ class LRCSync:
         script_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Construct the full path to the icon file
-        icon_path = os.path.join(script_dir, 'icons', 'icon.png')
+        icon_path = os.path.join(script_dir, 'icons', 'lrc.png')
 
         self.lrc_display.setWindowIcon(QIcon(icon_path))
         self.lrc_display.setGeometry(200, 200, 400, 200)  # Consider removing this to let layout handle the size
@@ -69,10 +71,11 @@ class LRCSync:
         self.lrc_display.show()
 
     def setup_button_layout(self, main_layout):
+        # # Load custom fonts
+        # load_fonts()
+        
         # Initialize lyric label as a class attribute for potential updates
         self.lyric_label = QLabel("Current Lyrics")
-        font = QFont("Noto Serif", 20)
-        self.lyric_label.setFont(font)
         self.lyric_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         prev_button = QPushButton("Previous Line")
@@ -117,12 +120,12 @@ class LRCSync:
             for i in range(len(lyrics_keys)):
                 if self.current_time < lyrics_keys[i]:
                     if i == 0:
-                        self.lyric_label.setText(self.lyrics[lyrics_keys[0]])  # Handle the first lyric
+                        self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[0]]))  # Handle the first lyric
                     else:
-                        self.lyric_label.setText(self.lyrics[lyrics_keys[i - 1]])
+                        self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[i - 1]]))
                     break
             else:
-                self.lyric_label.setText(self.lyrics[lyrics_keys[-1]])
+                self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[-1]]))
         else:
             self.lyric_label.setText("No lrc file found on the disk")
 
@@ -133,12 +136,12 @@ class LRCSync:
             for i in range(len(lyrics_keys)):
                 if self.current_time < lyrics_keys[i]:
                     if i == 0:
-                        self.media_lyric.setText(self.lyrics[lyrics_keys[0]])  # Handle the first lyric
+                        self.media_lyric.setText(self.media_font.get_formatted_text(self.lyrics[lyrics_keys[0]]))  # Handle the first lyric
                     else:
-                        self.media_lyric.setText(self.lyrics[lyrics_keys[i - 1]])
+                        self.media_lyric.setText(self.media_font.get_formatted_text(self.lyrics[lyrics_keys[i - 1]]))
                     break
             else:
-                self.media_lyric.setText(self.lyrics[lyrics_keys[-1]])
+                self.media_lyric.setText(self.media_font.get_formatted_text(self.lyrics[lyrics_keys[-1]]))
         else:
             self.media_lyric.setText("No lrc file found on the disk")
 
