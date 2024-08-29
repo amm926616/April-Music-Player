@@ -2,4 +2,4 @@
 Music Player with lyrics syncing, note taking feature for lyrics memorization.
 
 #### screenshots
-![screenshot](./screenshots/Screenshot_20240828_161403.png)
+![screenshot](./screenshots/Screenshot_20240829_162419.png)
