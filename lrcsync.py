@@ -49,11 +49,25 @@ class LRCSync:
         icon_path = os.path.join(script_dir, 'icons', 'lrc.png')
 
         self.lrc_display.setWindowIcon(QIcon(icon_path))
+        
+        # Calculate the width and height of the dialog
         dialog_width = int(parent.width() * 0.9)
         dialog_height = int(parent.height() * 0.8)
-        positionx = int((parent.width() - dialog_width) / 2)
-        positiony = int((parent.height() - dialog_height) / 2)
+
+        # Calculate the top-left position of the dialog relative to the parent widget
+        relative_x = int((parent.width() - dialog_width) / 2)
+        relative_y = int((parent.height() - dialog_height) / 2)
+
+        # Convert the relative position to global screen coordinates
+        global_position = parent.mapToGlobal(parent.rect().topLeft())
+
+        # Add the relative position to the global position to get the final coordinates
+        positionx = global_position.x() + relative_x
+        positiony = global_position.y() + relative_y
+
+        # Set the geometry of the dialog
         self.lrc_display.setGeometry(positionx, positiony, dialog_width, dialog_height)
+
 
         self.player.player.positionChanged.connect(self.update_lyrics)
 
