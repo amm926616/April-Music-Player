@@ -49,9 +49,11 @@ class LRCSync:
         icon_path = os.path.join(script_dir, 'icons', 'lrc.png')
 
         self.lrc_display.setWindowIcon(QIcon(icon_path))
-        parent_width = int(parent.width() * 0.9)
-        parent_height = int(parent.height() * 0.8)
-        self.lrc_display.setGeometry(20, 50, parent_width, parent_height)
+        dialog_width = int(parent.width() * 0.9)
+        dialog_height = int(parent.height() * 0.8)
+        positionx = int((parent.width() - dialog_width) / 2)
+        positiony = int((parent.height() - dialog_height) / 2)
+        self.lrc_display.setGeometry(positionx, positiony, dialog_width, dialog_height)
 
         self.player.player.positionChanged.connect(self.update_lyrics)
 
