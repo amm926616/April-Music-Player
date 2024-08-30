@@ -2,11 +2,8 @@ import re
 import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
-
-def handle_close_event(event):
-    event.accept()
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
@@ -41,11 +38,6 @@ class LRCSync:
 
         self.parse_lrc()
 
-    def closeEvent(self, event):
-        print("QDialog closed")
-        self.lrc_display = None
-        event.accept()  # To accept the close event
-
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle("LRC Player")
@@ -71,13 +63,30 @@ class LRCSync:
 
         # Properly connect the close event
         self.lrc_display.closeEvent = self.closeEvent
+        self.lrc_display.keyPressEvent = self.keyPressEvent
 
-        self.lrc_display.show()
-
-    def setup_button_layout(self, main_layout):
-        # # Load custom fonts
-        # load_fonts()
+        self.lrc_display.exec()
         
+    def closeEvent(self, event):
+        print("QDialog closed")
+        self.lyric_label = None
+        self.lrc_display = None
+        event.accept()  # To accept the close event
+        
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Left:
+            print("left key pressed")
+            self.player.seek_backward()
+            
+        elif event.key() == Qt.Key.Key_Right:
+            print("right key pressed")
+            self.player.seek_forward()
+            
+        elif event.key() == Qt.Key.Key_Space:
+            print("Space key pressed")
+            self.player.play_pause()
+
+    def setup_button_layout(self, main_layout):       
         # Initialize lyric label as a class attribute for potential updates
         self.lyric_label = QLabel("Current Lyrics")
         self.lyric_label.setWordWrap(True)
@@ -119,20 +128,21 @@ class LRCSync:
         return self.player.get_current_time()
 
     def update_lyrics(self):
-        if self.file is not None:
-            self.current_time = self.get_current_playback_time()
-            lyrics_keys = sorted(self.lyrics.keys())
-            for i in range(len(lyrics_keys)):
-                if self.current_time < lyrics_keys[i]:
-                    if i == 0:
-                        self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[0]]))  # Handle the first lyric
-                    else:
-                        self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[i - 1]]))
-                    break
+        if self.lyric_label is not None:
+            if self.file is not None:
+                self.current_time = self.get_current_playback_time()
+                lyrics_keys = sorted(self.lyrics.keys())
+                for i in range(len(lyrics_keys)):
+                    if self.current_time < lyrics_keys[i]:
+                        if i == 0:
+                            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[0]]))  # Handle the first lyric
+                        else:
+                            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[i - 1]]))
+                        break
+                else:
+                    self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[-1]]))
             else:
-                self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[-1]]))
-        else:
-            self.lyric_label.setText("No lrc file found on the disk")
+                self.lyric_label.setText("No lrc file found on the disk")
 
     def update_media_lyric(self):
         if self.file is not None:

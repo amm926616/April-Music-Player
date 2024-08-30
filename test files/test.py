@@ -1,32 +1,43 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel
+from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 
-class MainApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class CustomDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-        # Set up the main window
-        self.setWindowTitle("Key Press Example")
-        self.setGeometry(100, 100, 400, 300)
+        # Set up the dialog
+        self.setWindowTitle("Key Press Example in QDialog")
+        self.setGeometry(100, 100, 300, 200)
 
         # Create a label to display which key was pressed
         self.label = QLabel("Press any key...", self)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setCentralWidget(self.label)
+
+        # Set up the layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        self.setLayout(layout)
 
     def keyPressEvent(self, event: QKeyEvent):
-        # Check which key was pressed and update the label text
+        # Handle key presses here
         if event.key() == Qt.Key.Key_A:
             self.label.setText("You pressed the 'A' key!")
+        elif event.key() == Qt.Key.Key_Left:
+            self.label.setText("You pressed the 'Left Arrow' key!")
+        elif event.key() == Qt.Key.Key_Right:
+            self.label.setText("You pressed the 'Right Arrow' key!")
         elif event.key() == Qt.Key.Key_Escape:
-            self.label.setText("You pressed the 'Escape' key!")
+            self.close()  # Close the dialog when Escape is pressed
         else:
             self.label.setText(f"You pressed the '{event.text()}' key!")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    main_window = MainApp()
-    main_window.show()
+    
+    # Create and show the custom dialog
+    dialog = CustomDialog()
+    dialog.exec()
+    
     sys.exit(app.exec())

@@ -25,6 +25,22 @@ class MusicPlayer:
     def play(self):
         self.player.play()
         self.started_playing = True
+        
+    def play_pause(self):
+        if self.started_playing:  # pause state activating
+            if not self.in_pause_state:
+                # Record the current position before pausing
+                self.paused_position = self.player.position()  # Assuming get_position() returns the current position in seconds or milliseconds
+                
+                self.player.pause()
+                self.in_pause_state = True
+            else:
+                # Set the position to the recorded value before resuming
+                self.player.setPosition(self.paused_position)  # Assuming set_position() sets the playback position
+                
+                # Continue playing
+                self.player.play()
+                self.in_pause_state = False
 
     def play_pause_music(self, button):
         script_path = os.path.dirname(os.path.abspath(__file__))
@@ -45,7 +61,6 @@ class MusicPlayer:
                 self.player.play()
                 self.in_pause_state = False
                 button.setIcon(QIcon(os.path.join(script_path, "media-icons", "pause.ico")))
-
 
     def pause(self):
         self.player.pause()
