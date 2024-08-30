@@ -29,6 +29,7 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(50)
+        self.current_lyric = None
         self.script_path = os.path.dirname(os.path.abspath(__file__))
 
     def updateFileandParse(self, file):
@@ -78,14 +79,12 @@ class LRCSync:
         # Set the geometry of the dialog
         self.lrc_display.setGeometry(positionx, positiony, dialog_width, dialog_height)
 
-
         self.player.player.positionChanged.connect(self.update_lyrics)
 
         main_layout = QVBoxLayout(self.lrc_display)
         self.setup_button_layout(main_layout)
 
         self.updateFileandParse(file)
-        self.update_lyrics()
 
         # Properly connect the close event
         self.lrc_display.closeEvent = self.closeEvent
@@ -102,13 +101,13 @@ class LRCSync:
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
-            # Your action for left key
+            self.player.seek_backward()
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
-            # Your action for right key
+            self.player.seek_forward()
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
-            # Your action for space key
+            self.player.play_pause()
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
             if self.is_full_screen():
@@ -158,7 +157,7 @@ class LRCSync:
     def go_to_previous_lyrics(self):
         pass
     
-    def next_lyric(self):
+    def go_to_next_lyrics(self):
         pass
 
     def parse_lrc(self):
@@ -174,44 +173,31 @@ class LRCSync:
                         time_in_seconds = convert_time_to_seconds(time_str)
                         lyrics_dict[time_in_seconds] = lyric
             self.lyrics = lyrics_dict
-
-    def get_current_playback_time(self):
-        return self.player.get_current_time()
-
-    def update_lyrics(self):
-        if self.lyric_label is not None:
-            if self.file is not None:
-                self.current_time = self.get_current_playback_time()
-                lyrics_keys = sorted(self.lyrics.keys())
-                for i in range(len(lyrics_keys)):
-                    if self.current_time < lyrics_keys[i]:
-                        if i == 0:
-                            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[0]]))  # Handle the first lyric
-                        else:
-                            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[i - 1]]))
-                        break
-                else:
-                    self.lyric_label.setText(self.lrc_font.get_formatted_text(self.lyrics[lyrics_keys[-1]]))
-            else:
-                self.lyric_label.setText("No lrc file found on the disk")
-
-    def update_media_lyric(self):
+    
+    def get_current_lyrics(self):
         if self.file is not None:
-            self.current_time = self.get_current_playback_time()
+            self.current_time = self.player.get_current_time()
             lyrics_keys = sorted(self.lyrics.keys())
             for i in range(len(lyrics_keys)):
                 if self.current_time < lyrics_keys[i]:
                     if i == 0:
-                        self.media_lyric.setText(self.media_font.get_formatted_text(self.lyrics[lyrics_keys[0]]))  # Handle the first lyric
+                        self.current_lyric = self.lyrics[lyrics_keys[0]]
                     else:
-                        self.media_lyric.setText(self.media_font.get_formatted_text(self.lyrics[lyrics_keys[i - 1]]))
+                        self.current_lyric = self.lyrics[lyrics_keys[i - 1]]
                     break
             else:
-                self.media_lyric.setText(self.media_font.get_formatted_text(self.lyrics[lyrics_keys[-1]]))
+                self.current_lyric = self.lyrics[lyrics_keys[-1]]
         else:
-            self.media_lyric.setText("No lrc file found on the disk")
-
+            self.current_lyric = "No lyrics"                        
+                                                
+    def update_media_lyric(self):
+        self.get_current_lyrics()
+        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
+                        
+    def update_lyrics(self):
+        if self.lyric_label is not None:
+            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
+            
     def sync_lyrics(self, file):
         self.updateFileandParse(file)
         self.player.player.positionChanged.connect(self.update_media_lyric)
-        self.update_media_lyric()
