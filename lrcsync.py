@@ -40,7 +40,7 @@ class LRCSync:
 
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
-        self.lrc_display.setWindowTitle("LRC Player")
+        self.lrc_display.setWindowTitle(file)
 
         # Get the directory where the script is located
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -125,6 +125,12 @@ class LRCSync:
         # Add widgets to the main layout
         main_layout.addWidget(self.lyric_label)
         # main_layout.addLayout(button_layout)
+        
+    def go_to_previous_lyrics(self):
+        pass
+    
+    def next_lyric(self):
+        pass
 
     def parse_lrc(self):
         lyrics_dict = {}
