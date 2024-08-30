@@ -24,12 +24,14 @@ class LRCSync:
         self.player = player
         self.lyric_label = None
         self.lyrics = None
+        self.lyrics_keys = None
         self.current_time = 0.0
         self.media_lyric = QLabel()
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(50)
         self.current_lyric = "....."
+        self.current_lyrics_time = 0.0
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = 0.1  # Minimum interval in seconds      
         self.script_path = os.path.dirname(os.path.abspath(__file__))
@@ -110,6 +112,14 @@ class LRCSync:
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
             self.player.play_pause()
+        elif event.key() == Qt.Key.Key_Up:
+            print("UP key pressed")
+            self.go_to_previous_lyrics()
+        elif event.key() == Qt.Key.Key_Down:
+            print("down key pressed")
+            self.go_to_next_lyrics()
+        elif event.key() == Qt.Key.Key_D:
+            self.go_to_the_start_of_current_lyric()           
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
             if self.is_full_screen():
@@ -157,10 +167,29 @@ class LRCSync:
         # main_layout.addLayout(button_layout)
         
     def go_to_previous_lyrics(self):
-        pass
+        previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
+        if not previous_lyric_index < 0:
+            previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
+            print("previous time, ", previous_lyrics_key)        
+            self.player.player.setPosition(int(previous_lyrics_key * 1000))
+        else:
+            previous_lyrics_key = self.lyrics_keys[-1]
+            self.player.player.setPosition(int(previous_lyrics_key * 1000))
+            
     
     def go_to_next_lyrics(self):
-        pass
+        next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
+        if not len(self.lyrics_keys) < (next_lyric_index + 1):
+            next_lyric_key = self.lyrics_keys[next_lyric_index]
+            print("next line, ", next_lyric_key)        
+            self.player.player.setPosition(int(next_lyric_key * 1000))
+        else:
+            next_lyric_key = self.lyrics_keys[0]
+            print("next line, ", next_lyric_key)        
+            self.player.player.setPosition(int(next_lyric_key * 1000))
+        
+    def go_to_the_start_of_current_lyric(self):
+        self.player.player.setPosition(int(self.current_lyrics_time * 1000))
 
     def parse_lrc(self):
         lyrics_dict = {}
@@ -175,6 +204,7 @@ class LRCSync:
                         time_in_seconds = convert_time_to_seconds(time_str)
                         lyrics_dict[time_in_seconds] = lyric
             self.lyrics = lyrics_dict
+            self.lyrics_keys = sorted(self.lyrics.keys())
     
     def get_current_lyrics(self):
         if self.file is not None:
@@ -182,28 +212,27 @@ class LRCSync:
 
             # Only update if the current time has moved beyond the update interval
             abs_value = abs(self.current_time - self.last_update_time)
-            print(abs_value)
             if abs_value < self.update_interval:
                 return  # Skip updating if within the interval
 
             self.last_update_time = self.current_time  # Update the last updated time
 
-            lyrics_keys = sorted(self.lyrics.keys())
-            for i in range(len(lyrics_keys)):
-                if self.current_time < lyrics_keys[i]:
+            for i in range(len(self.lyrics_keys)):
+                if self.current_time < self.lyrics_keys[i]:
                     if i == 0:
-                        self.current_lyric = self.lyrics[lyrics_keys[0]]
+                        self.current_lyrics_time = self.lyrics_keys[0]
+                        self.current_lyric = self.lyrics[self.current_lyrics_time]
                     else:
-                        self.current_lyric = self.lyrics[lyrics_keys[i - 1]]
+                        self.current_lyrics_time = self.lyrics_keys[i - 1]
+                        self.current_lyric = self.lyrics[self.current_lyrics_time]
                     break
             else:
-                self.current_lyric = self.lyrics[lyrics_keys[-1]]
+                self.current_lyrics_time = self.lyrics_keys[-1]
+                self.current_lyric = self.lyrics[self.current_lyrics_time]
         else:
-            self.current_lyric = "No lyrics"      
-            
-        print(self.current_lyric)           
-                    
-                                                
+            self.current_lyrics_time = 0.0
+            self.current_lyric = "No lyrics"       
+                                                            
     def update_media_lyric(self):
         self.get_current_lyrics()
         self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
