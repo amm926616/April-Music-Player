@@ -1,43 +1,49 @@
-import sys
-from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QDialog, QApplication, QVBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt
 
-class CustomDialog(QDialog):
+class FullScreenDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Set up the dialog
-        self.setWindowTitle("Key Press Example in QDialog")
-        self.setGeometry(100, 100, 300, 200)
+        # Set up the dialog window
+        self.setWindowTitle("Full-Screen Dialog")
 
-        # Create a label to display which key was pressed
-        self.label = QLabel("Press any key...", self)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Add a label to demonstrate content
+        label = QLabel("Press Esc to exit full-screen mode", self)
+        label.setStyleSheet("color: white; font-size: 24px;")
+        layout = QVBoxLayout(self)
+        layout.addWidget(label)
 
-        # Set up the layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.label)
-        self.setLayout(layout)
+        # Add a button to toggle full-screen mode
+        toggle_button = QPushButton("Toggle Full-Screen", self)
+        toggle_button.clicked.connect(self.toggle_full_screen)
+        layout.addWidget(toggle_button)
 
-    def keyPressEvent(self, event: QKeyEvent):
-        # Handle key presses here
-        if event.key() == Qt.Key.Key_A:
-            self.label.setText("You pressed the 'A' key!")
-        elif event.key() == Qt.Key.Key_Left:
-            self.label.setText("You pressed the 'Left Arrow' key!")
-        elif event.key() == Qt.Key.Key_Right:
-            self.label.setText("You pressed the 'Right Arrow' key!")
-        elif event.key() == Qt.Key.Key_Escape:
-            self.close()  # Close the dialog when Escape is pressed
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.exit_full_screen()
         else:
-            self.label.setText(f"You pressed the '{event.text()}' key!")
+            super().keyPressEvent(event)
+
+    def toggle_full_screen(self):
+        if self.is_full_screen():
+            self.exit_full_screen()
+        else:
+            self.showFullScreen()
+
+    def is_full_screen(self):
+        # Check if the dialog is in full-screen mode
+        return self.windowState() & Qt.WindowState.WindowFullScreen
+
+    def exit_full_screen(self):
+        # Restore the dialog to windowed mode
+        self.showNormal()
 
 if __name__ == "__main__":
+    import sys
     app = QApplication(sys.argv)
-    
-    # Create and show the custom dialog
-    dialog = CustomDialog()
-    dialog.exec()
-    
+
+    # Create and show the dialog
+    dialog = FullScreenDialog()
+    dialog.show()
     sys.exit(app.exec())

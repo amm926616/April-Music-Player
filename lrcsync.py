@@ -29,6 +29,7 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(50)
+        self.script_path = os.path.dirname(os.path.abspath(__file__))
 
     def updateFileandParse(self, file):
         if file is None:
@@ -41,6 +42,15 @@ class LRCSync:
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
+        
+        self.lrc_display.setStyleSheet(f"""
+            QDialog {{
+                background-image: url({os.path.join(self.script_path, "background-stars.jpg")});
+                background-repeat: no-repeat;
+                background-position: center;
+                background-size: cover;
+            }}
+        """)
 
         # Get the directory where the script is located
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +91,7 @@ class LRCSync:
         self.lrc_display.closeEvent = self.closeEvent
         self.lrc_display.keyPressEvent = self.keyPressEvent
 
-        self.lrc_display.exec()
+        self.lrc_display.show()
         
     def closeEvent(self, event):
         print("QDialog closed")
@@ -92,15 +102,34 @@ class LRCSync:
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
-            self.player.seek_backward()
-            
+            # Your action for left key
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
-            self.player.seek_forward()
-            
+            # Your action for right key
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
-            self.player.play_pause()
+            # Your action for space key
+        elif event.key() == Qt.Key.Key_F:
+            print("pressed F")
+            if self.is_full_screen():
+                self.lrc_display.showNormal()  # Restore to normal mode
+            else:
+                self.lrc_display.showFullScreen()  # Enter full-screen mode
+
+    def is_full_screen(self):
+        # Check if the dialog is in full-screen mode
+
+        current_window_state = self.lrc_display.windowState()
+        
+        # Define the full-screen flag
+        full_screen_flag = Qt.WindowState.WindowFullScreen
+        
+        # Check if the current window state includes the full-screen flag
+        is_full_screen_mode = (current_window_state & full_screen_flag) == full_screen_flag
+        
+        # Return the result
+        return is_full_screen_mode
+
 
     def setup_button_layout(self, main_layout):       
         # Initialize lyric label as a class attribute for potential updates
