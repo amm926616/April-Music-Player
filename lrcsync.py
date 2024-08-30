@@ -145,6 +145,8 @@ class LRCSync:
     def setup_button_layout(self, main_layout):       
         # Initialize lyric label as a class attribute for potential updates
         self.lyric_label = QLabel("Current Lyrics")
+        self.lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+
         self.lyric_label.setWordWrap(True)
         self.lyric_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -176,6 +178,9 @@ class LRCSync:
             previous_lyrics_key = self.lyrics_keys[-1]
             self.player.player.setPosition(int(previous_lyrics_key * 1000))
             
+        if self.player.in_pause_state:
+            self.player.paused_position = int(previous_lyrics_key * 1000)
+            
     
     def go_to_next_lyrics(self):
         next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
@@ -187,6 +192,9 @@ class LRCSync:
             next_lyric_key = self.lyrics_keys[0]
             print("next line, ", next_lyric_key)        
             self.player.player.setPosition(int(next_lyric_key * 1000))
+            
+        if self.player.in_pause_state:
+            self.player.paused_position = int(next_lyric_key * 1000)            
         
     def go_to_the_start_of_current_lyric(self):
         self.player.player.setPosition(int(self.current_lyrics_time * 1000))
