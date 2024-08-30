@@ -4,12 +4,12 @@ import os
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase, QAction
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QCoreApplication
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
@@ -169,6 +169,27 @@ class MusicPlayerUI(QMainWindow):
         self.createMenuBar()
         self.createWidgetAndLayouts()
         self.showMaximized()
+        
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon(self.icon_path))
+        self.tray_icon.setVisible(True)
+        
+        self.tray_menu = QMenu()
+        
+        open_action = QAction("Open", self)
+        open_action.triggered.connect(self.show)
+        self.tray_menu.addAction(open_action)
+        
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(QCoreApplication.instance().quit)
+        self.tray_menu.addAction(exit_action)
+        
+        self.tray_icon.setContextMenu(self.tray_menu)
+                
+    def closeEvent(self, event):
+        print("hiding window")
+        self.hide()
+        event.ignore()
 
     def createMenuBar(self):
         # this is the menubar that will hold all together
@@ -483,15 +504,10 @@ class MusicPlayerUI(QMainWindow):
         self.updateDisplayData()
         self.extract_and_set_album_art()
         self.updateSongDetails()                                        
-                           
-        
+                                   
     def play_song(self):
         self.player.play()
         self.lrcPlayer.sync_lyrics(self.lrc_file)      
-        
-        """
-        
-        """  
         
     def get_file_path_from_click(self, item):
         row = item.row()
