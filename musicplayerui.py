@@ -204,6 +204,9 @@ class MusicPlayerUI(QMainWindow):
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
             self.play_pause()
+            
+        elif event.key() == Qt.Key.Key_M and Qt.KeyboardModifier.ControlModifier:
+            self.on_progress_bar_double_click()
 
     def createMenuBar(self):
         # this is the menubar that will hold all together
