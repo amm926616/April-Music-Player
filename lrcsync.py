@@ -29,7 +29,9 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(50)
-        self.current_lyric = None
+        self.current_lyric = "....."
+        self.last_update_time = 0.0  # Initialize with 0 or None
+        self.update_interval = 0.1  # Minimum interval in seconds      
         self.script_path = os.path.dirname(os.path.abspath(__file__))
 
     def updateFileandParse(self, file):
@@ -177,6 +179,15 @@ class LRCSync:
     def get_current_lyrics(self):
         if self.file is not None:
             self.current_time = self.player.get_current_time()
+
+            # Only update if the current time has moved beyond the update interval
+            abs_value = abs(self.current_time - self.last_update_time)
+            print(abs_value)
+            if abs_value < self.update_interval:
+                return  # Skip updating if within the interval
+
+            self.last_update_time = self.current_time  # Update the last updated time
+
             lyrics_keys = sorted(self.lyrics.keys())
             for i in range(len(lyrics_keys)):
                 if self.current_time < lyrics_keys[i]:
@@ -188,7 +199,10 @@ class LRCSync:
             else:
                 self.current_lyric = self.lyrics[lyrics_keys[-1]]
         else:
-            self.current_lyric = "No lyrics"                        
+            self.current_lyric = "No lyrics"      
+            
+        print(self.current_lyric)           
+                    
                                                 
     def update_media_lyric(self):
         self.get_current_lyrics()

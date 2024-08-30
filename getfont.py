@@ -61,7 +61,7 @@ class GetFont:
         cursor = QTextCursor(doc)
 
         for char in text:
-            language = self.detect_language(char) or "korean"
+            language = self.detect_language(char) or "english"
             cursor.setCharFormat(self.formats.get(language, self.formats[language]))
             cursor.insertText(char)
 
