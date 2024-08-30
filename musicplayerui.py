@@ -1,5 +1,6 @@
 import json
 from base64 import b64decode
+import sqlite3
 import os
 import platform
 from collections import defaultdict
@@ -409,11 +410,32 @@ class MusicPlayerUI(QMainWindow):
         self.image_display.clear()
         self.song_details.clear()
 
-        
+
+    def initialize_database(self):
+        # Connect to the SQLite database (creates the file if it doesn't exist)
+        self.conn = sqlite3.connect('songs.db')
+        self.cursor = self.conn.cursor()
+
+        # Create the table for storing song metadata if it doesn't exist
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS songs (
+                title TEXT,
+                artist TEXT,
+                album TEXT,
+                year TEXT,
+                genre TEXT,
+                track_number TEXT,
+                duration INTEGER,
+                file_path TEXT PRIMARY KEY
+            )
+        ''')
+        self.conn.commit()
+
     def loadSongs(self, load_again=False):
+        self.initialize_database()
+
         if load_again:
             self.cleanDetails()
-            # Clear the table before loading new items
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)
             self.songTableWidget.setHorizontalHeaderLabels(
@@ -434,11 +456,42 @@ class MusicPlayerUI(QMainWindow):
 
         songs_by_artist = defaultdict(list)
 
+        # Check if the database already has the songs stored
         for item_path in media_files:
-            self.music_file = item_path
-            metadata = self.get_metadata()
+            self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
+            result = self.cursor.fetchone()
 
-            # Group songs by artist and album
+            if result:
+                # If the song is already in the database, use the stored metadata
+                metadata = {
+                    'title': result[0],
+                    'artist': result[1],
+                    'album': result[2],
+                    'year': result[3],
+                    'genre': result[4],
+                    'track_number': result[5],
+                    'duration': result[6]
+                }
+            else:
+                # Otherwise, extract the metadata and store it in the database
+                self.music_file = item_path
+                metadata = self.get_metadata()
+
+                self.cursor.execute('''
+                    INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    metadata['title'],
+                    metadata['artist'],
+                    metadata['album'],
+                    str(metadata['year']),
+                    metadata['genre'],
+                    metadata['track_number'],
+                    metadata['duration'],
+                    item_path
+                ))
+                self.conn.commit()
+
             artist = metadata['artist'] if metadata['artist'] else 'Unknown Artist'
             album = metadata['album'] if metadata['album'] else 'Unknown Album'
             track_number = metadata['track_number']
@@ -451,11 +504,11 @@ class MusicPlayerUI(QMainWindow):
                 songs_by_album[album].append((track_number, item_path, metadata))
 
             for album in sorted(songs_by_album.keys()):
-                # Insert a row with the album name
+                # Insert a row with the album name (same as your current implementation)
                 row_position = self.songTableWidget.rowCount()
                 self.songTableWidget.insertRow(row_position)
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
-                
+
                 # funcky cool font for album title
                 QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))
                 font = QFont("Komika Axis", 10)
@@ -478,6 +531,7 @@ class MusicPlayerUI(QMainWindow):
                 sorted_songs = sorted(songs_by_album[album], key=lambda x: extract_track_number(x[0]))
 
                 for track_number, item_path, metadata in sorted_songs:
+                    # Insert song data into the QTableWidget (same as your current implementation)
                     row_position = self.songTableWidget.rowCount()
                     self.songTableWidget.insertRow(row_position)
 
@@ -515,6 +569,8 @@ class MusicPlayerUI(QMainWindow):
                     file_path_item = QTableWidgetItem(item_path)
                     file_path_item.setFlags(file_path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.songTableWidget.setItem(row_position, 7, file_path_item)
+
+        self.conn.close()
                     
     def updateInformations(self):
         self.get_song_and_lrc_dir(self.music_file)
