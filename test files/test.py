@@ -1,37 +1,29 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMainWindow
-from PyQt6.QtGui import QIcon, QAction
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel
+from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtCore import Qt
 
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # Set up the system tray icon
-        self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('icon.ico'))
-        self.tray_icon.setVisible(True)
+        # Set up the main window
+        self.setWindowTitle("Key Press Example")
+        self.setGeometry(100, 100, 400, 300)
 
-        # Create a context menu for the system tray icon
-        self.tray_menu = QMenu()
-        
-        # Add an "Open" action
-        open_action = QAction("Open", self)
-        open_action.triggered.connect(self.show)
-        self.tray_menu.addAction(open_action)
-        
-        # Add an "Exit" action
-        exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(QCoreApplication.instance().quit)
-        self.tray_menu.addAction(exit_action)
-        
-        # Set the context menu
-        self.tray_icon.setContextMenu(self.tray_menu)
+        # Create a label to display which key was pressed
+        self.label = QLabel("Press any key...", self)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setCentralWidget(self.label)
 
-    def closeEvent(self, event):
-        # Hide the window instead of quitting the application
-        self.hide()
-        event.ignore()
+    def keyPressEvent(self, event: QKeyEvent):
+        # Check which key was pressed and update the label text
+        if event.key() == Qt.Key.Key_A:
+            self.label.setText("You pressed the 'A' key!")
+        elif event.key() == Qt.Key.Key_Escape:
+            self.label.setText("You pressed the 'Escape' key!")
+        else:
+            self.label.setText(f"You pressed the '{event.text()}' key!")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
 )
 from PyQt6.QtCore import Qt, QCoreApplication
+from aqt import QKeyEvent
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
@@ -190,6 +191,19 @@ class MusicPlayerUI(QMainWindow):
         print("hiding window")
         self.hide()
         event.ignore()
+        
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Left:
+            print("left key pressed")
+            self.seekBack()
+            
+        elif event.key() == Qt.Key.Key_Right:
+            print("right key pressed")
+            self.seekForward()
+            
+        elif event.key() == Qt.Key.Key_Space:
+            print("Space key pressed")
+            self.play_pause()
 
     def createMenuBar(self):
         # this is the menubar that will hold all together
@@ -220,7 +234,7 @@ class MusicPlayerUI(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Initialize the table widget
-        self.songTableWidget = QTableWidget(self)
+        self.songTableWidget = QTableWidget(self)        
         self.songTableWidget.setColumnCount(8)  # 7 for metadata + 1 for file path
         self.songTableWidget.setHorizontalHeaderLabels(
             ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path']
