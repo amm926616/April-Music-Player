@@ -9,7 +9,7 @@ class MainApp(QMainWindow):
 
         # Set up the system tray icon
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('path/to/your/icon.png'))
+        self.tray_icon.setIcon(QIcon('icon.ico'))
         self.tray_icon.setVisible(True)
 
         # Create a context menu for the system tray icon
