@@ -175,6 +175,9 @@ class MusicPlayerUI(QMainWindow):
         self.createWidgetAndLayouts()
         self.showMaximized()
         
+        self.setupTrayIcon()
+        
+    def setupTrayIcon(self):
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(self.icon_path))
         self.tray_icon.setVisible(True)
@@ -190,7 +193,17 @@ class MusicPlayerUI(QMainWindow):
         self.tray_menu.addAction(exit_action)
         
         self.tray_icon.setContextMenu(self.tray_menu)
-                
+        self.tray_icon.activated.connect(self.on_tray_icon_clicked)
+        
+    def on_tray_icon_clicked(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            # Handle the left-click (Trigger) event here
+            print("Tray icon was left-clicked!")
+            if self.isHidden():
+                self.show()
+            else:
+                self.hide()  # Optionally, you can toggle between showing and hiding
+                        
     def closeEvent(self, event):
         print("hiding window")
         self.hide()
