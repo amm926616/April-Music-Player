@@ -7,33 +7,19 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
 - If you’d like to use the project without setting it up, I have compiled versions for both Linux and Windows. You can download them from the [Releases](#) section. After downloading, unzip the file and run the main executable by double-clicking it.
 - To run the project with Python, clone or download the repository:
     
-    bash
-    
-    Copy code
-    
-    `git clone <repository-url>`
+    `git clone https://github.com/amm926616/april-music-player.git` or download the repo.
+
+- Go inside the folder.
     
 - (Optional) Create a virtual environment:
-    
-    bash
-    
-    Copy code
-    
+
     `python -m venv .venv source .venv/bin/activate  # For Linux/macOS .venv\Scripts\activate     # For Windows`
     
 - Install the required modules:
-    
-    bash
-    
-    Copy code
-    
+
     `pip install -r requirements.txt`
     
 - Run the main script:
-    
-    bash
-    
-    Copy code
     
     `python main.py`
     
@@ -45,7 +31,6 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
 - **In LRC view**:
     - **F**: Toggle full-screen mode.
     - **Up Arrow, Down Arrow**: Seek to the previous or next lyric line.
-
 #### screenshots
 ![screenshot](./screenshots/screenshot1.png)
 
