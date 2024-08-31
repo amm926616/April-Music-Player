@@ -97,26 +97,29 @@ class MusicPlayerUI(QMainWindow):
         self.play_pause_button = None
         self.click_count = 0
         self.forw_button = None
+        self.config_path = None
         if platform.system() == "Windows":
-            config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player', 'config.json')
+            self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
-            config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player', "config.json")
+            self.config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player')
+            
+        config_file = os.path.join(self.config_path, "config.json")
 
         # Ensure the directory exists
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        os.makedirs(os.path.dirname(config_file), exist_ok=True)
 
         # Check if the file exists
-        if not os.path.isfile(config_path):
+        if not os.path.isfile(config_file):
             # Create an empty configuration
             default_config = {
                 "directory": None
             }
 
             # Write the default configuration to the file
-            with open(config_path, 'w') as config_file:
-                json.dump(default_config, config_file, indent=4)
+            with open(config_file, 'w') as file:
+                json.dump(default_config, file, indent=4)
 
-        self.config_file = config_path
+        self.config_file = config_file
         self.directory = None
         self.load_config()
 
@@ -413,7 +416,7 @@ class MusicPlayerUI(QMainWindow):
 
     def initialize_database(self):
         # Connect to the SQLite database (creates the file if it doesn't exist)
-        self.conn = sqlite3.connect('songs.db')
+        self.conn = sqlite3.connect(os.path.join(self.config_path, "songs.db"))
         self.cursor = self.conn.cursor()
 
         # Create the table for storing song metadata if it doesn't exist
