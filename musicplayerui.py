@@ -2,6 +2,7 @@ import json
 from base64 import b64decode
 import sqlite3
 import os
+import sys
 import platform
 from collections import defaultdict
 
@@ -225,7 +226,10 @@ class MusicPlayerUI(QMainWindow):
             self.play_pause()
             
         elif event.key() == Qt.Key.Key_L and Qt.KeyboardModifier.ControlModifier:
-            self.on_progress_bar_double_click()
+            self.on_progress_bar_double_click()            
+            
+        elif event.key() == Qt.Key.Key_Q and Qt.KeyboardModifier.ControlModifier:
+            sys.exit()
             
         elif event.key() == Qt.Key.Key_S and Qt.KeyboardModifier.ControlModifier:
             print("serach")
@@ -327,7 +331,11 @@ class MusicPlayerUI(QMainWindow):
         self.loadSongs(False)
 
     def setupMediaPlayerWidget(self, right_layout):
-        mediaLayout = QVBoxLayout()
+        # Create a widget to hold the media player components
+        media_widget = QWidget()
+        
+        # Create and configure the layout for the media widget
+        mediaLayout = QVBoxLayout(media_widget)
 
         # Create and configure the track display label
         self.track_display = QLabel("No Track Playing")
@@ -346,8 +354,68 @@ class MusicPlayerUI(QMainWindow):
         mediaLayout.addWidget(self.image_display)
         mediaLayout.addWidget(self.song_details)
         mediaLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        right_layout.addLayout(mediaLayout)
+        
+        # Add the media_widget to the right_layout
+        right_layout.addWidget(media_widget)
+        
+        # Set up the media player controls panel
         self.setupMediaPlayerControlsPanel(right_layout)
+
+    def setupMediaPlayerControlsPanel(self, right_layout):
+        # Store progress bar in a class variable
+        # Create a QProgressBar
+        self.progress_bar = DoubleClickableProgressBar(self)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid grey;
+                border-radius: 5px;
+                text-align: center;
+            }
+
+            QProgressBar::chunk {
+                width: 10px;
+            }
+        """)
+
+        # Connect the custom double-click signal to a function
+        self.progress_bar.doubleClicked.connect(self.on_progress_bar_double_click)
+
+        # Create a QSlider
+        self.slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider.setRange(0, 100)
+        self.slider.setValue(0)
+
+        # Connect the slider value to the progress bar
+        self.slider.valueChanged.connect(self.progress_bar.setValue)
+
+        # Connect the slider to the player's position
+        self.slider.sliderMoved.connect(self.set_position)
+
+        right_layout.addWidget(self.lrcPlayer.media_lyric)
+        self.lrcPlayer.media_lyric.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
+        right_layout.addWidget(self.progress_bar)
+        right_layout.addWidget(self.slider)
+
+        controls_layout = QHBoxLayout()
+        self.prev_button = QPushButton()
+        self.play_pause_button = QPushButton()
+        self.forw_button = QPushButton()
+
+        self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
+        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
+        self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-forward.ico")))
+
+        self.prev_button.clicked.connect(self.seekBack)
+        self.play_pause_button.clicked.connect(self.play_pause)
+        self.forw_button.clicked.connect(self.seekForward)
+
+        controls_layout.addWidget(self.prev_button)
+        controls_layout.addWidget(self.play_pause_button)
+        controls_layout.addWidget(self.forw_button)
+
+        right_layout.addLayout(controls_layout)
+        self.connect_progressbar_signals()
 
     def updateDisplayData(self):
         metadata = self.get_metadata()
@@ -576,7 +644,7 @@ class MusicPlayerUI(QMainWindow):
                 # album_name_item.setForeground(QColor('#403e3e'))
 
                 # Optionally, set the background color too
-                album_name_item.setBackground(QColor('#302121'))
+                # album_name_item.setBackground(QColor('#302121'))
 
                 self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
                 self.songTableWidget.setItem(row_position, 0, album_name_item)
@@ -630,7 +698,6 @@ class MusicPlayerUI(QMainWindow):
         self.conn.close()
                     
     def updateInformations(self):
-        self.get_song_and_lrc_dir(self.music_file)
         self.updateDisplayData()
         self.extract_and_set_album_art()
         self.updateSongDetails()                                        
@@ -655,6 +722,7 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.get_file_path_from_click(item)
             self.updateInformations()
+            self.get_lrc_file()
             self.player.update_files(self.music_file, self.lrc_file)
             self.play_song()
             
@@ -672,63 +740,6 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.lrcPlayer.startUI(self, self.lrc_file)
             # Add your desired functionality here
-
-    def setupMediaPlayerControlsPanel(self, right_layout):
-        # Store progress bar in a class variable
-        # Create a QProgressBar
-        self.progress_bar = DoubleClickableProgressBar(self)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid grey;
-                border-radius: 5px;
-                text-align: center;
-            }
-
-            QProgressBar::chunk {
-                background-color: #6f0e10;
-                width: 10px;
-            }
-        """)
-        
-        # Connect the custom double-click signal to a function
-        self.progress_bar.doubleClicked.connect(self.on_progress_bar_double_click)
-
-        # Create a QSlider
-        self.slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.slider.setRange(0, 100)
-        self.slider.setValue(0)
-
-        # Connect the slider value to the progress bar
-        self.slider.valueChanged.connect(self.progress_bar.setValue)
-
-        # Connect the slider to the player's position
-        self.slider.sliderMoved.connect(self.set_position)
-
-        right_layout.addWidget(self.lrcPlayer.media_lyric)
-        self.lrcPlayer.media_lyric.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
-        right_layout.addWidget(self.progress_bar)
-        right_layout.addWidget(self.slider)
-
-        controls_layout = QHBoxLayout()
-        self.prev_button = QPushButton()
-        self.play_pause_button = QPushButton()
-        self.forw_button = QPushButton()
-        
-        self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
-        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
-        self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-forward.ico")))
-
-        self.prev_button.clicked.connect(self.seekBack)
-        self.play_pause_button.clicked.connect(self.play_pause)
-        self.forw_button.clicked.connect(self.seekForward)
-        
-        controls_layout.addWidget(self.prev_button)
-        controls_layout.addWidget(self.play_pause_button)
-        controls_layout.addWidget(self.forw_button)
-
-        right_layout.addLayout(controls_layout)
-        self.connect_progressbar_signals()
 
     def seekBack(self):
         self.player.seek_backward()
@@ -765,8 +776,7 @@ class MusicPlayerUI(QMainWindow):
         # Set the media player position when the slider is moved
         self.player.player.setPosition(position)
         
-    def get_song_and_lrc_dir(self, file_path):
-        self.music_file = file_path
+    def get_lrc_file(self):
         if self.music_file.endswith(".ogg"):
             lrc = self.music_file.replace(".ogg", ".lrc")
         elif self.music_file.endswith(".mp3"):
