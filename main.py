@@ -6,6 +6,6 @@ import sys
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ui = MusicPlayerUI()
+    ui = MusicPlayerUI(app)
     ui.createUI()
     sys.exit(app.exec())
