@@ -216,7 +216,9 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_S and Qt.KeyboardModifier.ControlModifier:
             print("serach")
-
+            self.search_bar.setFocus()
+            self.search_bar.setCursorPosition(len(self.search_bar.text()))
+            
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
