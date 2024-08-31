@@ -703,36 +703,34 @@ class MusicPlayerUI(QMainWindow):
         self.extract_and_set_album_art()
         self.updateSongDetails()                                        
                                    
-    def play_song(self):
-        self.player.play()
-        self.lrcPlayer.sync_lyrics(self.lrc_file)      
-        
-    def get_file_path_from_click(self, item):
+    def get_music_file_from_click(self, item):
         row = item.row()
         file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
-        print(file_path)
-        # print(f"Row {row} single clicked")
-        # print(f"File path: {file_path}")
         self.music_file = file_path
         
         return file_path
+    
+    def handleRowSingleClick(self, item):
+        if "Album Title: " in item.text():
+            return
+        else:
+            self.get_music_file_from_click(item)
+            self.updateInformations()    
 
     def handleRowDoubleClick(self, item):
         if "Album Title: " in item.text():
             return
         else:
-            self.get_file_path_from_click(item)
+            self.get_music_file_from_click(item)
             self.updateInformations()
             self.get_lrc_file()
-            self.player.update_files(self.music_file, self.lrc_file)
+            self.player.update_music_file(self.music_file)
             self.play_song()
             
-    def handleRowSingleClick(self, item):
-        if "Album Title: " in item.text():
-            return
-        else:
-            self.get_file_path_from_click(item)
-            self.updateInformations()
+    def play_song(self):
+        self.player.play()
+        self.lrcPlayer.sync_lyrics(self.lrc_file)   
+                    
             
     def on_progress_bar_double_click(self):
         print("Progress bar was double-clicked!")
@@ -789,6 +787,7 @@ class MusicPlayerUI(QMainWindow):
             self.lrc_file = lrc
         else:
             self.lrc_file = None
+            self.lrcPlayer.file = None
             
     def double_click_on_image(self):
         album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file)
