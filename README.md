@@ -28,6 +28,7 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
 
 - **Left Arrow, Right Arrow, Spacebar**: Seek backward, seek forward, and play/pause, respectively.
 - **Ctrl + L**: Activate LRC display, or double-click the progress bar.
+- **Ctrl + S**: Focus and place cursor on search bar.
 - **In LRC view**:
     - **F**: Toggle full-screen mode.
     - **D**: Go to the start of current lyric.
