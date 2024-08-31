@@ -5,13 +5,12 @@ import os
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase, QAction, QCursor
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase, QAction, QCursor, QKeyEvent
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
 )
 from PyQt6.QtCore import Qt, QCoreApplication
-from aqt import QKeyEvent
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
