@@ -47,10 +47,16 @@ class LRCSync:
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
-        
+
+        image_path = os.path.join(self.script_path, "background-stars.jpg")
+
+        # Check if the OS is Windows
+        if os.name == 'nt':  # 'nt' stands for Windows
+            image_path = image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
+
         self.lrc_display.setStyleSheet(f"""
             QDialog {{
-                background-image: url({os.path.join(self.script_path, "background-stars.jpg")});
+                background-image: url({image_path});
                 background-repeat: no-repeat;
                 background-position: center;
                 background-size: cover;
