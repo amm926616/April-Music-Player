@@ -37,14 +37,20 @@ class AlbumImageWindow(QDialog):
 
     def save_image(self):
         default_image_folder = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.PicturesLocation)
-        
+
         # Define the file name and the full path
         file_name = self.image_name.split('/')[-1]
+
+        # Check if the OS is Windows
+        if os.name == 'nt':  # 'nt' stands for Windows
+            file_name = self.image_name.split("\\")[-1] # တော်တော်သောက်လုပ်ရှပ်တဲ့ window  
+        
         for ext in ['.mp3', '.ogg', '.asc']:
             if file_name.endswith(ext):
                 file_name = file_name.removesuffix(ext)
                 
         save_path = os.path.join(default_image_folder, file_name) + ".png"
+        print(save_path)
         
         # Save the pixmap to the specified path in PNG format
         success = self.image.save(save_path, format='PNG')
