@@ -5,7 +5,7 @@ import os
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase, QAction
+from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase, QAction, QCursor
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
@@ -79,7 +79,7 @@ def extract_track_number(track_number):
 
 
 class MusicPlayerUI(QMainWindow):
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
 
         # Define the config path
@@ -98,6 +98,7 @@ class MusicPlayerUI(QMainWindow):
         self.click_count = 0
         self.forw_button = None
         self.config_path = None
+        self.app = app
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
@@ -231,6 +232,30 @@ class MusicPlayerUI(QMainWindow):
         # Linking actions and menus
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
+        
+    def show_context_menu(self, pos):
+        # Get the item at the clicked position
+        item = self.songTableWidget.itemAt(pos)
+        print(item.row)
+        print(item.text)
+        
+        if item:
+            # Create the context menu
+            context_menu = QMenu(self)
+            
+            # Add an action to copy the file path
+            copy_action = context_menu.addAction("Copy Path")
+            
+            # Connect the action to a method
+            copy_action.triggered.connect(lambda: self.copy_item_path(item))
+            
+            # Show the context menu at the cursor position
+            context_menu.exec(QCursor.pos())
+
+    def copy_item_path(self, item):
+        print("in copy item path")
+        file = self.get_file_path_from_click(item)
+        self.app.clipboard().setText(file)
 
     def createWidgetAndLayouts(self):
         """ The main layout of the music player ui"""
@@ -241,10 +266,12 @@ class MusicPlayerUI(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Initialize the table widget
-        self.songTableWidget = QTableWidget(self)        
-        self.songTableWidget.setColumnCount(8)  # 7 for metadata + 1 for file path
+        self.songTableWidget = QTableWidget(self)  
+        self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)      
+        self.songTableWidget.setColumnCount(9)  # 7 for metadata + 1 for file path
         self.songTableWidget.setHorizontalHeaderLabels(
-            ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path']
+            ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', "Media Type"]
         )
 
         # Set selection behavior to select entire rows
@@ -346,7 +373,8 @@ class MusicPlayerUI(QMainWindow):
             'genre': 'Unknown Genre',
             'track_number': 'Unknown Track Number',
             'comment': 'No Comment',
-            'duration': 0,  # Initialize duration as integer
+            'duration': 0,  # Initialize duration as integer,
+            'file_type': 'Unknown File Type'
         }
 
         try:
@@ -365,6 +393,7 @@ class MusicPlayerUI(QMainWindow):
                 # Extract duration
                 mp3_audio = MP3(self.music_file)
                 metadata['duration'] = int(mp3_audio.info.length)
+                metadata['file_type'] = str(file_extension)
 
             elif file_extension == 'ogg':
                 audio = OggVorbis(self.music_file)
@@ -378,6 +407,8 @@ class MusicPlayerUI(QMainWindow):
 
                 # Extract duration
                 metadata['duration'] = int(audio.info.length)
+                metadata['file_type'] = str(file_extension)
+                metadata['file_type'] = str(file_extension)                                
 
             else:
                 raise ValueError("Unsupported file format")
@@ -413,7 +444,6 @@ class MusicPlayerUI(QMainWindow):
         self.image_display.clear()
         self.song_details.clear()
 
-
     def initialize_database(self):
         # Connect to the SQLite database (creates the file if it doesn't exist)
         self.conn = sqlite3.connect(os.path.join(self.config_path, "songs.db"))
@@ -429,7 +459,8 @@ class MusicPlayerUI(QMainWindow):
                 genre TEXT,
                 track_number TEXT,
                 duration INTEGER,
-                file_path TEXT PRIMARY KEY
+                file_path TEXT PRIMARY KEY,
+                file_type TEXT
             )
         ''')
         self.conn.commit()
@@ -442,7 +473,7 @@ class MusicPlayerUI(QMainWindow):
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)
             self.songTableWidget.setHorizontalHeaderLabels(
-                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path']
+                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'Media Type']
             )
 
         if not self.directory:
@@ -473,7 +504,8 @@ class MusicPlayerUI(QMainWindow):
                     'year': result[3],
                     'genre': result[4],
                     'track_number': result[5],
-                    'duration': result[6]
+                    'duration': result[6],
+                    'file_type': result[8]
                 }
             else:
                 # Otherwise, extract the metadata and store it in the database
@@ -481,8 +513,8 @@ class MusicPlayerUI(QMainWindow):
                 metadata = self.get_metadata()
 
                 self.cursor.execute('''
-                    INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     metadata['title'],
                     metadata['artist'],
@@ -491,7 +523,8 @@ class MusicPlayerUI(QMainWindow):
                     metadata['genre'],
                     metadata['track_number'],
                     metadata['duration'],
-                    item_path
+                    item_path,
+                    metadata['file_type']
                 ))
                 self.conn.commit()
 
@@ -509,6 +542,7 @@ class MusicPlayerUI(QMainWindow):
             for album in sorted(songs_by_album.keys()):
                 # Insert a row with the album name (same as your current implementation)
                 row_position = self.songTableWidget.rowCount()
+                print(self.songTableWidget.rowCount())
                 self.songTableWidget.insertRow(row_position)
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
 
@@ -534,7 +568,7 @@ class MusicPlayerUI(QMainWindow):
                 sorted_songs = sorted(songs_by_album[album], key=lambda x: extract_track_number(x[0]))
 
                 for track_number, item_path, metadata in sorted_songs:
-                    # Insert song data into the QTableWidget (same as your current implementation)
+                    # Insert song data into the QTableWide (same as your current implementation)
                     row_position = self.songTableWidget.rowCount()
                     self.songTableWidget.insertRow(row_position)
 
@@ -572,6 +606,10 @@ class MusicPlayerUI(QMainWindow):
                     file_path_item = QTableWidgetItem(item_path)
                     file_path_item.setFlags(file_path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.songTableWidget.setItem(row_position, 7, file_path_item)
+                    
+                    file_type_item = QTableWidgetItem(metadata['file_type'])
+                    file_type_item.setFlags(file_type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    self.songTableWidget.setItem(row_position, 8, file_type_item)
 
         self.conn.close()
                     
@@ -588,9 +626,12 @@ class MusicPlayerUI(QMainWindow):
     def get_file_path_from_click(self, item):
         row = item.row()
         file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
-        print(f"Row {row} single clicked")
-        print(f"File path: {file_path}")
+        print(file_path)
+        # print(f"Row {row} single clicked")
+        # print(f"File path: {file_path}")
         self.music_file = file_path
+        
+        return file_path
 
     def handleRowDoubleClick(self, item):
         if "Album Title: " in item.text():
