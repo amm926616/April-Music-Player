@@ -100,7 +100,7 @@ class LRCSync:
         self.lrc_display.closeEvent = self.closeEvent
         self.lrc_display.keyPressEvent = self.keyPressEvent
 
-        self.lrc_display.show()
+        self.lrc_display.exec()
         
     def closeEvent(self, event):
         print("QDialog closed")

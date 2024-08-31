@@ -194,6 +194,8 @@ class MusicPlayerUI(QMainWindow):
     def closeEvent(self, event):
         print("hiding window")
         self.hide()
+        if self.lrcPlayer.lrc_display is not None:
+            self.lrcPlayer.lrc_display.close()
         event.ignore()
         
     def keyPressEvent(self, event: QKeyEvent):
@@ -211,6 +213,9 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_L and Qt.KeyboardModifier.ControlModifier:
             self.on_progress_bar_double_click()
+            
+        elif event.key() == Qt.Key.Key_S and Qt.KeyboardModifier.ControlModifier:
+            print("serach")
 
     def createMenuBar(self):
         # this is the menubar that will hold all together
@@ -235,8 +240,6 @@ class MusicPlayerUI(QMainWindow):
     def show_context_menu(self, pos):
         # Get the item at the clicked position
         item = self.songTableWidget.itemAt(pos)
-        print(item.row)
-        print(item.text)
         
         if item:
             # Create the context menu
@@ -541,7 +544,6 @@ class MusicPlayerUI(QMainWindow):
             for album in sorted(songs_by_album.keys()):
                 # Insert a row with the album name (same as your current implementation)
                 row_position = self.songTableWidget.rowCount()
-                print(self.songTableWidget.rowCount())
                 self.songTableWidget.insertRow(row_position)
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
 
