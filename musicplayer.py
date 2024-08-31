@@ -6,7 +6,6 @@ from PyQt6.QtCore import QUrl
 
 class MusicPlayer:
     def __init__(self):
-        self.lrc_file = None
         self.file_name = None
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -17,9 +16,8 @@ class MusicPlayer:
         # Connect the mediaStatusChanged signal to a slot
         self.player.mediaStatusChanged.connect(self.handle_media_status_changed)
 
-    def update_files(self, file, lrc):
+    def update_music_file(self, file):
         self.file_name = file
-        self.lrc_file = lrc
         self.player.setSource(QUrl.fromLocalFile(self.file_name))
 
     def play(self):
