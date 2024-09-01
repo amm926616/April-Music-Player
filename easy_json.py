@@ -4,6 +4,10 @@ import os
 class EasyJson:
     def __init__(self, config_file):
         self.config_file = config_file
+        self.script_path = os.path.dirname(os.path.abspath(__file__))
+        
+    def setupDefaultFiles(self):
+        self.edit_value("background_image", os.path.join(self.script_path, "background-images", "default.jpg"))
     
     def get_value(self, key):
         print("in ej, get value")
