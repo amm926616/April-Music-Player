@@ -33,6 +33,7 @@ class LRCSync:
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(50)
         self.current_lyric = "....."
+        self.is_playing = False
         self.current_lyrics_time = 0.0
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = 0.1  # Minimum interval in seconds      
@@ -263,5 +264,8 @@ class LRCSync:
             self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
             
     def sync_lyrics(self, file):
+        if self.is_playing: 
+            self.player.player.positionChanged.disconnect(self.update_media_lyric)
+        self.is_playing = True        
         self.updateFileandParse(file)
         self.player.player.positionChanged.connect(self.update_media_lyric)
