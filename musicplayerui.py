@@ -308,7 +308,7 @@ class MusicPlayerUI(QMainWindow):
 
     def copy_item_path(self, item):
         print("in copy item path")
-        file = self.get_file_path_from_click(item)
+        file = self.get_music_file_from_click(item)
         self.app.clipboard().setText(file)
 
     def createWidgetAndLayouts(self):
