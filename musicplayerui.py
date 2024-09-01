@@ -302,11 +302,10 @@ class MusicPlayerUI(QMainWindow):
         """
         QMessageBox.information(self, "Shortcuts", shortcuts_text)
 
- 
         
     def ask_for_background_image(self):
         # Open a file dialog and get the selected file
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select a File")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select an Image file for lrc display background image")
         
         if file_path:
             # Show the selected file path in a QMessageBox
@@ -314,7 +313,7 @@ class MusicPlayerUI(QMainWindow):
         else:
             QMessageBox.warning(self, "No File Selected", "You did not select any file.")
             
-        self.save_config("background_image", file_path)  
+        self.ej.edit_value("background_image", file_path)  
         
     def show_context_menu(self, pos):
         # Get the item at the clicked position
