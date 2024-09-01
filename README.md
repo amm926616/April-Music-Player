@@ -22,7 +22,8 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
 - Run the main script:
     
     `python main.py`
-    
+
+- Later, maybe you can create your own shortcut or script to automate the running process.     
 
 ### Keyboard Shortcuts
 
