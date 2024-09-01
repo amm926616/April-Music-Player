@@ -1,4 +1,3 @@
-import json
 import re
 import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout
@@ -6,6 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
 from easy_json import EasyJson
+from PIL import Image
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
@@ -37,7 +37,8 @@ class LRCSync:
         self.current_lyrics_time = 0.0
         self.ej = EasyJson(config)
         self.last_update_time = 0.0  # Initialize with 0 or None
-        self.update_interval = 0.1  # Minimum interval in seconds      
+        self.update_interval = 0.1  # Minimum interval in seconds    
+        self.script_path = os.path.dirname(os.path.abspath(__file__))
 
     def updateFileandParse(self, file):
         if file is None:
@@ -46,6 +47,20 @@ class LRCSync:
             self.file = file
 
         self.parse_lrc()
+        
+    def resizeBackgroundImage(self, parent, image_path):
+        image = Image.open(image_path)
+        screen_height = parent.height()
+        aspect_ratio = image.width /image.height
+        new_width = int(screen_height * aspect_ratio)
+        
+        resized_image = image.resize((new_width, screen_height), Image.LANCZOS)
+        
+        # Save the resized image
+        resized_image_path = os.path.join(self.script_path, "background-images", "resized_image.png")
+        resized_image.save(resized_image_path)   
+        
+        return resized_image_path             
 
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
@@ -57,20 +72,23 @@ class LRCSync:
         if not image_path or not os.path.exists(image_path):
             self.ej.setupBackgroundImage()
             image_path = self.ej.get_value("background_image")
+            
+        resized_image_path = self.resizeBackgroundImage(parent, image_path)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            image_path = image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
-
+            resized_image_path = image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
+            
         self.lrc_display.setStyleSheet(f"""
             QDialog {{
-                background-image: url({image_path});
+                background-color: black;  /* Black background color */
+                background-image: url({resized_image_path});
                 background-repeat: no-repeat;
                 background-position: center;
-                background-size: cover;
+                background-size: 100% auto;  /* Fix the image height to the dialog's height */                
             }}
         """)
-        
+                
         # Get the directory where the script is located
         script_dir = os.path.dirname(os.path.abspath(__file__))
 
