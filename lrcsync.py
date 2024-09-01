@@ -36,7 +36,6 @@ class LRCSync:
         self.current_lyrics_time = 0.0
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = 0.1  # Minimum interval in seconds      
-        self.script_path = os.path.dirname(os.path.abspath(__file__))
 
     def updateFileandParse(self, file):
         if file is None:
@@ -51,9 +50,12 @@ class LRCSync:
 
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
+        
+        if not ejson.get_value("background_image"):
+            ejson.setupDefaultFiles()  
             
         image_path = ejson.get_value("background_image")
-
+                                        
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
             image_path = image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   

@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
 )
 from PyQt6.QtCore import Qt, QCoreApplication
-from click import option
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
@@ -101,6 +100,7 @@ class MusicPlayerUI(QMainWindow):
         self.forw_button = None
         self.config_path = None
         self.app = app
+        self.file_path = None
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
@@ -136,9 +136,7 @@ class MusicPlayerUI(QMainWindow):
     def load_config(self):
         """Load configuration from a JSON file."""
         if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as file:
-                config = json.load(file)
-                self.directory = config.get('music_directory', None)
+            self.directory = self.ej.get_value("music_directory")
         else:
             self.directory = None        
 
