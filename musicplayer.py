@@ -19,14 +19,9 @@ class MusicPlayer:
         self.paused_position = 0.0
         # Connect the mediaStatusChanged signal to a slot
         self.player.mediaStatusChanged.connect(self.handle_media_status_changed)
-        
-        
+                
     def handle_buffer_status(self, percent_filled):
         print(f"Buffer status: {percent_filled}%")
-        if percent_filled < 50:
-            # Optionally, take some action if the buffer is too low
-            print(percent_filled)
-            print("Buffering is low, consider taking action.")
             
     def update_music_file(self, file):
         self.file_name = file
