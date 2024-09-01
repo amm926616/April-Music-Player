@@ -6,8 +6,11 @@ class EasyJson:
         self.config_file = config_file
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         
-    def setupDefaultFiles(self):
+    def setupBackgroundImage(self):
         self.edit_value("background_image", os.path.join(self.script_path, "background-images", "default.jpg"))
+        
+    def setupLyricsColor(self):
+        self.edit_value("lyrics_color", "white")
     
     def get_value(self, key):
         print("in ej, get value")
