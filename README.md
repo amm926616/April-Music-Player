@@ -13,7 +13,7 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
     
 - (Optional) Create a virtual environment:
 
-    `python -m venv .venv source .venv/bin/activate`
+    `python -m venv .venv && source .venv/bin/activate`
     
 - Install the required modules:
 
