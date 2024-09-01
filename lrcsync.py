@@ -1,8 +1,10 @@
+import json
 import re
 import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QKeyEvent
+from fastapi import background
 from getfont import GetFont
 
 def extract_time_and_lyric(line):
@@ -44,11 +46,14 @@ class LRCSync:
 
         self.parse_lrc()
 
-    def startUI(self, parent, file):
+    def startUI(self, parent, file, config_file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
 
-        image_path = os.path.join(self.script_path, "backgrounds", "background-stars.jpg")
+        with open(config_file, "r") as f:
+            data = json.load(f)
+            
+        image_path = data.get('background_image', None)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows

@@ -295,7 +295,7 @@ class MusicPlayerUI(QMainWindow):
         
         if file_path:
             # Show the selected file path in a QMessageBox
-            QMessageBox.information(self, "Selected File", f"You selected: {file_path}")
+            QMessageBox.information(self, "Load Background Image", f"You selected: {file_path}")
         else:
             QMessageBox.warning(self, "No File Selected", "You did not select any file.")
             
@@ -782,7 +782,7 @@ class MusicPlayerUI(QMainWindow):
         if self.lrcPlayer.lrc_display is not None: 
             pass 
         else:
-            self.lrcPlayer.startUI(self, self.lrc_file)
+            self.lrcPlayer.startUI(self, self.lrc_file, self.config_file)
             # Add your desired functionality here
 
     def seekBack(self):
