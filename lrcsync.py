@@ -48,7 +48,7 @@ class LRCSync:
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
 
-        image_path = os.path.join(self.script_path, "background-stars.jpg")
+        image_path = os.path.join(self.script_path, "backgrounds", "background-stars.jpg")
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
@@ -67,7 +67,7 @@ class LRCSync:
         script_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Construct the full path to the icon file
-        icon_path = os.path.join(script_dir, 'icons', 'lrc.png')
+        icon_path = os.path.join(script_dir, 'icons', 'april.png')
 
         self.lrc_display.setWindowIcon(QIcon(icon_path))
         
