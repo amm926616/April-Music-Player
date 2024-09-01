@@ -13,7 +13,7 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
     
 - (Optional) Create a virtual environment:
 
-    `python -m venv .venv source .venv/bin/activate  # For Linux/macOS .venv\Scripts\activate     # For Windows`
+    `python -m venv .venv && source .venv/bin/activate`
     
 - Install the required modules:
 
@@ -22,14 +22,15 @@ Music Player with lyrics syncing, note taking feature for lyrics memorization.
 - Run the main script:
     
     `python main.py`
-    
+
+- Later, maybe you can create your own shortcut or script to automate the running process.     
 
 ### Keyboard Shortcuts
 
 - **Left Arrow, Right Arrow, Spacebar**: Seek backward, seek forward, and play/pause, respectively.
 - **Ctrl + L**: Activate LRC display, or double-click the progress bar.
 - **Ctrl + S**: Focus and place cursor on search bar.
-- **Ctrl + Q**: To quits the program: The program runs in the background even if you close the main window. 
+- **Ctrl + Q**: This shortcut quits the program. The program runs in the background even if you close the main window. 
 - **In LRC view**:
     - **F**: Toggle full-screen mode.
     - **D**: Go to the start of current lyric.
