@@ -6,7 +6,7 @@ import sys
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent
+from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
@@ -245,18 +245,45 @@ class MusicPlayerUI(QMainWindow):
         show_shortcuts_action.triggered.connect(self.show_shortcuts)
         
         add_lrc_background = QAction("Add Lrc Background Image", self)
-        add_lrc_background.triggered.connect(self.ask_for_background_image)
+        add_lrc_background.triggered.connect(self.ask_for_background_image)         
 
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
         options_menu = menubar.addMenu("Options")
         help_menu = menubar.addMenu("Help")
+        
+        # Add a sub-menu for text color selection with radio buttons
+        text_color_menu = QMenu("Choose Text Color", self)
+        options_menu.addMenu(text_color_menu)
+
+        # Create an action group to enforce a single selection (radio button behavior)
+        color_group = QActionGroup(self)
+        color_group.setExclusive(True)
+
+        # Add color options with radio buttons
+        colors = ["White", "Black", "Blue", "Yellow", "Red"]
+        self.color_actions = {}
+        for color in colors:
+            action = QAction(color, self, checkable=True)
+            action.setActionGroup(color_group)
+            action.triggered.connect(self.get_selected_color)  # Connect to method                        
+            text_color_menu.addAction(action)
+            self.color_actions[color] = action    
 
         # Linking actions and menus
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
         help_menu.addAction(show_shortcuts_action)      
         options_menu.addAction(add_lrc_background) 
+        
+    def get_selected_color(self):
+        selected_color = None
+        for color, action in self.color_actions.items():
+            if action.isChecked():
+                selected_color = color
+                break
+        print(f"Selected color: {selected_color}")  
+        self.ej.edit_value("lyrics_color", color.lower())      
         
     def show_shortcuts(self):
         shortcuts_text = """
