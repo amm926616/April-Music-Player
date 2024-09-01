@@ -50,6 +50,8 @@ class LRCSync:
         self.parse_lrc()
         
     def resizeBackgroundImage(self, image_path):
+        print("resizing image")
+        print(self.config_path)
         if not image_path:
             return
         

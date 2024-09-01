@@ -244,7 +244,7 @@ class MusicPlayerUI(QMainWindow):
         load_folder.triggered.connect(self.folder_load_again)
 
         close_action = QAction("Exit", self)
-        close_action.triggered.connect(self.close)
+        close_action.triggered.connect(sys.exit)
         
         show_shortcuts_action = QAction("Show Shortcuts", self)
         show_shortcuts_action.triggered.connect(self.show_shortcuts)
@@ -258,7 +258,7 @@ class MusicPlayerUI(QMainWindow):
         help_menu = menubar.addMenu("Help")
         
         # Add a sub-menu for text color selection with radio buttons
-        text_color_menu = QMenu("Choose Text Color", self)
+        text_color_menu = QMenu("Choose Lyric Color", self)
         options_menu.addMenu(text_color_menu)
 
         # Create an action group to enforce a single selection (radio button behavior)
@@ -420,10 +420,18 @@ class MusicPlayerUI(QMainWindow):
         self.song_details = QLabel()
         self.song_details.setWordWrap(True)  # Ensure the text wraps within the label
 
-        # Make the song_details label scrollable by placing it inside a QScrollArea
+        # Create a QWidget to hold the layout
+        container_widget = QWidget()
+
+        # Create a QVBoxLayout and add self.song_details to it
+        layout = QVBoxLayout(container_widget)
+        layout.addWidget(self.song_details)
+        layout.addStretch()  # This will push self.song_details to the top
+
+        # Set the layout as the widget of the scroll area
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(self.song_details)
+        scroll_area.setWidget(container_widget)
         
         # Add widgets to the vertical layout
         mediaLayout.addWidget(self.track_display)
@@ -450,7 +458,7 @@ class MusicPlayerUI(QMainWindow):
             }
 
             QProgressBar::chunk {
-                background-color: #6f0e10;
+                background-color: #ff3033;
                 width: 10px;
             }
         """)
