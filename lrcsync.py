@@ -4,8 +4,8 @@ import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QKeyEvent
-from fastapi import background
 from getfont import GetFont
+from easy_json import EasyJson
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
@@ -47,13 +47,12 @@ class LRCSync:
         self.parse_lrc()
 
     def startUI(self, parent, file, config_file):
+        ejson = EasyJson(config_file)
+
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
-
-        with open(config_file, "r") as f:
-            data = json.load(f)
             
-        image_path = data.get('background_image', None)
+        image_path = ejson.get_value("background_image")
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
@@ -67,7 +66,7 @@ class LRCSync:
                 background-size: cover;
             }}
         """)
-
+        
         # Get the directory where the script is located
         script_dir = os.path.dirname(os.path.abspath(__file__))
 

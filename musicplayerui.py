@@ -25,6 +25,7 @@ from lrcsync import LRCSync
 from musicplayer import MusicPlayer
 from clickable_progressbar import DoubleClickableProgressBar
 from clickable_label import ClickableLabel
+from easy_json import EasyJson
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -104,7 +105,7 @@ class MusicPlayerUI(QMainWindow):
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
             self.config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player')
-            
+                        
         config_file = os.path.join(self.config_path, "config.json")
 
         # Ensure the directory exists
@@ -122,12 +123,10 @@ class MusicPlayerUI(QMainWindow):
                 json.dump(default_config, file, indent=4)
 
         self.config_file = config_file
+        self.ej = EasyJson(self.config_file) # give config path to ej after setting up            
+
         self.directory = None
         self.load_config()
-
-        # If no directory is set, prompt the user to select one
-        if not self.directory:
-            self.ask_for_directory()
 
         self.music_file = None
         self.lrc_file = None
@@ -141,38 +140,23 @@ class MusicPlayerUI(QMainWindow):
                 config = json.load(file)
                 self.directory = config.get('music_directory', None)
         else:
-            self.directory = None
+            self.directory = None        
 
     def save_config(self, key, value):
-        """Save configuration to a JSON file."""
-        try:
-            # Try to load existing data from the file
-            with open(self.config_file, 'r') as file:
-                data = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
-            # If the file doesn't exist or is not valid JSON, initialize an empty dictionary
-            data = {}
+        self.ej.edit_value(key, value)
 
-        # Update the dictionary with the new key-value pair
-        data[key] = value
-
-        # Save the updated dictionary back to the file
-        with open(self.config_file, 'w') as file:
-            json.dump(data, file, indent=4)
-
-    def ask_for_directory(self):
+    def ask_for_directory(self, loadAgain):
         """Prompt the user to select a music directory."""
         dir_path = QFileDialog.getExistingDirectory(self, "Select Music Directory", "")
         print("dir ", dir_path)
         if dir_path:
             self.directory = dir_path
             self.save_config("music_directory", self.directory)
-            self.loadSongs(True)
+            self.loadSongs(loadAgain)
         else:
             # If the user cancels, show a message and close the app or ask again
             QMessageBox.warning(self, "No Directory Selected", "A music directory is required to proceed.")
             return
-            # self.ask_for_directory()  # Or handle this more gracefully
 
     def createUI(self):
         self.setWindowTitle("April Music Player - Digest Lyrics")
@@ -182,10 +166,9 @@ class MusicPlayerUI(QMainWindow):
         self.icon_path = os.path.join(self.script_path, 'icons', 'april.png')
 
         self.setWindowIcon(QIcon(self.icon_path))
-        self.createMenuBar()
+        self.createMenuBar()        
         self.createWidgetAndLayouts()
-        self.showMaximized()
-        
+        self.showMaximized()             
         self.setupTrayIcon()
         
     def setupTrayIcon(self):
@@ -246,13 +229,16 @@ class MusicPlayerUI(QMainWindow):
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
             
+    def folder_load_again(self):
+        self.ask_for_directory(True)
+            
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
 
         # Actions that will become buttons for each menu
         load_folder = QAction("Load folder", self)
-        load_folder.triggered.connect(self.ask_for_directory)
+        load_folder.triggered.connect(self.folder_load_again)
 
         close_action = QAction("Exit", self)
         close_action.triggered.connect(self.close)
@@ -373,7 +359,9 @@ class MusicPlayerUI(QMainWindow):
 
         self.songListWidget = QListWidget()
         left_layout.addWidget(self.search_bar)
-        self.loadSongs(False)
+        if self.ej.get_value("music_directory") is None:
+            self.ask_for_directory(False)
+        self.loadSongs()
 
     def setupMediaPlayerWidget(self, right_layout):
         # Create a widget to hold the media player components
@@ -486,6 +474,7 @@ class MusicPlayerUI(QMainWindow):
             f'<div>{BOLD}Track Number{END}: {metadata["track_number"]}</div>'
             f'<div>{BOLD}Comment{END}: {metadata["comment"]}</div>'
             f'<div>{BOLD}Duration{END}: {minutes}:{seconds:02d}</div>'
+            f'<div>{BOLD}File Path{END}: {self.file_path}</div>'            
         )
     
         self.song_details.setText(updated_text)
@@ -505,7 +494,7 @@ class MusicPlayerUI(QMainWindow):
             'track_number': 'Unknown Track Number',
             'comment': 'No Comment',
             'duration': 0,  # Initialize duration as integer,
-            'file_type': 'Unknown File Type'
+            'file_type': 'Unknown File Type',
         }
 
         try:
@@ -596,7 +585,7 @@ class MusicPlayerUI(QMainWindow):
         ''')
         self.conn.commit()
 
-    def loadSongs(self, load_again=False):
+    def loadSongs(self, load_again=False): # getting songs recursively
         self.initialize_database()
 
         if load_again:
@@ -606,8 +595,8 @@ class MusicPlayerUI(QMainWindow):
             self.songTableWidget.setHorizontalHeaderLabels(
                 ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'Media Type']
             )
-
-        if not self.directory:
+            
+        if self.directory is None:
             return
 
         media_extensions = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a'}
@@ -750,10 +739,10 @@ class MusicPlayerUI(QMainWindow):
                                    
     def get_music_file_from_click(self, item):
         row = item.row()
-        file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
-        self.music_file = file_path
+        self.file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
+        self.music_file = self.file_path
         
-        return file_path
+        return self.file_path
     
     def handleRowSingleClick(self, item):
         if "Album Title: " in item.text():
