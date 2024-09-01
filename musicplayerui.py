@@ -6,12 +6,13 @@ import sys
 import platform
 from collections import defaultdict
 
-from PyQt6.QtGui import QAction, QIcon, QColor, QFont, QFontDatabase, QAction, QCursor, QKeyEvent
+from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
 )
 from PyQt6.QtCore import Qt, QCoreApplication
+from click import option
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
@@ -142,13 +143,22 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.directory = None
 
-    def save_config(self):
+    def save_config(self, key, value):
         """Save configuration to a JSON file."""
-        config = {
-            'music_directory': self.directory
-        }
+        try:
+            # Try to load existing data from the file
+            with open(self.config_file, 'r') as file:
+                data = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # If the file doesn't exist or is not valid JSON, initialize an empty dictionary
+            data = {}
+
+        # Update the dictionary with the new key-value pair
+        data[key] = value
+
+        # Save the updated dictionary back to the file
         with open(self.config_file, 'w') as file:
-            json.dump(config, file, indent=4)
+            json.dump(data, file, indent=4)
 
     def ask_for_directory(self):
         """Prompt the user to select a music directory."""
@@ -156,7 +166,7 @@ class MusicPlayerUI(QMainWindow):
         print("dir ", dir_path)
         if dir_path:
             self.directory = dir_path
-            self.save_config()
+            self.save_config("music_directory", self.directory)
             self.loadSongs(True)
         else:
             # If the user cancels, show a message and close the app or ask again
@@ -246,6 +256,12 @@ class MusicPlayerUI(QMainWindow):
 
         close_action = QAction("Exit", self)
         close_action.triggered.connect(self.close)
+        
+        show_shortcuts_action = QAction("Show Shortcuts", self)
+        show_shortcuts_action.triggered.connect(self.show_shortcuts)
+        
+        add_lrc_background = QAction("Add Lrc Background Image", self)
+        add_lrc_background.triggered.connect(self.ask_for_background_image)
 
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
@@ -255,6 +271,35 @@ class MusicPlayerUI(QMainWindow):
         # Linking actions and menus
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
+        help_menu.addAction(show_shortcuts_action)      
+        options_menu.addAction(add_lrc_background) 
+        
+    def show_shortcuts(self):
+        shortcuts_text = """\n
+        Keyboard Shortcuts
+        Left Arrow, Right Arrow, Spacebar: Seek backward, seek forward, and play/pause, respectively.
+        Ctrl + L: Activate LRC display, or double-click the progress bar.
+        Ctrl + S: Focus and place cursor on search bar.
+        Ctrl + Q: This shortcut quits the program. The program runs in the background even if you close the main window.
+        
+        In LRC view:
+        F: Toggle full-screen mode.
+        D: Go to the start of current lyric.
+        Up Arrow, Down Arrow: Seek to the previous or next lyric line.
+        """
+        QMessageBox.information(self, "Shortcuts", shortcuts_text)    
+        
+    def ask_for_background_image(self):
+        # Open a file dialog and get the selected file
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select a File")
+        
+        if file_path:
+            # Show the selected file path in a QMessageBox
+            QMessageBox.information(self, "Selected File", f"You selected: {file_path}")
+        else:
+            QMessageBox.warning(self, "No File Selected", "You did not select any file.")
+            
+        self.save_config("background_image", file_path)  
         
     def show_context_menu(self, pos):
         # Get the item at the clicked position
