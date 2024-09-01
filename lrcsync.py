@@ -55,7 +55,7 @@ class LRCSync:
 
         # Check if the image path is not set or the file does not exist
         if not image_path or not os.path.exists(image_path):
-            self.ej.setupDefaultFiles()
+            self.ej.setupBackgroundImage()
             image_path = self.ej.get_value("background_image")
 
         # Check if the OS is Windows
@@ -163,7 +163,14 @@ class LRCSync:
         self.lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         self.lyric_label.setWordWrap(True)
+        
         lyrics_color = self.ej.get_value("lyrics_color")
+
+        # Check if the image path is not set or the file does not exist
+        if not lyrics_color:
+            self.ej.setupLyricsColor()
+            lyrics_color = self.ej.get_value("lyrics_color")        
+            
         self.lyric_label.setStyleSheet(f"color: {lyrics_color};")
         self.lyric_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
