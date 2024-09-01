@@ -1,6 +1,6 @@
 import re
 import os
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout, QApplication
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
@@ -20,7 +20,8 @@ def convert_time_to_seconds(time_str):
     return minutes * 60 + seconds
 
 class LRCSync:
-    def __init__(self, player, config):
+    def __init__(self, player, config_path):
+        self.config_path = config_path
         self.lrc_display = None
         self.file = None
         self.player = player
@@ -35,7 +36,7 @@ class LRCSync:
         self.current_lyric = "....."
         self.is_playing = False
         self.current_lyrics_time = 0.0
-        self.ej = EasyJson(config)
+        self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = 0.1  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
@@ -48,23 +49,35 @@ class LRCSync:
 
         self.parse_lrc()
         
-    def resizeBackgroundImage(self, parent, image_path):
+    def resizeBackgroundImage(self, image_path):
+        if not image_path:
+            return
+        
         image = Image.open(image_path)
-        screen_height = parent.height()
-        aspect_ratio = image.width /image.height
+        
+        # Get the screen geometry
+        app = QApplication.instance() or QApplication([])
+        screen_geometry = app.primaryScreen().geometry()
+
+        screen_height = screen_geometry.height()
+
+        # Calculate the new dimensions to maintain the aspect ratio
+        aspect_ratio = image.width / image.height
         new_width = int(screen_height * aspect_ratio)
-        
+
         resized_image = image.resize((new_width, screen_height), Image.LANCZOS)
-        
+
         # Save the resized image
-        resized_image_path = os.path.join(self.script_path, "background-images", "resized_image.png")
+        resized_image_path = os.path.join(self.config_path, "resized_image.png")
         resized_image.save(resized_image_path)   
-        
-        return resized_image_path             
+
+        return resized_image_path          
 
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
+        if file is None:
+            self.lrc_display.setWindowTitle("LRC Display")        
         
         image_path = self.ej.get_value("background_image")
 
@@ -73,7 +86,9 @@ class LRCSync:
             self.ej.setupBackgroundImage()
             image_path = self.ej.get_value("background_image")
             
-        resized_image_path = self.resizeBackgroundImage(parent, image_path)
+        resized_image_path = os.path.join(self.config_path, "background-images", "resized_image.png")
+        if not os.path.exists(resized_image_path):
+            resized_image_path = self.resizeBackgroundImage(image_path)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
@@ -177,7 +192,7 @@ class LRCSync:
 
     def setup_button_layout(self, main_layout):       
         # Initialize lyric label as a class attribute for potential updates
-        self.lyric_label = QLabel("Current Lyrics")
+        self.lyric_label = QLabel()
         self.lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         self.lyric_label.setWordWrap(True)

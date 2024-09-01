@@ -101,6 +101,7 @@ class MusicPlayerUI(QMainWindow):
         self.config_path = None
         self.app = app
         self.file_path = None
+        self.item = None
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
@@ -131,7 +132,7 @@ class MusicPlayerUI(QMainWindow):
         self.music_file = None
         self.lrc_file = None
         self.player = MusicPlayer()
-        self.lrcPlayer = LRCSync(self.player, self.config_file)
+        self.lrcPlayer = LRCSync(self.player, self.config_path)
 
     def load_config(self):
         """Load configuration from a JSON file."""
@@ -221,6 +222,10 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_Q and Qt.KeyboardModifier.ControlModifier:
             sys.exit()
+            
+        elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            if self.songTableWidget.hasFocus():
+                self.handleRowDoubleClick(self.item)            
             
         elif event.key() == Qt.Key.Key_S and Qt.KeyboardModifier.ControlModifier:
             print("serach")
@@ -314,6 +319,7 @@ class MusicPlayerUI(QMainWindow):
             QMessageBox.warning(self, "No File Selected", "You did not select any file.")
             
         self.ej.edit_value("background_image", file_path)  
+        self.lrcPlayer.resizeBackgroundImage(file_path)
         
     def show_context_menu(self, pos):
         # Get the item at the clicked position
@@ -576,22 +582,23 @@ class MusicPlayerUI(QMainWindow):
         return metadata
     
     def filterSongs(self):
-        search_text = self.search_bar.text().lower()
-        
-        for row in range(self.songTableWidget.rowCount()):
-            match = False
+        if self.search_bar.hasFocus():
+            search_text = self.search_bar.text().lower()
             
-            for column in range(self.songTableWidget.columnCount() - 1):
-                item = self.songTableWidget.item(row, column)
-                if item and search_text in item.text().lower():
-                    match = True
-                    break
-            
-            self.songTableWidget.setRowHidden(row, not match)
-            
-        # Clear the search bar and reset the placeholder text
-        self.search_bar.clear()
-        self.search_bar.setPlaceholderText("Search...")
+            for row in range(self.songTableWidget.rowCount()):
+                match = False
+                
+                for column in range(self.songTableWidget.columnCount() - 1):
+                    item = self.songTableWidget.item(row, column)
+                    if item and search_text in item.text().lower():
+                        match = True
+                        break
+                
+                self.songTableWidget.setRowHidden(row, not match)
+                
+            # Clear the search bar and reset the placeholder text
+            self.search_bar.clear()
+            self.search_bar.setPlaceholderText("Search...")
         
     def cleanDetails(self):
         # clear the remaining from previous play
@@ -787,6 +794,7 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.get_music_file_from_click(item)
             self.updateInformations()    
+        self.item = item
 
     def handleRowDoubleClick(self, item):
         if "Album Title: " in item.text():
