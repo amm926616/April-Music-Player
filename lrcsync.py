@@ -112,6 +112,7 @@ class LRCSync:
         print("QDialog closed")
         self.lyric_label = None
         self.lrc_display = None
+        self.player.player.positionChanged.disconnect(self.update_lyrics)        
         event.accept()  # To accept the close event
         
     def keyPressEvent(self, event: QKeyEvent):

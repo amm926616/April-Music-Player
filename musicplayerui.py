@@ -9,7 +9,7 @@ from collections import defaultdict
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
-    QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog
+    QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
 )
 from PyQt6.QtCore import Qt, QCoreApplication
 from mutagen import File
@@ -145,7 +145,7 @@ class MusicPlayerUI(QMainWindow):
 
     def ask_for_directory(self, loadAgain):
         """Prompt the user to select a music directory."""
-        dir_path = QFileDialog.getExistingDirectory(self, "Select Music Directory", "")
+        dir_path = QFileDialog.getExistingDirectory(self, "Select Your Main Music Directory Where You Put All Of Your Musics", "")
         print("dir ", dir_path)
         if dir_path:
             self.directory = dir_path
@@ -259,19 +259,23 @@ class MusicPlayerUI(QMainWindow):
         options_menu.addAction(add_lrc_background) 
         
     def show_shortcuts(self):
-        shortcuts_text = """\n
-        Keyboard Shortcuts
-        Left Arrow, Right Arrow, Spacebar: Seek backward, seek forward, and play/pause, respectively.
-        Ctrl + L: Activate LRC display, or double-click the progress bar.
-        Ctrl + S: Focus and place cursor on search bar.
-        Ctrl + Q: This shortcut quits the program. The program runs in the background even if you close the main window.
+        shortcuts_text = """
+        <b>Keyboard Shortcuts</b><br><br>
         
-        In LRC view:
-        F: Toggle full-screen mode.
-        D: Go to the start of current lyric.
-        Up Arrow, Down Arrow: Seek to the previous or next lyric line.
+        <b>General:</b><br>
+        - <b>Left Arrow, Right Arrow, Spacebar:</b> Seek backward, seek forward, and play/pause, respectively.<br>
+        - <b>Ctrl + L:</b> Activate LRC display, or double-click the progress bar.<br>
+        - <b>Ctrl + S:</b> Focus and place cursor on search bar.<br>
+        - <b>Ctrl + Q:</b> Quit the program (The program runs in the background even if the main window is closed).<br><br>
+        
+        <b>In LRC View:</b><br>
+        - <b>F:</b> Toggle full-screen mode.<br>
+        - <b>D:</b> Go to the start of the current lyric.<br>
+        - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br>
         """
-        QMessageBox.information(self, "Shortcuts", shortcuts_text)    
+        QMessageBox.information(self, "Shortcuts", shortcuts_text)
+
+ 
         
     def ask_for_background_image(self):
         # Open a file dialog and get the selected file
@@ -372,18 +376,27 @@ class MusicPlayerUI(QMainWindow):
         self.track_display = QLabel("No Track Playing")
         self.track_display.setFont(QFont("Komika Axis"))
         self.track_display.setWordWrap(True)
+        self.track_display.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.track_display.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.track_display.setStyleSheet("font-size: 20px")
 
         # Create and configure the image display label
         self.image_display = ClickableLabel()
         self.image_display.doubleClicked.connect(self.double_click_on_image)
+        
+        # Create and configure the song details label
         self.song_details = QLabel()
+        self.song_details.setWordWrap(True)  # Ensure the text wraps within the label
 
+        # Make the song_details label scrollable by placing it inside a QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.song_details)
+        
         # Add widgets to the vertical layout
         mediaLayout.addWidget(self.track_display)
         mediaLayout.addWidget(self.image_display)
-        mediaLayout.addWidget(self.song_details)
+        mediaLayout.addWidget(scroll_area)  # Add the scroll area instead of the label directly
         mediaLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         # Add the media_widget to the right_layout
@@ -463,7 +476,7 @@ class MusicPlayerUI(QMainWindow):
         END = '</b>'
         
         updated_text = (
-            f'<div>[Track Details]</div>'
+            f'<div>{BOLD}[Track Details]{END}</div>'
             f'<div>{BOLD}Title{END}: {metadata["title"]}</div>'
             f'<div>{BOLD}Artist{END}: {metadata["artist"]}</div>'
             f'<div>{BOLD}Album{END}: {metadata["album"]}</div>'
