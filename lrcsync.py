@@ -20,7 +20,7 @@ def convert_time_to_seconds(time_str):
     return minutes * 60 + seconds
 
 class LRCSync:
-    def __init__(self, player):
+    def __init__(self, player, config):
         self.lrc_display = None
         self.file = None
         self.player = player
@@ -35,6 +35,7 @@ class LRCSync:
         self.current_lyric = "....."
         self.is_playing = False
         self.current_lyrics_time = 0.0
+        self.ej = EasyJson(config)
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = 0.1  # Minimum interval in seconds      
 
@@ -46,17 +47,17 @@ class LRCSync:
 
         self.parse_lrc()
 
-    def startUI(self, parent, file, config_file):
-        ejson = EasyJson(config_file)
-
+    def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
         
-        if not ejson.get_value("background_image"):
-            ejson.setupDefaultFiles()  
-            
-        image_path = ejson.get_value("background_image")
-                                        
+        image_path = self.ej.get_value("background_image")
+
+        # Check if the image path is not set or the file does not exist
+        if not image_path or not os.path.exists(image_path):
+            self.ej.setupDefaultFiles()
+            image_path = self.ej.get_value("background_image")
+
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
             image_path = image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
@@ -162,6 +163,8 @@ class LRCSync:
         self.lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         self.lyric_label.setWordWrap(True)
+        lyrics_color = self.ej.get_value("lyrics_color")
+        self.lyric_label.setStyleSheet(f"color: {lyrics_color};")
         self.lyric_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         prev_button = QPushButton("Previous Line")

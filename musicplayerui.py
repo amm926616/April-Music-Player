@@ -131,7 +131,7 @@ class MusicPlayerUI(QMainWindow):
         self.music_file = None
         self.lrc_file = None
         self.player = MusicPlayer()
-        self.lrcPlayer = LRCSync(self.player)
+        self.lrcPlayer = LRCSync(self.player, self.config_file)
 
     def load_config(self):
         """Load configuration from a JSON file."""
@@ -782,7 +782,7 @@ class MusicPlayerUI(QMainWindow):
         if self.lrcPlayer.lrc_display is not None: 
             pass 
         else:
-            self.lrcPlayer.startUI(self, self.lrc_file, self.config_file)
+            self.lrcPlayer.startUI(self, self.lrc_file)
             # Add your desired functionality here
 
     def seekBack(self):
