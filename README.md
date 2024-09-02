@@ -1,7 +1,6 @@
 # april-music-player
 <img src="./icons/april.png" alt="logo" width="400"/>
-Music Player with lyrics syncing, note taking feature for lyrics memorization.
-
+Music player with lyric syncing and note-taking features for lyric memorization. (Note-taking is currently not available.)
 
 ### Installation
 
