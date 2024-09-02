@@ -5,7 +5,6 @@ import os
 import sys
 import platform
 from collections import defaultdict
-
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
@@ -132,7 +131,7 @@ class MusicPlayerUI(QMainWindow):
         self.music_file = None
         self.lrc_file = None
         self.player = MusicPlayer()
-        self.lrcPlayer = LRCSync(self.player, self.config_path)
+        self.lrcPlayer = LRCSync(self, self.player, self.config_path)
 
     def load_config(self):
         """Load configuration from a JSON file."""

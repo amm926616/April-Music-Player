@@ -20,7 +20,7 @@ def convert_time_to_seconds(time_str):
     return minutes * 60 + seconds
 
 class LRCSync:
-    def __init__(self, player, config_path):
+    def __init__(self, app, player, config_path):
         self.config_path = config_path
         self.lrc_display = None
         self.file = None
@@ -32,7 +32,7 @@ class LRCSync:
         self.media_lyric = QLabel()
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
-        self.lrc_font = GetFont(50)
+        self.lrc_font = GetFont(int(app.height() * 0.14))
         self.current_lyric = "....."
         self.is_playing = False
         self.current_lyrics_time = 0.0
