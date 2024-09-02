@@ -49,12 +49,8 @@ class LRCSync:
 
         self.parse_lrc()
         
-    def resizeBackgroundImage(self, image_path):
-        print("resizing image")
-        print(self.config_path)
-        if not image_path:
-            return
-        
+    def resizeBackgroundImage(self, image_path):        
+        print("In resize Image method")
         image = Image.open(image_path)
         
         # Get the screen geometry
@@ -94,7 +90,7 @@ class LRCSync:
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            resized_image_path = image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
+            resized_image_path = resized_image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
             
         self.lrc_display.setStyleSheet(f"""
             QDialog {{
@@ -228,32 +224,34 @@ class LRCSync:
         # main_layout.addLayout(button_layout)
         
     def go_to_previous_lyrics(self):
-        previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
-        if not previous_lyric_index < 0:
-            previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
-            print("previous time, ", previous_lyrics_key)        
-            self.player.player.setPosition(int(previous_lyrics_key * 1000))
-        else:
-            previous_lyrics_key = self.lyrics_keys[-1]
-            self.player.player.setPosition(int(previous_lyrics_key * 1000))
-            
-        if self.player.in_pause_state:
-            self.player.paused_position = int(previous_lyrics_key * 1000)
+        if self.lyrics:
+            previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
+            if not previous_lyric_index < 0:
+                previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
+                print("previous time, ", previous_lyrics_key)        
+                self.player.player.setPosition(int(previous_lyrics_key * 1000))
+            else:
+                previous_lyrics_key = self.lyrics_keys[-1]
+                self.player.player.setPosition(int(previous_lyrics_key * 1000))
+                
+            if self.player.in_pause_state:
+                self.player.paused_position = int(previous_lyrics_key * 1000)
             
     
     def go_to_next_lyrics(self):
-        next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
-        if not len(self.lyrics_keys) < (next_lyric_index + 1):
-            next_lyric_key = self.lyrics_keys[next_lyric_index]
-            print("next line, ", next_lyric_key)        
-            self.player.player.setPosition(int(next_lyric_key * 1000))
-        else:
-            next_lyric_key = self.lyrics_keys[0]
-            print("next line, ", next_lyric_key)        
-            self.player.player.setPosition(int(next_lyric_key * 1000))
-            
-        if self.player.in_pause_state:
-            self.player.paused_position = int(next_lyric_key * 1000)            
+        if self.lyrics:
+            next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
+            if not len(self.lyrics_keys) < (next_lyric_index + 1):
+                next_lyric_key = self.lyrics_keys[next_lyric_index]
+                print("next line, ", next_lyric_key)        
+                self.player.player.setPosition(int(next_lyric_key * 1000))
+            else:
+                next_lyric_key = self.lyrics_keys[0]
+                print("next line, ", next_lyric_key)        
+                self.player.player.setPosition(int(next_lyric_key * 1000))
+                
+            if self.player.in_pause_state:
+                self.player.paused_position = int(next_lyric_key * 1000)            
         
     def go_to_the_start_of_current_lyric(self):
         self.player.player.setPosition(int(self.current_lyrics_time * 1000))
@@ -298,7 +296,7 @@ class LRCSync:
                 self.current_lyric = self.lyrics[self.current_lyrics_time]
         else:
             self.current_lyrics_time = 0.0
-            self.current_lyric = "No lyrics"       
+            self.current_lyric = "No lyrics found on the disk"       
                                                             
     def update_media_lyric(self):
         self.get_current_lyrics()

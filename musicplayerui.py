@@ -252,6 +252,9 @@ class MusicPlayerUI(QMainWindow):
         add_lrc_background = QAction("Add Lrc Background Image", self)
         add_lrc_background.triggered.connect(self.ask_for_background_image)         
 
+        set_default_background = QAction("Set Default Background Image", self)
+        set_default_background.triggered.connect(self.ej.setupBackgroundImage)
+
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
         options_menu = menubar.addMenu("Options")
@@ -280,6 +283,7 @@ class MusicPlayerUI(QMainWindow):
         file_menu.addAction(close_action)
         help_menu.addAction(show_shortcuts_action)      
         options_menu.addAction(add_lrc_background) 
+        options_menu.addAction(set_default_background)
         
     def get_selected_color(self):
         selected_color = None
@@ -313,13 +317,12 @@ class MusicPlayerUI(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select an Image file for lrc display background image")
         
         if file_path:
+            self.ej.edit_value("background_image", file_path)  
+            self.lrcPlayer.resizeBackgroundImage(file_path)            
             # Show the selected file path in a QMessageBox
             QMessageBox.information(self, "Load Background Image", f"You selected: {file_path}")
         else:
-            QMessageBox.warning(self, "No File Selected", "You did not select any file.")
-            
-        self.ej.edit_value("background_image", file_path)  
-        self.lrcPlayer.resizeBackgroundImage(file_path)
+            QMessageBox.warning(self, "No File Selected", "You did not select any file.")        
         
     def show_context_menu(self, pos):
         # Get the item at the clicked position
@@ -377,7 +380,7 @@ class MusicPlayerUI(QMainWindow):
 
         rightLayout = QVBoxLayout()
         rightLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left
-        main_layout.addLayout(leftLayout, 4)
+        main_layout.addLayout(leftLayout, 5)
         main_layout.addLayout(rightLayout, 1)
         
         self.setupSongListWidget(leftLayout)
@@ -898,7 +901,7 @@ class MusicPlayerUI(QMainWindow):
             pixmap.loadFromData(album_image_data)
             self.passing_image = pixmap
             
-            image_size = int(self.width() / 5) # extract image size from main window
+            image_size = int(self.width() / 6) # extract image size from main window
             
             target_width = image_size
             target_height = image_size
