@@ -172,6 +172,7 @@ class MusicPlayerUI(QMainWindow):
     def setupTrayIcon(self):
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(self.icon_path))
+        self.tray_icon.setToolTip("April Music Player")  # Set the tooltip text
         self.tray_icon.setVisible(True)
         
         self.tray_menu = QMenu()
@@ -237,7 +238,7 @@ class MusicPlayerUI(QMainWindow):
     def set_default_background_image(self):
         self.ej.setupBackgroundImage()
         self.lrcPlayer.resizeBackgroundImage(self.ej.get_value("background_image"))
-        QMessageBox.about(self, "Default Background Image", "Restored Lyric Background Image")
+        QMessageBox.about(self, "Default Background Image", "Default lyric background image is restored")
             
     def createMenuBar(self):
         # this is the menubar that will hold all together
