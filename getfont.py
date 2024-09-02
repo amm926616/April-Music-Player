@@ -18,7 +18,7 @@ class GetFont:
         self.language_dict = {
             "korean": {"font_name": "Noto Serif KR ExtraBold", "file_path": os.path.join(self.script_path , "fonts/NotoSerifKR-ExtraBold.ttf"), "size": font_size},
             "english": {"font_name": "Positive Forward", "file_path": os.path.join(self.script_path , "fonts/PositiveForward.otf"), "size": font_size},
-            "japanese": {"font_name": "NotoSans JP Bold", "file_path": os.path.join(self.script_path , "fonts/NotoSansJP-Bold.otf"), "size": font_size},
+            "japanese": {"font_name": "Noto Sans JP Bold", "file_path": os.path.join(self.script_path , "fonts/NotoSansJP-Bold.otf"), "size": font_size},
         }
         self.fonts_loaded = False
         self.formats = {}
