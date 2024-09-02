@@ -380,7 +380,7 @@ class MusicPlayerUI(QMainWindow):
 
         rightLayout = QVBoxLayout()
         rightLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left
-        main_layout.addLayout(leftLayout, 5)
+        main_layout.addLayout(leftLayout, 4)
         main_layout.addLayout(rightLayout, 1)
         
         self.setupSongListWidget(leftLayout)
@@ -901,7 +901,7 @@ class MusicPlayerUI(QMainWindow):
             pixmap.loadFromData(album_image_data)
             self.passing_image = pixmap
             
-            image_size = int(self.width() / 6) # extract image size from main window
+            image_size = int(self.width() / 5) # extract image size from main window
             
             target_width = image_size
             target_height = image_size
