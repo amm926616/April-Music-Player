@@ -161,7 +161,7 @@ class MusicPlayerUI(QMainWindow):
         self.setGeometry(100, 100, 800, 400)
 
         # Construct the full path to the icon file
-        self.icon_path = os.path.join(self.script_path, 'icons', 'april.png')
+        self.icon_path = os.path.join(self.script_path, 'icons', 'april-icon.png')
 
         self.setWindowIcon(QIcon(self.icon_path))
         self.createMenuBar()        

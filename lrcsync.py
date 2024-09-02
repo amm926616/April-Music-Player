@@ -154,7 +154,7 @@ class LRCSync:
         script_dir = os.path.dirname(os.path.abspath(__file__))
 
         # Construct the full path to the icon file
-        icon_path = os.path.join(script_dir, 'icons', 'april.png')
+        icon_path = os.path.join(script_dir, 'icons', 'april-icon.png')
 
         self.lrc_display.setWindowIcon(QIcon(icon_path))
         
