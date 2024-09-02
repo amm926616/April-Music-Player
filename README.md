@@ -1,5 +1,5 @@
 # april-music-player
-<img src="./icons/april.png" alt="logo" width="200"/>
+<img src="./icons/april.png" alt="logo" width="400"/>
 Music Player with lyrics syncing, note taking feature for lyrics memorization.
 
 
