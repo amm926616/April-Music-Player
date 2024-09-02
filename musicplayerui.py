@@ -234,6 +234,11 @@ class MusicPlayerUI(QMainWindow):
             
     def folder_load_again(self):
         self.ask_for_directory(True)
+
+    def set_default_background_image(self):
+        self.ej.setupBackgroundImage()
+        self.lrcPlayer.resizeBackgroundImage(self.ej.get_value("background_image"))
+        QMessageBox.about(self, "Default Background Image", "Restored Lyric Background Image")
             
     def createMenuBar(self):
         # this is the menubar that will hold all together
@@ -253,7 +258,7 @@ class MusicPlayerUI(QMainWindow):
         add_lrc_background.triggered.connect(self.ask_for_background_image)         
 
         set_default_background = QAction("Set Default Background Image", self)
-        set_default_background.triggered.connect(self.ej.setupBackgroundImage)
+        set_default_background.triggered.connect(self.set_default_background_image)
 
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
@@ -318,7 +323,7 @@ class MusicPlayerUI(QMainWindow):
         
         if file_path:
             self.ej.edit_value("background_image", file_path)  
-            self.lrcPlayer.resizeBackgroundImage(file_path)            
+            self.lrcPlayer.resizeBackgroundImage(self.ej.get_value("background_image"))            
             # Show the selected file path in a QMessageBox
             QMessageBox.information(self, "Load Background Image", f"You selected: {file_path}")
         else:
@@ -820,8 +825,7 @@ class MusicPlayerUI(QMainWindow):
     def play_song(self):
         self.player.play()
         self.lrcPlayer.sync_lyrics(self.lrc_file)   
-                    
-            
+                                
     def on_progress_bar_double_click(self):
         print("Progress bar was double-clicked!")
         if self.lrcPlayer.lrc_display is not None: 
