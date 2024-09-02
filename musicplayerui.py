@@ -465,7 +465,7 @@ class MusicPlayerUI(QMainWindow):
             }
 
             QProgressBar::chunk {
-                background-color: #ff3033;
+                background-color: #aa0000;
                 width: 10px;
             }
         """)
