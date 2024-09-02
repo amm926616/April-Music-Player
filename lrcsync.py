@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
 from easy_json import EasyJson
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
@@ -21,6 +21,7 @@ def convert_time_to_seconds(time_str):
 
 class LRCSync:
     def __init__(self, app, player, config_path):
+        self.app = app
         self.config_path = config_path
         self.lrc_display = None
         self.file = None
@@ -32,7 +33,7 @@ class LRCSync:
         self.media_lyric = QLabel()
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
-        self.lrc_font = GetFont(int(app.height() * 0.14))
+        self.lrc_font = GetFont(int(self.app.height() * 0.14))
         self.current_lyric = "....."
         self.is_playing = False
         self.current_lyrics_time = 0.0
@@ -49,7 +50,7 @@ class LRCSync:
 
         self.parse_lrc()
         
-    def resizeBackgroundImage(self, image_path):        
+    def resizeBackgroundImage(self, image_path):
         print("In resize Image method")
         image = Image.open(image_path)
         
@@ -57,20 +58,67 @@ class LRCSync:
         app = QApplication.instance() or QApplication([])
         screen_geometry = app.primaryScreen().geometry()
 
+        screen_width = screen_geometry.width()
         screen_height = screen_geometry.height()
 
         # Calculate the new dimensions to maintain the aspect ratio
         aspect_ratio = image.width / image.height
         new_width = int(screen_height * aspect_ratio)
-
+        
+        # Resize the image
         resized_image = image.resize((new_width, screen_height), Image.LANCZOS)
 
-        # Save the resized image
-        resized_image_path = os.path.join(self.config_path, "resized_image.png")
-        resized_image.save(resized_image_path)   
+        # Create a new image with the screen dimensions and background color
+        background_color = "black"  # Set your background color here
+        final_image = Image.new("RGB", (screen_width, screen_height), background_color)
 
-        return resized_image_path          
+        # Calculate the position to paste the resized image onto the background
+        x_position = (screen_width - new_width) // 2
+        y_position = 0  # Keep the image vertically centered
 
+        # Paste the resized image onto the background
+        final_image.paste(resized_image, (x_position, y_position))
+
+        # Add copyright text to the final image
+        draw = ImageDraw.Draw(final_image)
+        
+        # Load a custom font with a specific size
+        font_size = int(self.app.height() * 0.06) # Set your desired font size here
+        font_path = os.path.join(self.script_path, "fonts", "Sexy Beauty.ttf")  # Replace with the path to your .ttf font file
+        font = ImageFont.truetype(font_path, font_size)  # Load the font with the specified size
+
+        # Define the text
+        text = "April Music Player"
+        
+        # Get text size using textbbox
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        # Define the position for the text (bottom-right corner with padding)
+        text_position = (screen_width - text_width - 10, screen_height - text_height - 10)
+        
+        # Define the stroke width and stroke color
+        stroke_width = 2  # Adjust the stroke width as needed
+        stroke_color = "black"  # Stroke color (outline)
+
+        # Draw the stroke by drawing the text multiple times with a slight offset
+        for offset in range(-stroke_width, stroke_width + 1):
+            if offset == 0:
+                continue
+            draw.text((text_position[0] + offset, text_position[1]), text, font=font, fill=stroke_color)
+            draw.text((text_position[0], text_position[1] + offset), text, font=font, fill=stroke_color)
+            draw.text((text_position[0] + offset, text_position[1] + offset), text, font=font, fill=stroke_color)
+
+        # Draw the main text
+        draw.text(text_position, text, font=font, fill="white")  # Main text color
+
+        # Save the final image
+        final_image_path = os.path.join(self.config_path, "resized_image.png")
+        final_image.save(final_image_path)
+
+        return final_image_path
+        
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
