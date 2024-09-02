@@ -4,7 +4,7 @@ Music player with lyric syncing and note-taking features for lyric memorization.
 
 ### Installation
 
-- If you’d like to use the project without setting it up, I have compiled versions for both Linux and Windows. You can download them from the [Releases](https://github.com/amm926616/april-music-player/releases) section. After downloading, unzip the file and run the main executable by double-clicking it.
+- Installer for windows is available in the releases section.
 - To run the project with Python, clone or download the repository:
     
     `git clone https://github.com/amm926616/april-music-player.git` or download the repo.
