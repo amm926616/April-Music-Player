@@ -312,10 +312,15 @@ class MusicPlayerUI(QMainWindow):
         <b>In LRC View:</b><br>
         - <b>F:</b> Toggle full-screen mode.<br>
         - <b>D:</b> Go to the start of the current lyric.<br>
-        - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br>
+        - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br><br>
+
+        <b>This project was developed to the alpha stage solely by me. I am seeking collaboration and more testers. I would greatly appreciate any contributions to this project.</b> 
+        <a href="https://github.com/amm926616/April-Music-Player">Project's GitHub link</a><br><br>
+
+        <b>Created with love by AD178</b><br>
+        <b>Contact me on Telegram: </b><a href="https://t.me/Adamd178">Go to Adam's Telegram</a><br>
         """
         QMessageBox.information(self, "Shortcuts", shortcuts_text)
-
         
     def ask_for_background_image(self):
         # Open a file dialog and get the selected file
