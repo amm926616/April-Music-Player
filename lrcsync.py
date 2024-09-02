@@ -88,7 +88,7 @@ class LRCSync:
             self.ej.setupBackgroundImage()
             image_path = self.ej.get_value("background_image")
             
-        resized_image_path = os.path.join(self.config_path, "background-images", "resized_image.png")
+        resized_image_path = os.path.join(self.config_path, "resized_image.png")
         if not os.path.exists(resized_image_path):
             resized_image_path = self.resizeBackgroundImage(image_path)
 
