@@ -2,7 +2,16 @@
 <img src="./icons/april-logo.png" alt="logo" width="400"/>
 Music player with lyric syncing and note-taking features for lyric memorization. (Note-taking is currently not available.)
 
+<<<<<<< HEAD
 
+=======
+Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LrcGet, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.
+
+- https://github.com/zotify-dev/zotify
+- https://github.com/tranxuanthang/lrcget
+- https://github.com/akashrchandran/syrics
+- https://github.com/Lambada10/SongSync
+>>>>>>> f85a0a8c047c335c765159aca6902e9462c32c6a
 
 ### Installation
 
