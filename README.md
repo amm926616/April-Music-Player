@@ -2,6 +2,8 @@
 <img src="./icons/april-logo.png" alt="logo" width="400"/>
 Music player with lyric syncing and note-taking features for lyric memorization. (Note-taking is currently not available.)
 
+
+
 ### Installation
 
 - Installer for windows is available in the releases section.
@@ -46,3 +48,7 @@ Music player with lyric syncing and note-taking features for lyric memorization.
 
 ### pressing f activates full screen mode.
 ![screenshot](./screenshots/screenshot4.png)
+
+### now, the background image and lyric color can be changed.
+![screenshot](./screenshots/screenshot5.png)
+
