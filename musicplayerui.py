@@ -845,7 +845,7 @@ class MusicPlayerUI(QMainWindow):
         self.player.seek_forward()
 
     def play_pause(self):
-        self.player.play_pause_music(self.play_pause_button)
+        self.player.play_pause_music()
 
     def connect_progressbar_signals(self):
         # Connect signals for the progress bar and slider
