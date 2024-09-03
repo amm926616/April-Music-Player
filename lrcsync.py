@@ -205,7 +205,7 @@ class LRCSync:
             self.player.seek_forward()
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
-            self.player.play_pause()
+            self.player.play_pause_music()
         elif event.key() == Qt.Key.Key_Up:
             print("UP key pressed")
             self.go_to_previous_lyrics()

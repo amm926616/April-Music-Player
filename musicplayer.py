@@ -5,7 +5,7 @@ from PyQt6.QtCore import QUrl
 
 
 class MusicPlayer:
-    def __init__(self):
+    def __init__(self, play_pause_button):
         self.file_name = None
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -19,6 +19,7 @@ class MusicPlayer:
         self.paused_position = 0.0
         # Connect the mediaStatusChanged signal to a slot
         self.player.mediaStatusChanged.connect(self.handle_media_status_changed)
+        self.play_pause_button = play_pause_button
                 
     def handle_buffer_status(self, percent_filled):
         print(f"Buffer status: {percent_filled}%")
@@ -31,23 +32,7 @@ class MusicPlayer:
         self.player.play()
         self.started_playing = True
         
-    def play_pause(self):
-        if self.started_playing:  # pause state activating
-            if not self.in_pause_state:
-                # Record the current position before pausing
-                self.paused_position = self.player.position()  # Assuming get_position() returns the current position in seconds or milliseconds
-                
-                self.player.pause()
-                self.in_pause_state = True
-            else:
-                # Set the position to the recorded value before resuming
-                self.player.setPosition(self.paused_position)  # Assuming set_position() sets the playback position
-                
-                # Continue playing
-                self.player.play()
-                self.in_pause_state = False
-
-    def play_pause_music(self, button):
+    def play_pause_music(self):
         script_path = os.path.dirname(os.path.abspath(__file__))
         
         if self.started_playing:  # pause state activating
@@ -57,7 +42,7 @@ class MusicPlayer:
                 
                 self.player.pause()
                 self.in_pause_state = True
-                button.setIcon(QIcon(os.path.join(script_path, "media-icons", "play.ico")))
+                self.play_pause_button.setIcon(QIcon(os.path.join(script_path, "media-icons", "play.ico")))
             else:
                 # Set the position to the recorded value before resuming
                 self.player.setPosition(self.paused_position)  # Assuming set_position() sets the playback position
@@ -65,7 +50,7 @@ class MusicPlayer:
                 # Continue playing
                 self.player.play()
                 self.in_pause_state = False
-                button.setIcon(QIcon(os.path.join(script_path, "media-icons", "pause.ico")))
+                self.play_pause_button.setIcon(QIcon(os.path.join(script_path, "media-icons", "pause.ico")))
 
     def pause(self):
         self.player.pause()

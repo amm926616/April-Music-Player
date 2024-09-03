@@ -94,7 +94,7 @@ class MusicPlayerUI(QMainWindow):
         self.progress_bar = None
         self.slider = None
         self.prev_button = None
-        self.play_pause_button = None
+        self.play_pause_button = QPushButton()
         self.click_count = 0
         self.forw_button = None
         self.config_path = None
@@ -130,7 +130,7 @@ class MusicPlayerUI(QMainWindow):
 
         self.music_file = None
         self.lrc_file = None
-        self.player = MusicPlayer()
+        self.player = MusicPlayer(self.play_pause_button)
         self.lrcPlayer = LRCSync(self, self.player, self.config_path)
 
     def load_config(self):
@@ -497,7 +497,6 @@ class MusicPlayerUI(QMainWindow):
 
         controls_layout = QHBoxLayout()
         self.prev_button = QPushButton()
-        self.play_pause_button = QPushButton()
         self.forw_button = QPushButton()
 
         self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
