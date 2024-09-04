@@ -1,3 +1,4 @@
+import bisect
 import re
 import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout, QApplication
@@ -6,6 +7,7 @@ from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
 from easy_json import EasyJson
 from PIL import Image, ImageDraw, ImageFont
+from notetaking import NoteTaking
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
@@ -39,8 +41,9 @@ class LRCSync:
         self.current_lyrics_time = 0.0
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
         self.last_update_time = 0.0  # Initialize with 0 or None
-        self.update_interval = 0.1  # Minimum interval in seconds    
+        self.update_interval = 0.2  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
+        self.notetaking = NoteTaking()
 
     def updateFileandParse(self, file):
         if file is None:
@@ -213,13 +216,19 @@ class LRCSync:
             print("down key pressed")
             self.go_to_next_lyrics()
         elif event.key() == Qt.Key.Key_D:
-            self.go_to_the_start_of_current_lyric()           
+            self.go_to_the_start_of_current_lyric()                       
+        elif event.key() == Qt.Key.Key_E:
+            print("pressing e")
+            self.createNoteTakingWindow()
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
             if self.is_full_screen():
                 self.lrc_display.showNormal()  # Restore to normal mode
             else:
                 self.lrc_display.showFullScreen()  # Enter full-screen mode
+        
+    def createNoteTakingWindow(self):
+        self.notetaking.createUI()
 
     def is_full_screen(self):
         # Check if the dialog is in full-screen mode
@@ -279,6 +288,7 @@ class LRCSync:
                 print("previous time, ", previous_lyrics_key)        
                 self.player.player.setPosition(int(previous_lyrics_key * 1000))
             else:
+                self.current_lyrics_time = self.lyrics_keys[-1]
                 previous_lyrics_key = self.lyrics_keys[-1]
                 self.player.player.setPosition(int(previous_lyrics_key * 1000))
                 
@@ -294,8 +304,8 @@ class LRCSync:
                 print("next line, ", next_lyric_key)        
                 self.player.player.setPosition(int(next_lyric_key * 1000))
             else:
+                self.current_lyrics_time = self.lyrics_keys[0]                
                 next_lyric_key = self.lyrics_keys[0]
-                print("next line, ", next_lyric_key)        
                 self.player.player.setPosition(int(next_lyric_key * 1000))
                 
             if self.player.in_pause_state:
@@ -318,7 +328,7 @@ class LRCSync:
                         lyrics_dict[time_in_seconds] = lyric
             self.lyrics = lyrics_dict
             self.lyrics_keys = sorted(self.lyrics.keys())
-    
+            
     def get_current_lyrics(self):
         if self.file is not None:
             self.current_time = self.player.get_current_time()
@@ -330,18 +340,23 @@ class LRCSync:
 
             self.last_update_time = self.current_time  # Update the last updated time
 
-            for i in range(len(self.lyrics_keys)):
-                if self.current_time < self.lyrics_keys[i]:
-                    if i == 0:
-                        self.current_lyrics_time = self.lyrics_keys[0]
-                        self.current_lyric = self.lyrics[self.current_lyrics_time]
-                    else:
-                        self.current_lyrics_time = self.lyrics_keys[i - 1]
-                        self.current_lyric = self.lyrics[self.current_lyrics_time]
-                    break
-            else:
+            # Use binary search to find the correct lyrics time
+            index = bisect.bisect_right(self.lyrics_keys, self.current_time)
+
+            if index == 0:
+                # If the current time is before the first lyric
+                self.current_lyrics_time = self.lyrics_keys[0]
+            elif index >= len(self.lyrics_keys):
+                # If the current time is after the last lyric
                 self.current_lyrics_time = self.lyrics_keys[-1]
-                self.current_lyric = self.lyrics[self.current_lyrics_time]
+            else:
+                # Otherwise, the correct lyric is at the previous index
+                self.current_lyrics_time = self.lyrics_keys[index - 1]
+
+            # Set the corresponding lyric
+            self.current_lyric = self.lyrics[self.current_lyrics_time]
+            print(f"found correct lyric on index:{index if index == 0 else index - 1}")
+
         else:
             self.current_lyrics_time = 0.0
             self.current_lyric = "No lyrics found on the disk"       
