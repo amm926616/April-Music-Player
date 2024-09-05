@@ -254,12 +254,15 @@ class MusicPlayerUI(QMainWindow):
         show_shortcuts_action = QAction("Show Shortcuts", self)
         show_shortcuts_action.triggered.connect(self.show_shortcuts)
         
+        show_tips_action = QAction("Preparation of files", self)
+        show_tips_action.triggered.connect(self.show_preparation)
+        
         add_lrc_background = QAction("Add Lrc Background Image", self)
         add_lrc_background.triggered.connect(self.ask_for_background_image)         
 
         set_default_background = QAction("Set Default Background Image", self)
         set_default_background.triggered.connect(self.set_default_background_image)
-
+                    
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
         options_menu = menubar.addMenu("Options")
@@ -274,33 +277,77 @@ class MusicPlayerUI(QMainWindow):
         color_group.setExclusive(True)
 
         # Add color options with radio buttons
-        colors = ["White", "Black", "Blue", "Yellow", "Red"]
+        colors = ["white", "black", "blue", "yellow", "red", "cyan", "magenta", "orange", "green", "purple", "light gray", "dark gray", "turquoise", "brown", "pink"]
         self.color_actions = {}
         for color in colors:
             action = QAction(color, self, checkable=True)
             action.setActionGroup(color_group)
             action.triggered.connect(self.get_selected_color)  # Connect to method                        
             text_color_menu.addAction(action)
-            self.color_actions[color] = action    
+            self.color_actions[color] = action 
+            
+        self.color_actions[self.ej.get_value("lyrics_color")].setChecked(True)            
+            
+        # Add a sub-menu for sync threshold selection with radio buttons
+        sync_threshold_menu = QMenu("Choose Syncing Interval", self)
+        options_menu.addMenu(sync_threshold_menu)
 
+        # Create an action group to enforce a single selection (radio button behavior)
+        threshold_group = QActionGroup(self)
+        threshold_group.setExclusive(True)
+
+        # Define threshold options in seconds
+        thresholds = [0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
+        self.threshold_actions = {}
+        for threshold in thresholds:
+            action = QAction(f"{threshold} seconds", self, checkable=True)
+            action.setActionGroup(threshold_group)
+            action.triggered.connect(self.set_sync_threshold)  # Connect to method
+            sync_threshold_menu.addAction(action)
+            self.threshold_actions[threshold] = action               
+            
+        self.threshold_actions[self.ej.get_value("sync_threshold")].setChecked(True)
+            
         # Linking actions and menus
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
-        help_menu.addAction(show_shortcuts_action)      
+        help_menu.addAction(show_shortcuts_action)    
+        help_menu.addAction(show_tips_action)  
         options_menu.addAction(add_lrc_background) 
         options_menu.addAction(set_default_background)
         
     def get_selected_color(self):
-        selected_color = None
+        selected_color = self.ej.get_value("lyrics_color")
         for color, action in self.color_actions.items():
             if action.isChecked():
                 selected_color = color
                 break
         print(f"Selected color: {selected_color}")  
-        self.ej.edit_value("lyrics_color", color.lower())      
+        self.ej.edit_value("lyrics_color", color.lower())     
         
+    # Method to update sync threshold
+    def set_sync_threshold(self):
+        selected_threshold = self.ej.get_value("sync_threshold") 
+        for threshold, action in self.threshold_actions.items():
+            if action.isChecked():
+                selected_threshold = threshold 
+                break 
+        print(f"Selected Threshold: {selected_threshold}")
+        self.ej.edit_value("sync_threshold", threshold)
+        self.lrcPlayer.update_interval = threshold
+        
+    def show_preparation(self):
+        text = """
+        <b>Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LRCGET, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.</b><br><br>
+        - <a href="https://github.com/zotify-dev/zotify">Zotify</a><br>
+        - <a href="https://github.com/tranxuanthang/lrcget">LRCGET</a><br>
+        - <a href="https://github.com/akashrchandran/syrics">Syrics</a><br>
+        - <a href="https://github.com/Lambada10/SongSync">SongSync</a><br>    
+        """        
+        QMessageBox.information(self, "Preparation of files", text)
+                 
     def show_shortcuts(self):
-        shortcuts_text = """
+        shortcuts_text = """         
         <b>Keyboard Shortcuts</b><br><br>
         
         <b>General:</b><br>
@@ -314,10 +361,10 @@ class MusicPlayerUI(QMainWindow):
         - <b>D:</b> Go to the start of the current lyric.<br>
         - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br><br>
 
-        <b>This project was developed to the alpha stage solely by me. I am seeking collaboration and more testers. I would greatly appreciate any contributions to this project.</b> 
+        <b>This project was developed to "the version 1 released" solely by me. I wish I could get collaborations that I could code together. I would greatly appreciate any contributions to this project. If you found April useful, I'd appreciate it if you could give the project a star on GitHub!</b> 
         <a href="https://github.com/amm926616/April-Music-Player">Project's GitHub link</a><br><br>
 
-        <b>Created with love by AD178</b><br>
+        <b>Created with love by AD178.</b><br>
         <b>Contact me on Telegram: </b><a href="https://t.me/Adamd178">Go to Adam's Telegram</a><br>
         """
         QMessageBox.information(self, "Shortcuts", shortcuts_text)
