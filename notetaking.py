@@ -10,7 +10,7 @@ class NoteTaking():
         self.lrcSync = lrcSync
         self.window = QDialog()        
         self.window.keyPressEvent = self.keyPressEvent
-        self.window.setWindowTitle("Note Taking Window")
+        self.window.setWindowTitle("Text Editor/Note Book")
         self.window.setGeometry(500, 300, 400, 300)
 
         # Layout
@@ -46,13 +46,9 @@ class NoteTaking():
     def saveToDatabase(self):
         # Retrieve the notes from the text box
         text = self.textBox.toHtml()
-        print(text)
         
-        # Split the notes into lines
-        lines = text.split('\n')
-
         # Add the notes to the database
-        self.add_notes(lines)
+        self.add_notes(text)
         
         # Clear the text box
         self.textBox.clear()
@@ -72,12 +68,9 @@ class NoteTaking():
                 
                 row = cursor.fetchone()
                 if row:
-                    print("in row if")
                     # Load existing JSON notes
                     existing_notes = json.loads(row[0])
-                    print("existing_notes ", existing_notes)
                 else:
-                    print('in row else')
                     # No existing notes, initialize an empty dictionary
                     existing_notes = {}
                     
@@ -114,19 +107,11 @@ class NoteTaking():
                 ''', (self.lrcSync.file,))
                 
                 row = cursor.fetchone()
-                print("row ", row)
-                print(type(row))
                 
                 if row:
-                    json_notes = row[0]
-                    print("json_notes ", json_notes)
-                    print(type(json_notes))
-                    
+                    json_notes = row[0]                    
                     # Load existing notes from JSON
-                    notes_data = json.loads(json_notes)
-                    print("notes_data ", notes_data)
-                    print(type(notes_data))
-                    
+                    notes_data = json.loads(json_notes)                    
                     index = str(self.lrcSync.current_index)
                     
                     # Extract notes for the current index
@@ -138,10 +123,7 @@ class NoteTaking():
                             notes_html = "<br>".join(notes_html)  # Convert list to HTML string
                     else:
                         notes_html = ""
-                        
-                    print("notes_html ", notes_html)
-                    print(type(notes_html))
-                    
+                                            
                     # Set the HTML content in the QTextEdit
                     self.textBox.setHtml(notes_html)
                 else:
