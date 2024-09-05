@@ -700,6 +700,15 @@ class MusicPlayerUI(QMainWindow):
                 file_type TEXT
             )
         ''')
+            
+        # Create the table for storing notes for lyrics if it doesn't exist
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notes (
+                lrc_filename TEXT PRIMARY KEY,
+                json_notes TEXT
+            );
+        ''')
+        
         self.conn.commit()
 
     def loadSongs(self, load_again=False): # getting songs recursively
