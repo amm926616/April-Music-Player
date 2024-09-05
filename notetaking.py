@@ -166,7 +166,6 @@ class NoteTaking():
             self.lrcSync.player.play_pause_music()            
             self.window.close()  # You can use sys.exit() here if you want to exit the entire app
             
-
     def textBoxClose(self, event):
         self.lrcSync.play_pause_music()
         event.accept()

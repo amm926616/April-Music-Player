@@ -36,7 +36,7 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(int(self.app.height() * 0.14))
-        self.current_lyric = "....."
+        self.current_lyric = "♪"
         self.is_playing = False
         self.current_lyrics_time = 0.0
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
@@ -351,14 +351,13 @@ class LRCSync:
                 self.current_lyrics_time = self.lyrics_keys[0]
             elif index >= len(self.lyrics_keys):
                 # If the current time is after the last lyric
-                self.current_lyrics_time = self.lyrics_keys[-1]
+                self.current_lyrics_time = self.lyrics_keys[-1]                
             else:
                 # Otherwise, the correct lyric is at the previous index
                 self.current_lyrics_time = self.lyrics_keys[index - 1]
                 
-                
             self.current_index = index # pass it for note taking
-            
+                        
             # Set the corresponding lyric
             self.current_lyric = self.lyrics[self.current_lyrics_time]
             print(f"found correct lyric on index:{index if index == 0 else index - 1}")
