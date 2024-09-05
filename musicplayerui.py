@@ -254,8 +254,8 @@ class MusicPlayerUI(QMainWindow):
         show_shortcuts_action = QAction("Show Shortcuts", self)
         show_shortcuts_action.triggered.connect(self.show_shortcuts)
         
-        show_tips_action = QAction("Preparation of files", self)
-        show_tips_action.triggered.connect(self.show_preparation)
+        preparation_tips = QAction("Preparation of files", self)
+        preparation_tips.triggered.connect(self.show_preparation)
         
         add_lrc_background = QAction("Add Lrc Background Image", self)
         add_lrc_background.triggered.connect(self.ask_for_background_image)         
@@ -311,8 +311,8 @@ class MusicPlayerUI(QMainWindow):
         # Linking actions and menus
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
+        help_menu.addAction(preparation_tips)          
         help_menu.addAction(show_shortcuts_action)    
-        help_menu.addAction(show_tips_action)  
         options_menu.addAction(add_lrc_background) 
         options_menu.addAction(set_default_background)
         
@@ -338,11 +338,12 @@ class MusicPlayerUI(QMainWindow):
         
     def show_preparation(self):
         text = """
-        <b>Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LRCGET, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.</b><br><br>
+        <b>Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LRCGET, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.</b><br>
         - <a href="https://github.com/zotify-dev/zotify">Zotify</a><br>
         - <a href="https://github.com/tranxuanthang/lrcget">LRCGET</a><br>
         - <a href="https://github.com/akashrchandran/syrics">Syrics</a><br>
-        - <a href="https://github.com/Lambada10/SongSync">SongSync</a><br>    
+        - <a href="https://github.com/Lambada10/SongSync">SongSync</a><br><br>
+        <b>For the program to easily match and grab files, ensure that the music file and the LRC file have the same name, plus in the same directory. I will figure out for better file management in the future.</b>
         """        
         QMessageBox.information(self, "Preparation of files", text)
                  
