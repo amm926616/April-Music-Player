@@ -43,7 +43,8 @@ class LRCSync:
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
-        self.notetaking = NoteTaking()
+        self.current_index = 0
+        self.notetaking = NoteTaking(self)
 
     def updateFileandParse(self, file):
         if file is None:
@@ -353,7 +354,10 @@ class LRCSync:
             else:
                 # Otherwise, the correct lyric is at the previous index
                 self.current_lyrics_time = self.lyrics_keys[index - 1]
-
+                
+                
+            self.current_index = index # pass it for note taking
+            
             # Set the corresponding lyric
             self.current_lyric = self.lyrics[self.current_lyrics_time]
             print(f"found correct lyric on index:{index if index == 0 else index - 1}")
