@@ -220,6 +220,7 @@ class LRCSync:
             self.go_to_the_start_of_current_lyric()                       
         elif event.key() == Qt.Key.Key_E:
             print("pressing e")
+            self.player.pause()            
             self.createNoteTakingWindow()
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
