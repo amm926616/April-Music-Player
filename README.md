@@ -10,6 +10,17 @@ Before using the player, you'll need to download your songs and lyrics in advanc
 - https://github.com/akashrchandran/syrics
 - https://github.com/Lambada10/SongSync
 
+### Features to be implemented
+- smart playing mode
+  - playing mode
+  - random mode
+  - play next song in album
+- I need to figure out how to store text pages for each lyric note. Currently, line by line are stored in list of json format in sqlite database. (The meme got me here lol)
+- it will be better to have global shortcut keys
+- Lyrics texts could be better with stoke. 
+- Live background changing of of lrc display.
+- User Customizable fonts
+ 
 ### Installation
 
 - Installer for windows is available in the releases section.
