@@ -44,7 +44,7 @@ class NoteTaking():
         
     def saveToDatabase(self):
         # Retrieve the notes from the text box
-        text = self.textBox.toPlainText()
+        text = self.textBox.toHtml()
         print(text)
         
         # Split the notes into lines
@@ -57,7 +57,7 @@ class NoteTaking():
         self.textBox.clear()
         self.window.close()
 
-    def add_notes(self, notes_lines):
+    def add_notes(self, html_text):
         try:
             # Connect to the SQLite database
             with sqlite3.connect(os.path.join(self.lrcSync.config_path, "songs.db")) as conn:
@@ -81,7 +81,8 @@ class NoteTaking():
                     
                 index = str(self.lrcSync.current_index)
 
-                existing_notes[index] = notes_lines
+                # Store the HTML text for the current index
+                existing_notes[index] = html_text
 
                 # Convert the updated dictionary to JSON format
                 json_notes = json.dumps(existing_notes)
@@ -97,7 +98,6 @@ class NoteTaking():
         except sqlite3.Error as e:
             print(f"Database error: {e}")
 
-    
     def createUI(self):
         # Load existing notes
         try:
@@ -119,39 +119,38 @@ class NoteTaking():
                     json_notes = row[0]
                     print("json_notes ", json_notes)
                     print(type(json_notes))
+                    
+                    # Load existing notes from JSON
                     notes_data = json.loads(json_notes)
                     print("notes_data ", notes_data)
                     print(type(notes_data))
                     
                     index = str(self.lrcSync.current_index)
                     
-                    # Extract notes list
-                    if str(self.lrcSync.current_index) in notes_data:
-                        notes_list = notes_data[index]
+                    # Extract notes for the current index
+                    if index in notes_data:
+                        notes_html = notes_data[index]
                         
+                        # Ensure notes_html is a string
+                        if isinstance(notes_html, list):
+                            notes_html = "<br>".join(notes_html)  # Convert list to HTML string
                     else:
-                        notes_list = []
+                        notes_html = ""
                         
-                    print("notes_list ", notes_list)
-                    print(type(notes_list))        
+                    print("notes_html ", notes_html)
+                    print(type(notes_html))
                     
-                    # Concatenate all notes into a single text with newlines
-                    notes_text = "\n".join(notes_list)                
-                    
-                    print("notes_text ", notes_text)
-                    print(type(notes_text))
-                                        
-                    # Set the text in the QTextEdit
-                    self.textBox.setPlainText(notes_text)
+                    # Set the HTML content in the QTextEdit
+                    self.textBox.setHtml(notes_html)
                 else:
                     print("No notes found for the specified file_path.")
-                    
+                
         except sqlite3.Error as e:
             print(f"Database error: {e}")
 
         # Show the dialog
         if not self.window.isVisible():
-            self.window.exec()    
+            self.window.exec()
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
