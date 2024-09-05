@@ -18,6 +18,7 @@ class NoteTaking():
 
         # Text edit area
         self.textBox = QTextEdit()
+        self.textBox.closeEvent = self.textBoxClose
         
         # Create a QTextCharFormat object
         format = QTextCharFormat()
@@ -56,6 +57,7 @@ class NoteTaking():
         # Clear the text box
         self.textBox.clear()
         self.window.close()
+        self.lrcSync.player.play_pause_music()
 
     def add_notes(self, html_text):
         try:
@@ -151,10 +153,21 @@ class NoteTaking():
         # Show the dialog
         if not self.window.isVisible():
             self.window.exec()
-
-    def keyPressEvent(self, event: QKeyEvent):
+            
+    def keyPressEvent(self, event: QKeyEvent):            
+        # Handle Ctrl + S (save to database)
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
-            # Handle Ctrl + S
             print("Ctrl + S pressed")
             self.saveToDatabase()
+            
+        # Handle Exit key (example: Esc key)
+        elif event.key() == Qt.Key.Key_Escape:
+            print("Escape pressed, exiting application")
+            self.lrcSync.player.play_pause_music()            
+            self.window.close()  # You can use sys.exit() here if you want to exit the entire app
+            
+
+    def textBoxClose(self, event):
+        self.lrcSync.play_pause_music()
+        event.accept()
 
