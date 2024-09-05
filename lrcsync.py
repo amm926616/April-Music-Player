@@ -41,7 +41,7 @@ class LRCSync:
         self.current_lyrics_time = 0.0
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
         self.last_update_time = 0.0  # Initialize with 0 or None
-        self.update_interval = 0.2  # Minimum interval in seconds    
+        self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.notetaking = NoteTaking()
 
@@ -336,6 +336,7 @@ class LRCSync:
             # Only update if the current time has moved beyond the update interval
             abs_value = abs(self.current_time - self.last_update_time)
             if abs_value < self.update_interval:
+                print("skipped")
                 return  # Skip updating if within the interval
 
             self.last_update_time = self.current_time  # Update the last updated time
