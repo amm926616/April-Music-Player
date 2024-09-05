@@ -222,6 +222,8 @@ class LRCSync:
             print("pressing e")
             self.player.pause()            
             self.createNoteTakingWindow()
+        elif event.key() == Qt.Key.Key_Escape:
+            self.lrc_display.close()
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
             if self.is_full_screen():
