@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor
 from PyQt6.QtCore import Qt
 import sqlite3
 import os
@@ -18,6 +18,21 @@ class NoteTaking():
 
         # Text edit area
         self.textBox = QTextEdit()
+        
+        # Create a QTextCharFormat object
+        format = QTextCharFormat()
+
+        # Set the font size
+        font = QFont()
+        font.setPointSize(14)  # Set the desired font size
+        format.setFont(font)
+
+        # Apply the format to the text
+        cursor = self.textBox.textCursor()
+        cursor.select(QTextCursor.SelectionType.Document)  # Use QTextCursor.SelectionType.Document
+        cursor.mergeCharFormat(format)
+        self.textBox.setTextCursor(cursor)
+                
         self.layout.addWidget(self.textBox)
 
         # Save button
@@ -118,11 +133,14 @@ class NoteTaking():
                         notes_list = []
                         
                     print("notes_list ", notes_list)
-                    print(type(notes_list))
+                    print(type(notes_list))        
                     
                     # Concatenate all notes into a single text with newlines
-                    notes_text = "\n".join(notes_list)
+                    notes_text = "\n".join(notes_list)                
                     
+                    print("notes_text ", notes_text)
+                    print(type(notes_text))
+                                        
                     # Set the text in the QTextEdit
                     self.textBox.setPlainText(notes_text)
                 else:
