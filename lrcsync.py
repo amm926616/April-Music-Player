@@ -338,7 +338,6 @@ class LRCSync:
             # Only update if the current time has moved beyond the update interval
             abs_value = abs(self.current_time - self.last_update_time)
             if abs_value < self.update_interval:
-                print("skipped")
                 return  # Skip updating if within the interval
 
             self.last_update_time = self.current_time  # Update the last updated time
@@ -360,7 +359,6 @@ class LRCSync:
                         
             # Set the corresponding lyric
             self.current_lyric = self.lyrics[self.current_lyrics_time]
-            print(f"found correct lyric on index:{index if index == 0 else index - 1}")
 
         else:
             self.current_lyrics_time = 0.0
