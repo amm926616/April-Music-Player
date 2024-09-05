@@ -651,7 +651,8 @@ class MusicPlayerUI(QMainWindow):
     def filterSongs(self):
         if self.search_bar.hasFocus():
             search_text = self.search_bar.text().lower()
-            
+            first_match_found = False  # Flag to track the first match
+
             for row in range(self.songTableWidget.rowCount()):
                 match = False
                 
@@ -659,10 +660,14 @@ class MusicPlayerUI(QMainWindow):
                     item = self.songTableWidget.item(row, column)
                     if item and search_text in item.text().lower():
                         match = True
+                        if not first_match_found:
+                            # Perform action on the first matching item
+                            self.handleRowDoubleClick(item)
+                            first_match_found = True
                         break
                 
                 self.songTableWidget.setRowHidden(row, not match)
-                
+            
             # Clear the search bar and reset the placeholder text
             self.search_bar.clear()
             self.search_bar.setPlaceholderText("Search...")
