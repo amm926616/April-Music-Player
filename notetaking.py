@@ -11,7 +11,8 @@ import zlib
 class NoteTaking():
     def __init__(self, lrcSync):
         self.lrcSync = lrcSync
-        self.window = QDialog()        
+        self.window = QDialog()   
+        self.window.closeEvent = self.noteWindowClose 
         self.window.keyPressEvent = self.keyPressEvent
         self.window.setWindowTitle("Current Lyric's Notebook")
         
@@ -22,7 +23,6 @@ class NoteTaking():
 
         # Text edit area
         self.textBox = QTextEdit()
-        self.textBox.closeEvent = self.textBoxClose
         
         # Create a QTextCharFormat object
         format = QTextCharFormat()
@@ -62,8 +62,6 @@ class NoteTaking():
 
         # Clear the text box
         self.textBox.clear()
-        self.window.close()
-        self.lrcSync.player.play_pause_music()
 
     def push_note_to_database(self, compressed_html_base64):
         try:
@@ -170,6 +168,7 @@ class NoteTaking():
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
             print("Ctrl + S pressed")
             self.saveToDatabase()
+            self.window.close()            
 
         elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_F:
             print("pressed ctrl + F")
@@ -180,13 +179,11 @@ class NoteTaking():
 
         elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_W:
             print("pressed ctrl + w")     
-            self.lrcSync.player.play_pause_music()            
             self.window.close()  # You can use sys.exit() here if you want to exit the entire app
             
         # Handle Exit key (example: Esc key)
         elif event.key() == Qt.Key.Key_Escape:
             print("Escape pressed, exiting application")
-            self.lrcSync.player.play_pause_music()            
             self.window.close()  # You can use sys.exit() here if you want to exit the entire app
 
     def is_full_screen(self):
@@ -203,7 +200,7 @@ class NoteTaking():
         # Return the result
         return is_full_screen_mode
             
-    def textBoxClose(self, event):
-        self.lrcSync.play_pause_music()
+    def noteWindowClose(self, event):
+        self.lrcSync.player.play_pause_music()
         event.accept()
 
