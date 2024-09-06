@@ -12,21 +12,18 @@ class SongTableWidget(QTableWidget):
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
+            super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
             print("UP key pressed")
-            # Get the current item and call the click handler if provided
             current_item = self.currentItem()
-            if self.rowSingleClick and current_item:
+            if current_item:
                 self.rowSingleClick(current_item)
-            # Call the base class method to maintain default behavior
-            super().keyPressEvent(event)
-            
+                    
         elif event.key() == Qt.Key.Key_Down:
+            super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
             print("DOWN key pressed")            
             current_item = self.currentItem()
-            if self.rowSingleClick and current_item:
+            if current_item:            
                 self.rowSingleClick(current_item)            
-            # Call the base class method to maintain default behavior
-            super().keyPressEvent(event)
             
         elif event.key() == Qt.Key.Key_Right:
             self.seekRight()
