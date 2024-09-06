@@ -41,8 +41,6 @@ class LRCSync:
         self.current_lyrics_time = 0.0
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
         self.last_update_time = 0.0  # Initialize with 0 or None
-        if self.ej.get_value("sync_threshold") == None:
-            self.ej.edit_value("sync_threshold", 0.3)
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.current_index = 0

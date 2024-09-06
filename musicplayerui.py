@@ -131,6 +131,8 @@ class MusicPlayerUI(QMainWindow):
         self.music_file = None
         self.lrc_file = None
         self.player = MusicPlayer(self.play_pause_button)
+        
+        self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path)
 
     def load_config(self):
@@ -239,6 +241,12 @@ class MusicPlayerUI(QMainWindow):
         self.ej.setupBackgroundImage()
         self.lrcPlayer.resizeBackgroundImage(self.ej.get_value("background_image"))
         QMessageBox.about(self, "Default Background Image", "Default lyric background image is restored")
+        
+    def default_menubar_content(self):
+        if self.ej.get_value("sync_threshold") is None:
+            self.ej.edit_value("sync_threshold", 0.3)
+        if self.ej.get_value("lyrics_color") is None:
+            self.ej.edit_value("lyrics_color", "white")        
             
     def createMenuBar(self):
         # this is the menubar that will hold all together
