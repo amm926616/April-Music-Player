@@ -66,10 +66,12 @@ class MusicPlayer:
         return position
 
     def seek_forward(self):
-        self.player.setPosition(self.player.position() + 1000)
+        if self.player.isPlaying:
+            self.player.setPosition(self.player.position() + 1000)
 
     def seek_backward(self):
-        self.player.setPosition(self.player.position() - 1000)
+        if self.player.isPlaying:        
+            self.player.setPosition(self.player.position() - 1000)
 
     def get_duration(self):
         return self.player.duration()
