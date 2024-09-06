@@ -89,9 +89,15 @@ window.
 
 ![screenshot](./screenshots/full-screen4.png)
 
-### Your personal note page for each lyrics
+### Take Your Notes In Each Lyric, a helpful feature to study vocabulary from songs.
 ![screenshot](./screenshots/note-taking1.png)
 
 ![screenshot](./screenshots/note-taking2.png)
+
+Also, try out my 'Personal Dictionary' to collect vocabulary. It features a search system that shows words with similar syllables, mimicking how neurons connect in the brain.
+![screenshot](./screenshots/note-taking3.png)
+
+
+
 
 
