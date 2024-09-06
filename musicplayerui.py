@@ -391,7 +391,7 @@ class MusicPlayerUI(QMainWindow):
             context_menu = QMenu(self)
             
             # Add an action to copy the file path
-            copy_action = context_menu.addAction("Copy Path")
+            copy_action = context_menu.addAction("Copy Song Path")
             
             # Connect the action to a method
             copy_action.triggered.connect(lambda: self.copy_item_path(item))
@@ -886,6 +886,7 @@ class MusicPlayerUI(QMainWindow):
             self.updateInformations()
             self.get_lrc_file()
             self.player.update_music_file(self.music_file)
+            self.player.default_pause_state()            
             self.play_song()
             
     def play_song(self):
