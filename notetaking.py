@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QLabel
+from PyQt6.QtWidgets import QVBoxLayout, QTextEdit, QPushButton, QLabel, QDialog
 from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor
 from PyQt6.QtCore import Qt
 from getfont import GetFont
@@ -14,7 +14,7 @@ class NoteTaking():
         self.window = QDialog()        
         self.window.keyPressEvent = self.keyPressEvent
         self.window.setWindowTitle("Current Lyric's Notebook")
-        self.window.setGeometry(500, 300, 600, 400)
+        self.window.setGeometry(500, 300, 800, 500)
         
         self.lyric_label_font = GetFont(13)
 
@@ -48,7 +48,7 @@ class NoteTaking():
         saveButton.clicked.connect(self.saveToDatabase)
         self.layout.addWidget(saveButton)
 
-        self.window.setLayout(self.layout)       
+        self.window.setLayout(self.layout) 
         
     def saveToDatabase(self):
         # Retrieve the notes from the text box
@@ -162,7 +162,8 @@ class NoteTaking():
 
         # Show the dialog
         if not self.window.isVisible():
-            self.window.exec()  
+            self.window.exec()                  
+            
                   
     def keyPressEvent(self, event: QKeyEvent):            
         # Handle Ctrl + S (save to database)
