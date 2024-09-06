@@ -7,7 +7,7 @@ import platform
 from collections import defaultdict
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, 
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
 )
 from PyQt6.QtCore import Qt, QCoreApplication
@@ -297,7 +297,7 @@ class MusicPlayerUI(QMainWindow):
         help_menu = menubar.addMenu("Help")
         
         # Add a sub-menu for text color selection with radio buttons
-        text_color_menu = QMenu("Choose Lyric Color", self)
+        text_color_menu = QMenu("Choose Lyrics Color", self)
         options_menu.addMenu(text_color_menu)
 
         # Create an action group to enforce a single selection (radio button behavior)
@@ -320,6 +320,11 @@ class MusicPlayerUI(QMainWindow):
         sync_threshold_menu = QMenu("Choose Syncing Interval", self)
         options_menu.addMenu(sync_threshold_menu)
 
+        # Add a QLabel at the top of the menu with your message
+        label = QLabel("This is basically the refresh rate. Shorter interval provides \nsmoother syncing but uses more CPU.", self)
+        label_action = QWidgetAction(self)
+        label_action.setDefaultWidget(label)
+
         # Create an action group to enforce a single selection (radio button behavior)
         threshold_group = QActionGroup(self)
         threshold_group.setExclusive(True)
@@ -334,6 +339,9 @@ class MusicPlayerUI(QMainWindow):
             sync_threshold_menu.addAction(action)
             self.threshold_actions[threshold] = action               
             
+        sync_threshold_menu.addAction(label_action)           
+
+        # Set the previously selected threshold
         self.threshold_actions[self.ej.get_value("sync_threshold")].setChecked(True)
             
         # Linking actions and menus
@@ -390,16 +398,25 @@ class MusicPlayerUI(QMainWindow):
         shortcuts_text = """         
         <b>Keyboard Shortcuts</b><br><br>
         
-        <b>General:</b><br>
-        - <b>Left Arrow, Right Arrow, Spacebar:</b> Seek backward, seek forward, and play/pause, respectively.<br>
-        - <b>Ctrl + L:</b> Activate LRC display, or double-click the progress bar.<br>
-        - <b>Ctrl + S:</b> Focus and place cursor on search bar.<br>
-        - <b>Ctrl + Q:</b> Quit the program (The program runs in the background even if the main window is closed).<br><br>
-        
-        <b>In LRC View:</b><br>
-        - <b>F:</b> Toggle full-screen mode.<br>
-        - <b>D:</b> Go to the start of the current lyric.<br>
-        - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br>
+        <b>General:</b>
+            <ul>
+                <li><strong>Left Arrow, Right Arrow, Spacebar</strong>: Seek backward, seek forward, and play/pause, respectively.</li>
+                <li><strong>Ctrl + L</strong>: Activate LRC display, or double-click the progress bar.</li>
+                <li><strong>Ctrl + S</strong>: Focus and place cursor on search bar.</li>
+                <li><strong>Ctrl + Q</strong>: This shortcut quits the program. The program runs in the background even if you close the main window.</li>
+            </ul>
+        <b>In LRC view</b>:
+            <ul>
+                <li><strong>F</strong>: Toggle full-screen mode.</li>
+                <li><strong>D</strong>: Go to the start of current lyric.</li>
+                <li><strong>Up Arrow, Down Arrow</strong>: Seek to the previous or next lyric line.</li>
+                <li><strong>E</strong>: To activate Note Book</li>
+            </ul>
+        <b>In Lyrics Notebook</b>:
+            <ul>
+                <li><strong>Ctrl + S</strong>: To save written text.</li>
+                <li><strong>Esc</strong>, <strong>Ctrl + W</strong>, <strong>Alt + F4</strong>: To exit without saving.</li>
+            </ul>
         """
         QMessageBox.information(self, "Shortcuts", shortcuts_text)
         
@@ -957,6 +974,8 @@ class MusicPlayerUI(QMainWindow):
     
     def handleRowSingleClick(self, item):
         if "Album Title: " in item.text():
+            print("in album row")
+            self.item = None
             return
         else:
             self.get_music_file_from_click(item)
