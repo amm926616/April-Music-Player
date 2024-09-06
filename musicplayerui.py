@@ -26,6 +26,7 @@ from clickable_progressbar import DoubleClickableProgressBar
 from clickable_label import ClickableLabel
 from easy_json import EasyJson
 from loadingbar import LoadingBar
+from songtablewidget import SongTableWidget
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -207,6 +208,20 @@ class MusicPlayerUI(QMainWindow):
         if self.lrcPlayer.lrc_display is not None:
             self.lrcPlayer.lrc_display.close()
         event.ignore()
+        
+    def tableWidgetKeyEvents(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_Up:
+            print("UP key pressed")
+            # If you want to still navigate up, you should process the event further
+            event.ignore()  # Let the event propagate to other handlers
+        elif event.key() == Qt.Key.Key_Down:
+            print("DOWN key pressed")
+            # If you want to still navigate down, you should process the event further
+            event.ignore()  # Let the event propagate to other handlers
+        else:
+            # For other keys, you might want to pass them to the default handler
+            super(QTableWidget, self).keyPressEvent(event)  # Call the base class method
+                 
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
@@ -431,7 +446,7 @@ class MusicPlayerUI(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Initialize the table widget
-        self.songTableWidget = QTableWidget(self)  
+        self.songTableWidget = SongTableWidget(self, self.handleRowSingleClick, self.player.seek_forward, self.player.seek_backward, self.player.play_pause_music)  
         self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)      
         self.songTableWidget.setColumnCount(9)  # 7 for metadata + 1 for file path
@@ -949,16 +964,19 @@ class MusicPlayerUI(QMainWindow):
         self.item = item
 
     def handleRowDoubleClick(self, item):
-        if "Album Title: " in item.text():
-            return
+        if item:
+            if "Album Title: " in item.text():
+                return
+            else:
+                self.get_music_file_from_click(item)
+                self.updateInformations()
+                self.get_lrc_file()
+                self.player.update_music_file(self.music_file)
+                self.player.default_pause_state()            
+                self.play_song()
         else:
-            self.get_music_file_from_click(item)
-            self.updateInformations()
-            self.get_lrc_file()
-            self.player.update_music_file(self.music_file)
-            self.player.default_pause_state()            
-            self.play_song()
-            
+            pass
+                
     def play_song(self):
         self.player.play()
         self.lrcPlayer.sync_lyrics(self.lrc_file)   
