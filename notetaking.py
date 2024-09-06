@@ -202,5 +202,7 @@ class NoteTaking():
             
     def noteWindowClose(self, event):
         self.lrcSync.player.play_pause_music()
+        # Clear the text box
+        self.textBox.clear()        
         event.accept()
 
