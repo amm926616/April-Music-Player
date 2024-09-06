@@ -7,7 +7,7 @@ import platform
 from collections import defaultdict
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QProgressBar,
     QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
 )
 from PyQt6.QtCore import Qt, QCoreApplication
@@ -17,6 +17,7 @@ from mutagen.id3 import APIC
 from mutagen.id3 import ID3
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
+from mutagen.wave import WAVE
 from PyQt6.QtGui import QPixmap
 from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
@@ -24,6 +25,7 @@ from musicplayer import MusicPlayer
 from clickable_progressbar import DoubleClickableProgressBar
 from clickable_label import ClickableLabel
 from easy_json import EasyJson
+from loadingbar import LoadingBar
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -253,7 +255,7 @@ class MusicPlayerUI(QMainWindow):
         menubar = self.menuBar()
 
         # Actions that will become buttons for each menu
-        load_folder = QAction("Load folder", self)
+        load_folder = QAction("Set Main Music Folder", self)
         load_folder.triggered.connect(self.folder_load_again)
 
         close_action = QAction("Exit", self)
@@ -264,6 +266,9 @@ class MusicPlayerUI(QMainWindow):
         
         preparation_tips = QAction("Preparation of files", self)
         preparation_tips.triggered.connect(self.show_preparation)
+        
+        fromMe = QAction("From Developer", self)
+        fromMe.triggered.connect(self.show_fromMe)
         
         add_lrc_background = QAction("Add Lrc Background Image", self)
         add_lrc_background.triggered.connect(self.ask_for_background_image)         
@@ -319,6 +324,7 @@ class MusicPlayerUI(QMainWindow):
         # Linking actions and menus
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
+        help_menu.addAction(fromMe)
         help_menu.addAction(preparation_tips)          
         help_menu.addAction(show_shortcuts_action)    
         options_menu.addAction(add_lrc_background) 
@@ -344,6 +350,16 @@ class MusicPlayerUI(QMainWindow):
         self.ej.edit_value("sync_threshold", threshold)
         self.lrcPlayer.update_interval = threshold
         
+    def show_fromMe(self):
+        text = """
+        <b>This project was developed to "the version 1 released" solely by me. I wish I could get collaborations that I could code together. I would greatly appreciate any contributions to this project. If you found April useful, I'd appreciate it if you could give the project a star on GitHub!</b> 
+        <a href="https://github.com/amm926616/April-Music-Player">Project's GitHub link</a><br><br>
+
+        <b>Created with love by AD178.</b><br>
+        <b>Contact me on Telegram: </b><a href="https://t.me/Adamd178">Go to Adam's Telegram</a><br>
+        """
+        QMessageBox.information(self, "Thank you for using April", text)
+        
     def show_preparation(self):
         text = """
         <b>Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LRCGET, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.</b><br>
@@ -368,13 +384,7 @@ class MusicPlayerUI(QMainWindow):
         <b>In LRC View:</b><br>
         - <b>F:</b> Toggle full-screen mode.<br>
         - <b>D:</b> Go to the start of the current lyric.<br>
-        - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br><br>
-
-        <b>This project was developed to "the version 1 released" solely by me. I wish I could get collaborations that I could code together. I would greatly appreciate any contributions to this project. If you found April useful, I'd appreciate it if you could give the project a star on GitHub!</b> 
-        <a href="https://github.com/amm926616/April-Music-Player">Project's GitHub link</a><br><br>
-
-        <b>Created with love by AD178.</b><br>
-        <b>Contact me on Telegram: </b><a href="https://t.me/Adamd178">Go to Adam's Telegram</a><br>
+        - <b>Up Arrow, Down Arrow:</b> Seek to the previous or next lyric line.<br>
         """
         QMessageBox.information(self, "Shortcuts", shortcuts_text)
         
@@ -602,6 +612,9 @@ class MusicPlayerUI(QMainWindow):
         self.song_details.setWordWrap(True)
 
     def get_metadata(self):
+        if self.music_file is None:
+            return
+        
         file_extension = self.music_file.lower().split('.')[-1]
 
         metadata = {
@@ -617,7 +630,7 @@ class MusicPlayerUI(QMainWindow):
         }
 
         try:
-            if file_extension == 'mp3':
+            if file_extension == "mp3":
                 audio = ID3(self.music_file)
                 metadata['title'] = audio.get('TIT2', 'Unknown Title').text[0] if audio.get('TIT2') else 'Unknown Title'
                 metadata['artist'] = audio.get('TPE1', 'Unknown Artist').text[0] if audio.get(
@@ -647,8 +660,41 @@ class MusicPlayerUI(QMainWindow):
                 # Extract duration
                 metadata['duration'] = int(audio.info.length)
                 metadata['file_type'] = str(file_extension)
-                metadata['file_type'] = str(file_extension)                                
+                metadata['file_type'] = str(file_extension)
+                
+            elif file_extension == 'flac':
+                audio = FLAC(self.music_file)
+                metadata['title'] = audio.get('title', ['Unknown Title'])[0]
+                metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
+                metadata['album'] = audio.get('album', ['Unknown Album'])[0]
+                metadata['year'] = audio.get('date', ['Unknown Year'])[0]
+                metadata['genre'] = audio.get('genre', ['Unknown Genre'])[0]
+                metadata['track_number'] = audio.get('tracknumber', ['Unknown Track Number'])[0]
+                metadata['comment'] = audio.get('description', ['No Comment'])[0]
 
+                # Extract duration
+                metadata['duration'] = int(audio.info.length)
+                # Extract file type
+                metadata['file_type'] = str(file_extension)
+                
+            elif file_extension == 'wav':
+                audio = WAVE(self.music_file)
+                try:
+                    metadata['title'] = audio.get('title', 'Unknown Title')
+                    metadata['artist'] = audio.get('artist', 'Unknown Artist')
+                    metadata['album'] = audio.get('album', 'Unknown Album')
+                    metadata['year'] = audio.get('date', 'Unknown Year')
+                    metadata['genre'] = audio.get('genre', 'Unknown Genre')
+                    metadata['track_number'] = audio.get('tracknumber', 'Unknown Track Number')
+                    metadata['comment'] = audio.get('comment', 'No Comment')
+                except KeyError:
+                    pass  # WAV files may not contain these tags
+
+                # Extract duration
+                metadata['duration'] = int(audio.info.length)
+                # Extract file type
+                metadata['file_type'] = str(file_extension)                           
+                                                                                     
             else:
                 raise ValueError("Unsupported file format")
 
@@ -720,14 +766,14 @@ class MusicPlayerUI(QMainWindow):
         self.conn.commit()
 
     def loadSongs(self, load_again=False): # getting songs recursively
-        self.initialize_database()
+        self.initialize_database()    
 
         if load_again:
             self.cleanDetails()
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)
             self.songTableWidget.setHorizontalHeaderLabels(
-                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'Media Type']
+                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
             )
             
         if self.directory is None:
@@ -742,10 +788,15 @@ class MusicPlayerUI(QMainWindow):
                 if os.path.splitext(file)[1].lower() in media_extensions:
                     media_files.append(os.path.join(root, file))
 
+        # loadingBar = LoadingBar(len(media_files))
         songs_by_artist = defaultdict(list)
+        
+        loadingBar = LoadingBar(self, len(media_files))
+        loadingBar.show()
 
         # Check if the database already has the songs stored
-        for item_path in media_files:
+        for index, item_path in enumerate(media_files):
+            loadingBar.update(index + 1)
             self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
             result = self.cursor.fetchone()
 
@@ -863,20 +914,31 @@ class MusicPlayerUI(QMainWindow):
                     file_type_item = QTableWidgetItem(metadata['file_type'])
                     file_type_item.setFlags(file_type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.songTableWidget.setItem(row_position, 8, file_type_item)
-
+                    
         self.conn.close()
+        loadingBar.close()
                     
     def updateInformations(self):
-        self.updateDisplayData()
-        self.extract_and_set_album_art()
-        self.updateSongDetails()                                        
-                                   
+        if self.music_file:
+            self.updateDisplayData()
+            self.extract_and_set_album_art()
+            self.updateSongDetails()   
+        else:
+            return                                     
+                                    
     def get_music_file_from_click(self, item):
         row = item.row()
         self.file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
-        self.music_file = self.file_path
         
-        return self.file_path
+        if not os.path.isfile(self.file_path):
+            # File does not exist
+            QMessageBox.warning(self, 'File Not Found', f'The file at {self.file_path} does not exist.')
+            self.file_path = None
+            self.music_file = None
+        else:
+            self.music_file = self.file_path
+        
+        return self.file_path        
     
     def handleRowSingleClick(self, item):
         if "Album Title: " in item.text():
