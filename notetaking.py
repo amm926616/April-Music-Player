@@ -1,17 +1,22 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QLabel
 from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor
 from PyQt6.QtCore import Qt
+from getfont import GetFont
 import sqlite3
 import os
 import json
+import base64
+import zlib
 
 class NoteTaking():
     def __init__(self, lrcSync):
         self.lrcSync = lrcSync
         self.window = QDialog()        
         self.window.keyPressEvent = self.keyPressEvent
-        self.window.setWindowTitle("Text Editor/Note Book")
-        self.window.setGeometry(500, 300, 400, 300)
+        self.window.setWindowTitle("Current Lyric's Notebook")
+        self.window.setGeometry(500, 300, 600, 400)
+        
+        self.lyric_label_font = GetFont(13)
 
         # Layout
         self.layout = QVBoxLayout()
@@ -33,7 +38,9 @@ class NoteTaking():
         cursor.select(QTextCursor.SelectionType.Document)  # Use QTextCursor.SelectionType.Document
         cursor.mergeCharFormat(format)
         self.textBox.setTextCursor(cursor)
-                
+        
+        self.current_lyric_label = QLabel()
+        self.layout.addWidget(self.current_lyric_label)
         self.layout.addWidget(self.textBox)
 
         # Save button
@@ -41,21 +48,25 @@ class NoteTaking():
         saveButton.clicked.connect(self.saveToDatabase)
         self.layout.addWidget(saveButton)
 
-        self.window.setLayout(self.layout)
+        self.window.setLayout(self.layout)       
         
     def saveToDatabase(self):
         # Retrieve the notes from the text box
         text = self.textBox.toHtml()
-        
+
+        # Compress and encode to Base64
+        compressed_html = zlib.compress(text.encode('utf-8'))
+        compressed_html_base64 = base64.b64encode(compressed_html).decode('utf-8')  # Convert to Base64 string
+
         # Add the notes to the database
-        self.add_notes(text)
-        
+        self.push_note_to_database(compressed_html_base64)
+
         # Clear the text box
         self.textBox.clear()
         self.window.close()
         self.lrcSync.player.play_pause_music()
 
-    def add_notes(self, html_text):
+    def push_note_to_database(self, compressed_html_base64):
         try:
             # Connect to the SQLite database
             with sqlite3.connect(os.path.join(self.lrcSync.config_path, "songs.db")) as conn:
@@ -73,11 +84,11 @@ class NoteTaking():
                 else:
                     # No existing notes, initialize an empty dictionary
                     existing_notes = {}
-                    
+
                 index = str(self.lrcSync.current_index)
 
-                # Store the HTML text for the current index
-                existing_notes[index] = html_text
+                # Store the Base64-encoded compressed HTML for the current index
+                existing_notes[index] = compressed_html_base64
 
                 # Convert the updated dictionary to JSON format
                 json_notes = json.dumps(existing_notes)
@@ -94,6 +105,13 @@ class NoteTaking():
             print(f"Database error: {e}")
 
     def createUI(self):
+        # update current lyric label
+        self.current_lyric_label.setText(self.lyric_label_font.get_formatted_text(f"Current Lyric: {self.lrcSync.current_lyric}"))
+        self.current_lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse) # make it selectable
+        
+        # setting window's title as current index
+        self.window.setWindowTitle(f"Notebook for [Lyric Line {self.lrcSync.current_index}]")        
+        
         # Load existing notes
         try:
             # Connect to the SQLite database
@@ -109,33 +127,43 @@ class NoteTaking():
                 row = cursor.fetchone()
                 
                 if row:
-                    json_notes = row[0]                    
+                    json_notes = row[0]
+                    
                     # Load existing notes from JSON
-                    notes_data = json.loads(json_notes)                    
+                    notes_data = json.loads(json_notes)
                     index = str(self.lrcSync.current_index)
                     
                     # Extract notes for the current index
                     if index in notes_data:
-                        notes_html = notes_data[index]
+                        # Retrieve the Base64-encoded compressed HTML string
+                        compressed_html_base64 = notes_data[index]
                         
-                        # Ensure notes_html is a string
-                        if isinstance(notes_html, list):
-                            notes_html = "<br>".join(notes_html)  # Convert list to HTML string
+                        # Decode Base64 to get compressed bytes
+                        compressed_html = base64.b64decode(compressed_html_base64)
+                        
+                        # Decompress the compressed HTML
+                        decompressed_html = zlib.decompress(compressed_html).decode('utf-8')
+                        
+                        # Ensure decompressed_html is a string (if not, handle appropriately)
+                        if isinstance(decompressed_html, list):
+                            decompressed_html = "<br>".join(decompressed_html)  # Convert list to HTML string
                     else:
-                        notes_html = ""
-                                            
+                        decompressed_html = ""
+                                        
                     # Set the HTML content in the QTextEdit
-                    self.textBox.setHtml(notes_html)
+                    self.textBox.setHtml(decompressed_html)
                 else:
                     print("No notes found for the specified file_path.")
-                
+            
         except sqlite3.Error as e:
             print(f"Database error: {e}")
+        except Exception as e:
+            print(f"Error while loading notes: {e}")
 
         # Show the dialog
         if not self.window.isVisible():
-            self.window.exec()
-            
+            self.window.exec()  
+                  
     def keyPressEvent(self, event: QKeyEvent):            
         # Handle Ctrl + S (save to database)
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
