@@ -74,7 +74,7 @@ class NoteTaking():
                 # Fetch the existing notes for the current file
                 cursor.execute('''
                     SELECT json_notes FROM notes WHERE lrc_filename = ?
-                ''', (self.lrcSync.file,))
+                ''', (self.lrcSync.player.file_name,))
                 
                 row = cursor.fetchone()
                 if row:
@@ -96,7 +96,7 @@ class NoteTaking():
                 cursor.execute('''
                     REPLACE INTO notes (lrc_filename, json_notes)
                     VALUES (?, ?)
-                ''', (self.lrcSync.file, json_notes))
+                ''', (self.lrcSync.player.file_name, json_notes))
                 
                 conn.commit()
 
@@ -122,7 +122,7 @@ class NoteTaking():
                 cursor.execute('''
                     SELECT json_notes FROM notes
                     WHERE lrc_filename = ?
-                ''', (self.lrcSync.file,))
+                ''', (self.lrcSync.player.file_name,))
                 
                 row = cursor.fetchone()
                 
