@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QVBoxLayout, QTextEdit, QPushButton, QLabel, QDialog
-from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QLabel
+from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor, QIcon
 from PyQt6.QtCore import Qt
 from getfont import GetFont
 import sqlite3
@@ -14,7 +14,6 @@ class NoteTaking():
         self.window = QDialog()        
         self.window.keyPressEvent = self.keyPressEvent
         self.window.setWindowTitle("Current Lyric's Notebook")
-        self.window.setGeometry(500, 300, 800, 500)
         
         self.lyric_label_font = GetFont(13)
 
@@ -111,6 +110,7 @@ class NoteTaking():
         
         # setting window's title as current index
         self.window.setWindowTitle(f"Notebook for [Lyric Line {self.lrcSync.current_index}]")        
+        self.window.setGeometry(500, 300, 800, 400)
         
         # Load existing notes
         try:
@@ -170,12 +170,38 @@ class NoteTaking():
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
             print("Ctrl + S pressed")
             self.saveToDatabase()
+
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_F:
+            print("pressed ctrl + F")
+            if self.is_full_screen():
+                self.window.showNormal()  # Restore to normal mode
+            else:
+                self.window.showFullScreen()  # Enter full-screen mode            
+
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_W:
+            print("pressed ctrl + w")     
+            self.lrcSync.player.play_pause_music()            
+            self.window.close()  # You can use sys.exit() here if you want to exit the entire app
             
         # Handle Exit key (example: Esc key)
         elif event.key() == Qt.Key.Key_Escape:
             print("Escape pressed, exiting application")
             self.lrcSync.player.play_pause_music()            
             self.window.close()  # You can use sys.exit() here if you want to exit the entire app
+
+    def is_full_screen(self):
+        # Check if the dialog is in full-screen mode
+
+        current_window_state = self.window.windowState()
+        
+        # Define the full-screen flag
+        full_screen_flag = Qt.WindowState.WindowFullScreen
+        
+        # Check if the current window state includes the full-screen flag
+        is_full_screen_mode = (current_window_state & full_screen_flag) == full_screen_flag
+        
+        # Return the result
+        return is_full_screen_mode
             
     def textBoxClose(self, event):
         self.lrcSync.play_pause_music()

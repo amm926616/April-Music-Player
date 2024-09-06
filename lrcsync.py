@@ -41,9 +41,16 @@ class LRCSync:
         self.current_lyrics_time = 0.0
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
         self.last_update_time = 0.0  # Initialize with 0 or None
+        if self.ej.get_value("sync_threshold") == None:
+            self.ej.edit_value("sync_threshold", 0.3)
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.current_index = 0
+        # Get the directory where the script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Construct the full path to the icon file
+        self.icon_path = os.path.join(script_dir, 'icons', 'april-icon.png')
         self.notetaking = NoteTaking(self)
 
     def updateFileandParse(self, file):
@@ -153,14 +160,8 @@ class LRCSync:
                 background-size: 100% auto;  /* Fix the image height to the dialog's height */                
             }}
         """)
-                
-        # Get the directory where the script is located
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # Construct the full path to the icon file
-        icon_path = os.path.join(script_dir, 'icons', 'april-icon.png')
-
-        self.lrc_display.setWindowIcon(QIcon(icon_path))
+            
+        self.lrc_display.setWindowIcon(QIcon(self.icon_path))
         
         # Calculate the width and height of the dialog
         dialog_width = int(parent.width() * 0.9)
@@ -369,7 +370,10 @@ class LRCSync:
                 else:
                     # Otherwise, the correct lyric is at the previous index
                     self.current_lyrics_time = self.lyrics_keys[index - 1]
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]                       
+                    self.current_lyric = self.lyrics[self.current_lyrics_time]        
+
+        else:
+            self.current_lyric = "No Lyrics Found on the Disk"             
                                         
                                                            
     def update_media_lyric(self):
