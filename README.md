@@ -63,17 +63,35 @@ window.
   - **Ctrl + S**: To save written text.
   - **Esc**, **Ctrl + W**, **Alt + F4**: To exit without saving.
 
-#### screenshots
-![screenshot](./screenshots/screenshot1.png)
+## Screenshots
+![screenshot](./screenshots/ui1.png)
 
-![screenshot](./screenshots/screenshot2.png)
+![screenshot](./screenshots/ui2.png)
 
-### ctrl l to activate lrc display or you can double click progress bar.
-![screenshot](./screenshots/screenshot3.png)
+![screenshot](./screenshots/ui3.png)
 
-### pressing f activates full screen mode.
-![screenshot](./screenshots/screenshot4.png)
+![screenshot](./screenshots/ui4.png)
 
-### now, the background image and lyric color can be changed.
-![screenshot](./screenshots/screenshot5.png)
+### Save Album Art to disk
+![screenshot](./screenshots/savetodisk.png)
+
+### **Ctrl + L** to activate lrc display or you can double click progress bar.
+![screenshot](./screenshots/lrc1.png)
+![screenshot](./screenshots/lrc2.png)
+![screenshot](./screenshots/lrc3.png)
+
+### Pressing F activates full screen mode.
+![screenshot](./screenshots/full-screen1.png)
+
+![screenshot](./screenshots/full-screen2.png)
+
+![screenshot](./screenshots/full-screen3.png)
+
+![screenshot](./screenshots/full-screen4.png)
+
+### Your personal note page for each lyrics
+![screenshot](./screenshots/note-taking1.png)
+
+![screenshot](./screenshots/note-taking2.png)
+
 
