@@ -21,6 +21,10 @@ class MusicPlayer:
         self.player.mediaStatusChanged.connect(self.handle_media_status_changed)
         self.play_pause_button = play_pause_button
         self.script_path = os.path.dirname(os.path.abspath(__file__))        
+        
+    def default_pause_state(self):
+        self.in_pause_state = False
+        self.paused_position = 0.0
                 
     def handle_buffer_status(self, percent_filled):
         print(f"Buffer status: {percent_filled}%")
