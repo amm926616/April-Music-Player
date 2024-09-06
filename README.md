@@ -1,6 +1,6 @@
 # april-music-player
 <img src="./icons/april-logo.png" alt="logo" width="400"/>
-Music player with lyric syncing and note-taking features for lyric memorization. (Note-taking is currently not available. Currently the player is only in looping mode for one song.)
+Music player with lyric syncing and note-taking features for lyric memorization. (Currently the player is only in looping mode for one song.)
 
 ### For music and lrc files
 Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LrcGet, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.
@@ -52,11 +52,16 @@ Before using the player, you'll need to download your songs and lyrics in advanc
 - **Left Arrow, Right Arrow, Spacebar**: Seek backward, seek forward, and play/pause, respectively.
 - **Ctrl + L**: Activate LRC display, or double-click the progress bar.
 - **Ctrl + S**: Focus and place cursor on search bar.
-- **Ctrl + Q**: This shortcut quits the program. The program runs in the background even if you close the main window. 
+- **Ctrl + Q**: This shortcut quits the program. The program runs in the background even if you close the main 
+window. 
 - **In LRC view**:
     - **F**: Toggle full-screen mode.
     - **D**: Go to the start of current lyric.
     - **Up Arrow, Down Arrow**: Seek to the previous or next lyric line.
+    - **E**: To activate Note Book
+- **In Notebook**:
+  - **Ctrl + S**: To save written text.
+  - **Esc**: To exit without saving.
 
 #### screenshots
 ![screenshot](./screenshots/screenshot1.png)
