@@ -59,9 +59,9 @@ window.
     - **D**: Go to the start of current lyric.
     - **Up Arrow, Down Arrow**: Seek to the previous or next lyric line.
     - **E**: To activate Note Book
-- **In Notebook**:
+- **In Lyrics Notebook**:
   - **Ctrl + S**: To save written text.
-  - **Esc**: To exit without saving.
+  - **Esc**, **Ctrl + W**, **Alt + F4**: To exit without saving.
 
 #### screenshots
 ![screenshot](./screenshots/screenshot1.png)
