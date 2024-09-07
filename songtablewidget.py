@@ -12,11 +12,26 @@ class SongTableWidget(QTableWidget):
         self.verticalHeader().setVisible(False) # hide the row numbers
         
     def get_next_song_object(self):
-        next_row = self.currentRow() + 1
-        next_song_object = self.item(next_row, 7)
-        print("next_item ", next_song_object.text())
+        current_row = self.currentRow()
+        next_row = current_row + 1
         
-        return next_song_object
+        # Ensure next_row is within bounds
+        if next_row >= self.rowCount():
+            return None  # Or handle the case where no more rows are available
+        
+        # Check if the item exists
+        item = self.item(next_row, 7)
+        
+        if item is None:
+            next_row += 1
+            if next_row >= self.rowCount():
+                return None  # Or handle the case where no more rows are available
+            item = self.item(next_row, 7)
+        
+        # Set the new current row
+        self.setCurrentCell(next_row, 7)
+        
+        return item
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
