@@ -5,7 +5,8 @@ from PyQt6.QtCore import QUrl
 
 
 class MusicPlayer:
-    def __init__(self, play_pause_button):
+    def __init__(self, play_pause_button, playNextSong=None):
+        self.playNextSong = playNextSong
         self.file_name = None
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -82,5 +83,4 @@ class MusicPlayer:
     def handle_media_status_changed(self, status):
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
             # Restart playback
-            self.player.setPosition(0)
-            self.player.play()
+            self.playNextSong()
