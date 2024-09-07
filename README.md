@@ -94,7 +94,7 @@ window.
 
 ![screenshot](./screenshots/note-taking2.png)
 
-Also, try out my 'Personal Dictionary' to collect vocabulary. It features a search system that shows words with similar syllables, mimicking how neurons connect in the brain. ![personal-dictionary](https://github.com/amm926616/sqlite-personal-dictionary)
+Also, try out my 'Personal Dictionary' to collect vocabulary. It features a search system that shows words with similar syllables, mimicking how neurons connect in the brain. [personal-dictionary](https://github.com/amm926616/sqlite-personal-dictionary)
 ![screenshot](./screenshots/note-taking3.png)
 
 
