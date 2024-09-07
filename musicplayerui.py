@@ -80,8 +80,7 @@ def extract_track_number(track_number):
         return int(track_number)
     return float('inf')  # For non-numeric track numbers, place them at the end
 
-
-class MusicPlayerUI(QMainWindow):
+class MusicPlayerUI(QMainWindow):   
     def __init__(self, app):
         super().__init__()
 
@@ -133,7 +132,7 @@ class MusicPlayerUI(QMainWindow):
 
         self.music_file = None
         self.lrc_file = None
-        self.player = MusicPlayer(self.play_pause_button)
+        self.player = MusicPlayer(self.play_pause_button, self.play_next_song)
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path)
@@ -200,7 +199,7 @@ class MusicPlayerUI(QMainWindow):
             if self.isHidden():
                 self.show()
             else:
-                self.hide()  # Optionally, you can toggle between showing and hiding
+                self.hide()  # Optionally, you can toggle between showing and hiding                
                         
     def closeEvent(self, event):
         print("hiding window")
@@ -970,7 +969,11 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.music_file = self.file_path
         
-        return self.file_path        
+        return self.file_path     
+    
+    def play_next_song(self):
+        next_song = self.songTableWidget.get_next_song_object()
+        self.handleRowDoubleClick(next_song)    
     
     def handleRowSingleClick(self, item):
         if "Album Title: " in item.text():
