@@ -9,7 +9,15 @@ class SongTableWidget(QTableWidget):
         self.seekLeft = seekLeft
         self.play_pause = play_pause
         super().__init__(parent)
-
+        self.verticalHeader().setVisible(False) # hide the row numbers
+        
+    def get_next_song_object(self):
+        next_row = self.currentRow() + 1
+        next_song_object = self.item(next_row, 7)
+        print("next_item ", next_song_object.text())
+        
+        return next_song_object
+        
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
