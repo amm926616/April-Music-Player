@@ -44,11 +44,9 @@ class LRCSync:
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.current_index = 0
-        # Get the directory where the script is located
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-
+        
         # Construct the full path to the icon file
-        self.icon_path = os.path.join(script_dir, 'icons', 'april-icon.png')
+        self.icon_path = os.path.join(self.script_path, 'icons', 'april-icon.png')
         self.notetaking = NoteTaking(self)
 
     def updateFileandParse(self, file):
