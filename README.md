@@ -25,7 +25,7 @@ Before using the player, you'll need to download your songs and lyrics in advanc
  
 ### Installation
 
-- An installer for Windows is available in the releases section. However, since I don't use Windows, creating an installer can be tedious. So, I will only create an installer for major updates. I recommend running the program directly from the Python file for the best experience, as daily updates and bug fixes will be released frequently.
+- An installer for Windows is available in the releases section(outdated). However, since I don't use Windows, creating an installer can be tedious. So, I will only create an installer for major updates. I recommend running the program directly from the Python file for the best experience, as daily updates and bug fixes will be released frequently.
 
 - To run the project with Python, clone or download the repository:
     
