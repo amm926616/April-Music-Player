@@ -483,7 +483,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Connect the itemClicked signal to the custom slot
         self.songTableWidget.itemDoubleClicked.connect(self.handleRowDoubleClick)
-        self.songTableWidget.itemClicked.connect(self.handleRowSingleClick)
+        # self.songTableWidget.itemClicked.connect(self.handleRowSingleClick)
 
         rightLayout = QVBoxLayout()
         rightLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left

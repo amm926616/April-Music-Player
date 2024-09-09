@@ -337,7 +337,9 @@ class LRCSync:
             self.lyrics_keys = sorted(self.lyrics.keys())
             
     def get_current_lyrics(self):
-        if self.file is not None:
+        if self.file is not None and self.lyrics:
+            print(self.lyrics)
+            print(self.lyrics_keys)
             self.current_time = self.player.get_current_time()
 
             # Only update if the current time has moved beyond the update interval
