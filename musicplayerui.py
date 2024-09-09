@@ -1,5 +1,6 @@
 import json
 from base64 import b64decode
+import random
 import sqlite3
 import os
 import sys
@@ -27,6 +28,7 @@ from clickable_label import ClickableLabel
 from easy_json import EasyJson
 from loadingbar import LoadingBar
 from songtablewidget import SongTableWidget
+from random import choice
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -88,7 +90,6 @@ class MusicPlayerUI(QMainWindow):
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.central_widget = None
         self.songTableWidget = None
-        self.songListWidget = None
         self.search_bar = None
         self.track_display = None
         self.song_details = None
@@ -97,12 +98,19 @@ class MusicPlayerUI(QMainWindow):
         self.slider = None
         self.prev_button = None
         self.play_pause_button = QPushButton()
+        self.play_pause_button.setToolTip("Play/Pause")
+        self.repeat_button = QPushButton() 
+        self.repeat_button.setToolTip("Toggle Repeat")   
+        self.shuffle_button = QPushButton()    
+        self.shuffle_button.setToolTip("Toggle Shuffle")
         self.click_count = 0
         self.forw_button = None
         self.config_path = None
         self.app = app
         self.file_path = None
         self.item = None
+        self.media_files = []
+        
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
@@ -132,7 +140,7 @@ class MusicPlayerUI(QMainWindow):
 
         self.music_file = None
         self.lrc_file = None
-        self.player = MusicPlayer(self.play_pause_button, self.play_next_song)
+        self.player = MusicPlayer(self.play_pause_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path)
@@ -208,19 +216,6 @@ class MusicPlayerUI(QMainWindow):
             self.lrcPlayer.lrc_display.close()
         event.ignore()
         
-    def tableWidgetKeyEvents(self, event: QKeyEvent):
-        if event.key() == Qt.Key.Key_Up:
-            print("UP key pressed")
-            # If you want to still navigate up, you should process the event further
-            event.ignore()  # Let the event propagate to other handlers
-        elif event.key() == Qt.Key.Key_Down:
-            print("DOWN key pressed")
-            # If you want to still navigate down, you should process the event further
-            event.ignore()  # Let the event propagate to other handlers
-        else:
-            # For other keys, you might want to pass them to the default handler
-            super(QTableWidget, self).keyPressEvent(event)  # Call the base class method
-                 
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
@@ -239,11 +234,7 @@ class MusicPlayerUI(QMainWindow):
             self.on_progress_bar_double_click()            
             
         elif event.key() == Qt.Key.Key_Q and Qt.KeyboardModifier.ControlModifier:
-            sys.exit()
-            
-        elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
-            if self.songTableWidget.hasFocus():
-                self.handleRowDoubleClick(self.item)            
+            sys.exit()                 
             
         elif event.key() == Qt.Key.Key_S and Qt.KeyboardModifier.ControlModifier:
             print("serach")
@@ -462,7 +453,7 @@ class MusicPlayerUI(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Initialize the table widget
-        self.songTableWidget = SongTableWidget(self, self.handleRowSingleClick, self.player.seek_forward, self.player.seek_backward, self.player.play_pause_music)  
+        self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.player.seek_forward, self.player.seek_backward, self.player.play_pause_music)  
         self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)      
         self.songTableWidget.setColumnCount(9)  # 7 for metadata + 1 for file path
@@ -492,7 +483,7 @@ class MusicPlayerUI(QMainWindow):
         
         self.setupSongListWidget(leftLayout)
         self.setupMediaPlayerWidget(rightLayout)
-
+        
     def setupSongListWidget(self, left_layout):
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search...")
@@ -500,9 +491,19 @@ class MusicPlayerUI(QMainWindow):
 
         # Connect search bar returnPressed signal to the search method
         self.search_bar.returnPressed.connect(self.filterSongs)
+        
+        self.repeat_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "repeat.ico")))        
+        self.repeat_button.clicked.connect(self.player.toggle_repeat)
+        
+        self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle.ico")))        
+        self.shuffle_button.clicked.connect(self.player.toggle_shuffle)
+        
+        self.search_bar_layout = QHBoxLayout()
+        self.search_bar_layout.addWidget(self.search_bar)
+        self.search_bar_layout.addWidget(self.shuffle_button)
+        self.search_bar_layout.addWidget(self.repeat_button)
 
-        self.songListWidget = QListWidget()
-        left_layout.addWidget(self.search_bar)
+        left_layout.addLayout(self.search_bar_layout)
         if self.ej.get_value("music_directory") is None:
             self.ask_for_directory(False)
         self.loadSongs()
@@ -811,22 +812,20 @@ class MusicPlayerUI(QMainWindow):
             return
 
         media_extensions = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a'}
-        media_files = []
 
         # Recursively find all media files
         for root, _, files in os.walk(self.directory):
             for file in files:
                 if os.path.splitext(file)[1].lower() in media_extensions:
-                    media_files.append(os.path.join(root, file))
+                    self.media_files.append(os.path.join(root, file))
 
-        # loadingBar = LoadingBar(len(media_files))
         songs_by_artist = defaultdict(list)
         
-        loadingBar = LoadingBar(self, len(media_files))
+        loadingBar = LoadingBar(self, len(self.media_files))
         loadingBar.show()
 
         # Check if the database already has the songs stored
-        for index, item_path in enumerate(media_files):
+        for index, item_path in enumerate(self.media_files):
             loadingBar.update(index + 1)
             self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
             result = self.cursor.fetchone()
@@ -971,9 +970,36 @@ class MusicPlayerUI(QMainWindow):
         
         return self.file_path     
     
+    def find_row(self, target_file_path):
+        # Loop through each row in the table
+        for row in range(self.songTableWidget.rowCount()):
+            item = self.songTableWidget.item(row, 7)
+            if item:
+                current_file_path = self.songTableWidget.item(row, 7).text()
+
+                # Check if the current file path matches the target file path
+                if current_file_path == target_file_path:
+                    print(f"File found in row: {row}")
+                    # Perform any action you want with the found row, such as selecting it
+                    self.songTableWidget.selectRow(row)
+                    return row
+        else:
+            print("File path not found.")    
+                
     def play_next_song(self):
         next_song = self.songTableWidget.get_next_song_object()
         self.handleRowDoubleClick(next_song)    
+        
+    def play_random_song(self):
+        random_song = choice(self.media_files)
+        self.music_file = random_song
+        self.updateInformations()
+        self.get_lrc_file()
+        self.player.update_music_file(self.music_file)
+        self.player.default_pause_state()            
+        self.play_song()
+        random_song_row = self.find_row(self.music_file)
+        self.songTableWidget.song_playing_row = random_song_row
     
     def handleRowSingleClick(self, item):
         if "Album Title: " in item.text():
@@ -996,6 +1022,7 @@ class MusicPlayerUI(QMainWindow):
                 self.player.update_music_file(self.music_file)
                 self.player.default_pause_state()            
                 self.play_song()
+                self.songTableWidget.song_playing_row = item.row()
         else:
             pass
                 
