@@ -217,17 +217,17 @@ class MusicPlayerUI(QMainWindow):
         event.ignore()
         
         
-    def keyPressEvent(self, event: QKeyEvent):
-        if event.key() == Qt.Key.Key_Left:
-            print("left key pressed")
-            self.seekBack()
-            
-        elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
+    def keyPressEvent(self, event: QKeyEvent):            
+        if event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
             if self.lrcPlayer.show_lyrics:
                 self.on_off_lyrics(False)
             else:
                 self.on_off_lyrics(True)
+                
+        elif event.key() == Qt.Key.Key_Left:
+            print("left key pressed")
+            self.seekBack()                
             
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
@@ -593,7 +593,21 @@ class MusicPlayerUI(QMainWindow):
         right_layout.addWidget(media_widget)
         
         # Set up the media player controls panel
-        self.setupMediaPlayerControlsPanel(right_layout)
+        self.setupMediaPlayerControlsPanel(right_layout)        
+        
+    def slider_key_event(self, event):
+        # to catch key event on slider.
+        if event.key() == Qt.Key.Key_Left:
+            print("left key pressed")
+            self.seekBack()                
+            
+        elif event.key() == Qt.Key.Key_Right:
+            print("right key pressed")
+            self.seekForward()
+            
+        elif event.key() == Qt.Key.Key_Space:
+            print("Space key pressed")
+            self.play_pause()               
 
     def setupMediaPlayerControlsPanel(self, right_layout):
         # Store progress bar in a class variable
@@ -618,6 +632,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Create a QSlider
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider.keyPressEvent = self.slider_key_event
         self.slider.setRange(0, 100)
         self.slider.setValue(0)
 
