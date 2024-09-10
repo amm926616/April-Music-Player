@@ -38,8 +38,9 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(int(self.app.height() * 0.14))
+        self.show_lyrics = self.ej.get_value("show_lyrics")        
         
-        if self.ej.get_value("show_lyrics"):            
+        if self.show_lyrics:            
             self.current_lyric = "♪"
         else:
             self.current_lyric = "Lyrics Disabled"
@@ -188,7 +189,7 @@ class LRCSync:
         main_layout = QVBoxLayout(self.lrc_display)
         self.setup_button_layout(main_layout)        
 
-        if self.ej.get_value("show_lyrics"):
+        if self.show_lyrics:
             self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
             self.player.player.positionChanged.connect(self.update_display_lyric)
             self.lyric_sync_connected = True
@@ -247,8 +248,7 @@ class LRCSync:
                 
         elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
-            state = self.ej.get_value("show_lyrics")
-            if state:
+            if self.show_lyrics:
                 self.on_off_lyrics(False)
                 self.player.player.positionChanged.disconnect(self.update_display_lyric)                
                 self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))                

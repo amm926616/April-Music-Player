@@ -224,8 +224,7 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
-            state = self.ej.get_value("show_lyrics")
-            if state:
+            if self.lrcPlayer.show_lyrics:
                 self.on_off_lyrics(False)
             else:
                 self.on_off_lyrics(True)
@@ -268,12 +267,14 @@ class MusicPlayerUI(QMainWindow):
     def on_off_lyrics(self, checked):
         if checked:
             self.ej.edit_value("show_lyrics", True)
-            self.show_lyrics_action.setChecked(self.ej.get_value("show_lyrics"))            
+            self.lrcPlayer.show_lyrics = True            
+            self.show_lyrics_action.setChecked(True)            
             self.lrcPlayer.sync_lyrics(self.lrc_file)
         else:
             print("in disabling")
             self.ej.edit_value("show_lyrics", False)  
-            self.show_lyrics_action.setChecked(self.ej.get_value("show_lyrics"))            
+            self.lrcPlayer.show_lyrics = False                        
+            self.show_lyrics_action.setChecked(False)            
             self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric) 
             self.lrcPlayer.media_sync_connected = False
             self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("Lyrics Disabled"))                    
@@ -1062,7 +1063,7 @@ class MusicPlayerUI(QMainWindow):
             pass
                 
     def play_song(self):
-        if self.ej.get_value("show_lyrics"):
+        if self.lrcPlayer.show_lyrics:
             self.lrcPlayer.sync_lyrics(self.lrc_file)  
         else:
             if self.lrcPlayer.media_sync_connected:
