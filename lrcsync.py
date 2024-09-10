@@ -22,7 +22,8 @@ def convert_time_to_seconds(time_str):
     return minutes * 60 + seconds
 
 class LRCSync:
-    def __init__(self, app, player, config_path):
+    def __init__(self, app, player, config_path, on_off_lyrics=None):
+        self.on_off_lyrics = on_off_lyrics
         self.app = app
         self.config_path = config_path
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))        
@@ -242,6 +243,19 @@ class LRCSync:
                 self.lrc_display.showNormal()  # Restore to normal mode
             else:
                 self.lrc_display.showFullScreen()  # Enter full-screen mode
+                
+        elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
+            print("disabled lyrics")
+            state = self.ej.get_value("show_lyrics")
+            if state:
+                self.on_off_lyrics(False)
+                self.player.player.positionChanged.disconnect(self.update_display_lyric)                
+                self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))                
+                self.lyric_sync_connected = False                
+            else:
+                self.on_off_lyrics(True) 
+                self.player.player.positionChanged.connect(self.update_display_lyric)
+                self.lyric_sync_connected = True
         
     def createNoteTakingWindow(self):
         self.notetaking.createUI()
@@ -297,7 +311,7 @@ class LRCSync:
         # main_layout.addLayout(button_layout)
         
     def go_to_previous_lyrics(self):
-        if self.lyrics:
+        if self.lyrics and self.lyric_sync_connected:
             previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
             if not previous_lyric_index < 0:
                 previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
@@ -313,7 +327,7 @@ class LRCSync:
             
     
     def go_to_next_lyrics(self):
-        if self.lyrics:
+        if self.lyrics and self.lyric_sync_connected:
             if self.current_lyric == "♪":
                 next_lyric_index = 0
             else:
@@ -351,6 +365,7 @@ class LRCSync:
             
     def get_current_lyric(self):
         if self.file is not None and self.lyrics:
+            print("searching lyric")
             self.current_time = self.player.get_current_time()
 
             # Only update if the current time has moved beyond the update interval

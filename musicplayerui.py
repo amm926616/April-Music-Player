@@ -143,7 +143,7 @@ class MusicPlayerUI(QMainWindow):
         self.player = MusicPlayer(self.play_pause_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
         
         self.default_menubar_content() # setup menubar json if doesn't exist
-        self.lrcPlayer = LRCSync(self, self.player, self.config_path)
+        self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
 
     def load_config(self):
         """Load configuration from a JSON file."""
@@ -223,7 +223,7 @@ class MusicPlayerUI(QMainWindow):
             self.seekBack()
             
         elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
-            print("jkfas;kjfasdkjf ")
+            print("disabled lyrics")
             state = self.ej.get_value("show_lyrics")
             if state:
                 self.on_off_lyrics(False)
@@ -277,6 +277,8 @@ class MusicPlayerUI(QMainWindow):
             self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric) 
             self.lrcPlayer.media_sync_connected = False
             self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("Lyrics Disabled"))                    
+            self.lrcPlayer.current_lyric = "Lyrics Disabled"
+            self.lrcPlayer.current_index = 0
                     
     def toggle_on_off_lyrics(self, checked):
         self.on_off_lyrics(checked)
