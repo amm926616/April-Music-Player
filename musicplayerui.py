@@ -462,7 +462,7 @@ class MusicPlayerUI(QMainWindow):
         # Get the item at the clicked position
         item = self.songTableWidget.itemAt(pos)
         
-        if item:
+        if item and not "Album Title:" in item.text():
             # Create the context menu
             context_menu = QMenu(self)
             
@@ -476,7 +476,6 @@ class MusicPlayerUI(QMainWindow):
             context_menu.exec(QCursor.pos())
 
     def copy_item_path(self, item):
-        print("in copy item path")
         file = self.get_music_file_from_click(item)
         if file:
             self.app.clipboard().setText(file)
