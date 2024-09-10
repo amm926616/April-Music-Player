@@ -222,6 +222,14 @@ class MusicPlayerUI(QMainWindow):
             print("left key pressed")
             self.seekBack()
             
+        elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
+            print("jkfas;kjfasdkjf ")
+            state = self.ej.get_value("show_lyrics")
+            if state:
+                self.on_off_lyrics(False)
+            else:
+                self.on_off_lyrics(True)
+            
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
             self.seekForward()
@@ -253,8 +261,26 @@ class MusicPlayerUI(QMainWindow):
         if self.ej.get_value("sync_threshold") is None:
             self.ej.edit_value("sync_threshold", 0.3)
         if self.ej.get_value("lyrics_color") is None:
-            self.ej.edit_value("lyrics_color", "white")        
+            self.ej.edit_value("lyrics_color", "white") 
+        if self.ej.get_value("show_lyrics") is None:
+            self.ej.edit_value("show_lyrics", True)
             
+    def on_off_lyrics(self, checked):
+        if checked:
+            self.ej.edit_value("show_lyrics", True)
+            self.show_lyrics_action.setChecked(self.ej.get_value("show_lyrics"))            
+            self.lrcPlayer.sync_lyrics(self.lrc_file)
+        else:
+            print("in disabling")
+            self.ej.edit_value("show_lyrics", False)  
+            self.show_lyrics_action.setChecked(self.ej.get_value("show_lyrics"))            
+            self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric) 
+            self.lrcPlayer.media_sync_connected = False
+            self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("Lyrics Disabled"))                    
+                    
+    def toggle_on_off_lyrics(self, checked):
+        self.on_off_lyrics(checked)
+                    
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
@@ -280,11 +306,18 @@ class MusicPlayerUI(QMainWindow):
 
         set_default_background = QAction("Set Default Background Image", self)
         set_default_background.triggered.connect(self.set_default_background_image)
+                
+        self.show_lyrics_action = QAction("Show Lyrics", self)
+        self.show_lyrics_action.setCheckable(True)
+        self.show_lyrics_action.setChecked(self.ej.get_value("show_lyrics"))
+        self.show_lyrics_action.triggered.connect(self.toggle_on_off_lyrics)
                     
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
         options_menu = menubar.addMenu("Options")
         help_menu = menubar.addMenu("Help")
+        
+        options_menu.addAction(self.show_lyrics_action)
         
         # Add a sub-menu for text color selection with radio buttons
         text_color_menu = QMenu("Choose Lyrics Color", self)
@@ -1027,8 +1060,13 @@ class MusicPlayerUI(QMainWindow):
             pass
                 
     def play_song(self):
+        if self.ej.get_value("show_lyrics"):
+            self.lrcPlayer.sync_lyrics(self.lrc_file)  
+        else:
+            if self.lrcPlayer.media_sync_connected:
+                self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)         
+                self.lrcPlayer.media_sync_connected = False
         self.player.play()
-        self.lrcPlayer.sync_lyrics(self.lrc_file)   
                                 
     def on_progress_bar_double_click(self):
         print("Progress bar was double-clicked!")

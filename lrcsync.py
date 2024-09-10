@@ -25,6 +25,7 @@ class LRCSync:
     def __init__(self, app, player, config_path):
         self.app = app
         self.config_path = config_path
+        self.ej = EasyJson(os.path.join(self.config_path, "config.json"))        
         self.lrc_display = None
         self.file = None
         self.player = player
@@ -36,10 +37,16 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
         self.lrc_font = GetFont(int(self.app.height() * 0.14))
-        self.current_lyric = "♪"
-        self.is_playing = False
+        
+        if self.ej.get_value("show_lyrics"):            
+            self.current_lyric = "♪"
+        else:
+            self.current_lyric = "Lyrics Disabled"
+            self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
+            
+        self.lyric_sync_connected = None    
+        self.media_sync_connected = None
         self.current_lyrics_time = 0.0
-        self.ej = EasyJson(os.path.join(self.config_path, "config.json"))
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
@@ -176,13 +183,15 @@ class LRCSync:
 
         # Set the geometry of the dialog
         self.lrc_display.setGeometry(positionx, positiony, dialog_width, dialog_height)
-
-        self.player.player.positionChanged.connect(self.update_lyrics)
-
+        
         main_layout = QVBoxLayout(self.lrc_display)
-        self.setup_button_layout(main_layout)
+        self.setup_button_layout(main_layout)        
 
-        self.updateFileandParse(file)
+        if self.ej.get_value("show_lyrics"):
+            self.player.player.positionChanged.connect(self.update_display_lyric)
+            self.lyric_sync_connected = True
+        else:
+            self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
 
         # Properly connect the close event
         self.lrc_display.closeEvent = self.closeEvent
@@ -194,7 +203,11 @@ class LRCSync:
         print("QDialog closed")
         self.lyric_label = None
         self.lrc_display = None
-        self.player.player.positionChanged.disconnect(self.update_lyrics)        
+        
+        if self.lyric_sync_connected:
+            self.player.player.positionChanged.disconnect(self.update_display_lyric)        
+            self.lyric_sync_connected = False
+            
         event.accept()  # To accept the close event
         
     def keyPressEvent(self, event: QKeyEvent):
@@ -336,7 +349,7 @@ class LRCSync:
             self.lyrics = lyrics_dict
             self.lyrics_keys = sorted(self.lyrics.keys())
             
-    def get_current_lyrics(self):
+    def get_current_lyric(self):
         if self.file is not None and self.lyrics:
             self.current_time = self.player.get_current_time()
 
@@ -375,16 +388,18 @@ class LRCSync:
                                         
                                                            
     def update_media_lyric(self):
-        self.get_current_lyrics()
+        self.get_current_lyric()
         self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
                         
-    def update_lyrics(self):
+    def update_display_lyric(self):
         if self.lyric_label is not None:
             self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
             
     def sync_lyrics(self, file):
-        if self.is_playing: 
-            self.player.player.positionChanged.disconnect(self.update_media_lyric)
-        self.is_playing = True        
-        self.updateFileandParse(file)
-        self.player.player.positionChanged.connect(self.update_media_lyric)
+        self.updateFileandParse(file)       
+        if self.media_sync_connected:
+            self.player.player.positionChanged.disconnect(self.update_media_lyric)  
+            self.media_sync_connected = False
+
+        self.player.player.positionChanged.connect(self.update_media_lyric)  
+        self.media_sync_connected = True          
