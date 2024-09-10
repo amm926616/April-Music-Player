@@ -41,7 +41,7 @@ class LRCSync:
         self.show_lyrics = self.ej.get_value("show_lyrics")        
         
         if self.show_lyrics:            
-            self.current_lyric = "♪"
+            self.current_lyric = "(Instrumental Intro)"
         else:
             self.current_lyric = "Lyrics Disabled"
             self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
@@ -333,7 +333,7 @@ class LRCSync:
                 
     def go_to_next_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
-            if self.current_lyric == "♪":
+            if self.current_lyric == "(Instrumental Intro)":
                 next_lyric_index = 0
             else:
                 next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
@@ -390,7 +390,7 @@ class LRCSync:
             if index == 0:
                 if self.current_time < self.lyrics_keys[0]: # for instrument section before first lyric
                     self.current_lyrics_time = self.lyrics_keys[0]                                        
-                    self.current_lyric = "♪"
+                    self.current_lyric = "(Instrumental Intro)"
                 else:
                     # If the current time is before the first lyric
                     self.current_lyrics_time = self.lyrics_keys[0]                    
