@@ -478,7 +478,10 @@ class MusicPlayerUI(QMainWindow):
     def copy_item_path(self, item):
         print("in copy item path")
         file = self.get_music_file_from_click(item)
-        self.app.clipboard().setText(file)
+        if file:
+            self.app.clipboard().setText(file)
+        else:
+            pass
 
     def createWidgetAndLayouts(self):
         """ The main layout of the music player ui"""
@@ -993,6 +996,9 @@ class MusicPlayerUI(QMainWindow):
             return                                     
                                     
     def get_music_file_from_click(self, item):
+        if "Album Title:" in item.text():
+            return
+        
         row = item.row()
         self.file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
         
