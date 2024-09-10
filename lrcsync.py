@@ -189,6 +189,7 @@ class LRCSync:
         self.setup_button_layout(main_layout)        
 
         if self.ej.get_value("show_lyrics"):
+            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
             self.player.player.positionChanged.connect(self.update_display_lyric)
             self.lyric_sync_connected = True
         else:
@@ -223,10 +224,10 @@ class LRCSync:
             self.player.play_pause_music()
         elif event.key() == Qt.Key.Key_Up:
             print("UP key pressed")
-            self.go_to_previous_lyrics()
+            self.go_to_previous_lyric()
         elif event.key() == Qt.Key.Key_Down:
             print("down key pressed")
-            self.go_to_next_lyrics()
+            self.go_to_next_lyric()
         elif event.key() == Qt.Key.Key_D:
             self.go_to_the_start_of_current_lyric()                       
         elif event.key() == Qt.Key.Key_E:
@@ -310,13 +311,18 @@ class LRCSync:
         main_layout.addWidget(self.lyric_label)
         # main_layout.addLayout(button_layout)
         
-    def go_to_previous_lyrics(self):
+    def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
             previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
             if not previous_lyric_index < 0:
                 previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
                 print("previous time, ", previous_lyrics_key)        
                 self.player.player.setPosition(int(previous_lyrics_key * 1000))
+                
+                # fix the late to set current time due to slower sync time                                
+                self.current_lyrics_time = self.lyrics_keys[previous_lyric_index]                          
+                self.current_lyric = self.lyrics[self.current_lyrics_time]                                   
+                
             else:
                 self.current_lyrics_time = self.lyrics_keys[-1]
                 previous_lyrics_key = self.lyrics_keys[-1]
@@ -324,9 +330,8 @@ class LRCSync:
                 
             if self.player.in_pause_state:
                 self.player.paused_position = int(previous_lyrics_key * 1000)
-            
-    
-    def go_to_next_lyrics(self):
+                
+    def go_to_next_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
             if self.current_lyric == "♪":
                 next_lyric_index = 0
@@ -337,14 +342,18 @@ class LRCSync:
                 next_lyric_key = self.lyrics_keys[next_lyric_index]
                 print("next line, ", next_lyric_key)        
                 self.player.player.setPosition(int(next_lyric_key * 1000))
+                
+                # fix the late to set current time due to slower sync time                                                
+                self.current_lyrics_time = self.lyrics_keys[next_lyric_index]
+                self.current_lyric = self.lyrics[self.current_lyrics_time]                               
             else:
-                self.current_lyrics_time = self.lyrics_keys[0]                
+                self.current_lyrics_time = self.lyrics_keys[0]      
                 next_lyric_key = self.lyrics_keys[0]
                 self.player.player.setPosition(int(next_lyric_key * 1000))
                 
             if self.player.in_pause_state:
-                self.player.paused_position = int(next_lyric_key * 1000)            
-    
+                self.player.paused_position = int(next_lyric_key * 1000)                                   
+            
     def go_to_the_start_of_current_lyric(self):
         self.player.player.setPosition(int(self.current_lyrics_time * 1000))
 
@@ -365,7 +374,6 @@ class LRCSync:
             
     def get_current_lyric(self):
         if self.file is not None and self.lyrics:
-            print("searching lyric")
             self.current_time = self.player.get_current_time()
 
             # Only update if the current time has moved beyond the update interval
