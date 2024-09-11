@@ -82,6 +82,7 @@ def extract_track_number(track_number):
         return int(track_number)
     return float('inf')  # For non-numeric track numbers, place them at the end
 
+
 class MusicPlayerUI(QMainWindow):   
     def __init__(self, app):
         super().__init__()
@@ -144,7 +145,7 @@ class MusicPlayerUI(QMainWindow):
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
-
+        
     def load_config(self):
         """Load configuration from a JSON file."""
         if os.path.exists(self.config_file):
@@ -247,6 +248,10 @@ class MusicPlayerUI(QMainWindow):
             print("serach")
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
+            
+        else: 
+            # For other keys, use the default behavior            
+            super().keyPressEvent(event)            
             
     def folder_load_again(self):
         self.ask_for_directory(True)
@@ -793,21 +798,31 @@ class MusicPlayerUI(QMainWindow):
             search_text = self.search_bar.text().lower()
             first_match_found = False  # Flag to track the first match
 
-            for row in range(self.songTableWidget.rowCount()):
-                match = False
+            if search_text == "":  # If the search text is empty, reset the table view
+                for row in range(self.songTableWidget.rowCount()):
+                    self.songTableWidget.setRowHidden(row, False) 
+                        
+            elif search_text == "random":  # If the search text is "random", play a random song
+                self.play_random_song()
                 
-                for column in range(self.songTableWidget.columnCount() - 1):
-                    item = self.songTableWidget.item(row, column)
-                    if item and search_text in item.text().lower():
-                        match = True
-                        if not first_match_found:
-                            # Perform action on the first matching item
-                            self.handleRowDoubleClick(item)
-                            first_match_found = True
-                        break
-                
-                self.songTableWidget.setRowHidden(row, not match)
+            elif search_text == "crash":
+                raise RuntimeError("Purposely crashing the app with an uncaught exception")
             
+            else:
+                for row in range(self.songTableWidget.rowCount()):
+                    match = False
+                    
+                    for column in range(self.songTableWidget.columnCount() - 1):
+                        item = self.songTableWidget.item(row, column)
+                        if item and search_text in item.text().lower() and not "Album Title:" in item.text():
+                            match = True
+                            if not first_match_found:
+                                self.handleRowDoubleClick(item)
+                                first_match_found = True
+                            break
+                    
+                    self.songTableWidget.setRowHidden(row, not match)
+                
             # Clear the search bar and reset the placeholder text
             self.search_bar.clear()
             self.search_bar.setPlaceholderText("Search...")
