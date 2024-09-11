@@ -2,16 +2,26 @@ from musicplayerui import MusicPlayerUI
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QSharedMemory
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
+import signal
 import sys
 import os
 
-APP_KEY = 'adamlististhebest'
+APP_KEY = 'aprilmusicplayer'
 SERVER_NAME = 'MusicPlayerServer'
 
 class SingleInstanceApp:
     def __init__(self):
         self.shared_memory = QSharedMemory(APP_KEY)
         self.server = None
+        
+    def setup_signal_handlers(self):
+        """Setup signal handlers to ensure cleanup on crash or termination."""
+        signal.signal(signal.SIGINT, self.cleanup_stale_server)
+        signal.signal(signal.SIGTERM, self.cleanup_stale_server)        
+        
+    def cleanup_stale_server(self):
+        """Remove any existing server with the same name to avoid conflicts."""
+        QLocalServer.removeServer(SERVER_NAME)           
 
     def is_another_instance_running(self):
         if self.shared_memory.attach():
@@ -38,7 +48,7 @@ class SingleInstanceApp:
             socket.flush()
             socket.waitForBytesWritten(1000)
             socket.disconnectFromServer()
-        else:
+        else:          
             print("Failed to connect to server:", socket.errorString())
         socket.close()
 
@@ -62,10 +72,16 @@ class SingleInstanceApp:
 
     def run(self):
         app = QApplication(sys.argv)
-        
+
         # Load QSS stylesheet
         stylesheet = self.load_stylesheet()
-        app.setStyleSheet(stylesheet)        
+        app.setStyleSheet(stylesheet)
+
+        # Set up signal handlers for cleanup
+        self.setup_signal_handlers()
+
+        # Clean up stale server from previous crash
+        self.cleanup_stale_server()
 
         # If no other instance is running, create the UI and the local server
         ui = MusicPlayerUI(app)
