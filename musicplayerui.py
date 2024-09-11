@@ -433,8 +433,10 @@ class MusicPlayerUI(QMainWindow):
             <ul>
                 <li><strong>Left Arrow, Right Arrow, Spacebar</strong>: Seek backward, seek forward, and play/pause, respectively.</li>
                 <li><strong>Ctrl + L</strong>: Activate LRC display, or double-click the progress bar.</li>
-                <li><strong>Ctrl + S</strong>: Focus and place cursor on search bar.</li>
+                <li><strong>Ctrl + S</strong>: Focus and place cursor on search bar. Empty Search reloads default table.</li>
                 <li><strong>Ctrl + Q</strong>: This shortcut quits the program. The program runs in the background even if you close the main window.</li>
+                <li><strong>Ctrl + I</strong>: Activate/Disable Lyrics.</li>
+                <li><strong>Ctrl + G</strong>: Go to current playing music.</li>
             </ul>
         <b>In LRC view</b>:
             <ul>
