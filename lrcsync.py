@@ -363,7 +363,7 @@ class LRCSync:
         if self.file is None:
             self.lyrics = None
         else:
-            with open(self.file, 'r', encoding='utf-8') as file:
+            with open(self.file, 'r', encoding='utf-8-sig') as file:
                 for line in file:
                     time_str, lyric = extract_time_and_lyric(line)
                     if time_str and lyric:
