@@ -34,32 +34,50 @@ class SongTableWidget(QTableWidget):
         
         return item
     
-    def setNextRow(self):       
-        current_item = self.currentItem()
-        if current_item:
-            if "Album Title:" in current_item.text():    
-                self.setCurrentCell(self.currentRow() - 1, 7)
+    def setNextRow(self, currentItem):       
+        if currentItem:
+            if "Album Title:" in currentItem.text():    
+                next_row = self.currentRow() - 1  # Get the previous row index
+                self.setCurrentCell(next_row, 7)   # Set the current cell in the next row and column 7
+                print("Next row ", next_row)
+                
+                # Return the item at next_row and column 7
+                return self.item(next_row, 7)
         else:
-            pass
+            return None
+
             
-    def setPreviousRow(self):
-        current_item = self.currentItem()
-        if current_item:        
-            if "Album Title:" in current_item.text():    
-                self.setCurrentCell(self.currentRow() + 1, 7)
+    def setPreviousRow(self, currentItem):
+        if currentItem:        
+            if "Album Title:" in currentItem.text():    
+                previous_row  = self.currentRow() + 1                
+                self.setCurrentCell(previous_row, 7)
+                print("previous row ", previous_row)
+                
+                return self.item(previous_row, 7)
         else:
-            pass
+            return None
+            
+    def scrollToCurrentRow(self):
+        """Scroll to and highlight the current row."""
+        self.clearSelection()
+        if self.song_playing_row is not None:
+            current_item = self.item(self.song_playing_row, 7)
+            if current_item:
+                # Scroll to the item
+                self.scrollToItem(current_item, QTableWidget.ScrollHint.PositionAtCenter)
+                self.setCurrentCell(self.song_playing_row, 7)    
     
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
             print("UP key pressed")
-            self.setNextRow()
+            self.setNextRow(self.currentItem())
                     
         elif event.key() == Qt.Key.Key_Down:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
             print("DOWN key pressed")    
-            self.setPreviousRow()        
+            self.setPreviousRow(self.currentItem())        
             
         elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             if self.hasFocus():
@@ -78,7 +96,10 @@ class SongTableWidget(QTableWidget):
             
         elif event.key() == Qt.Key.Key_Enter:
             self.rowDoubleClick()
-            
+                                
+        elif event.key() == Qt.Key.Key_G:
+            self.scrollToCurrentRow()                         
+                                
         else:
             # For other keys, use the default behavior
             super().keyPressEvent(event)

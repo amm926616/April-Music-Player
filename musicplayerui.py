@@ -9,7 +9,7 @@ from collections import defaultdict
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
-    QLabel, QPushButton, QListWidget, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
+    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
 )
 from PyQt6.QtCore import Qt, QCoreApplication
 from mutagen import File
@@ -82,6 +82,7 @@ def extract_track_number(track_number):
         return int(track_number)
     return float('inf')  # For non-numeric track numbers, place them at the end
 
+
 class MusicPlayerUI(QMainWindow):   
     def __init__(self, app):
         super().__init__()
@@ -144,7 +145,7 @@ class MusicPlayerUI(QMainWindow):
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
-
+        
     def load_config(self):
         """Load configuration from a JSON file."""
         if os.path.exists(self.config_file):
@@ -217,17 +218,17 @@ class MusicPlayerUI(QMainWindow):
         event.ignore()
         
         
-    def keyPressEvent(self, event: QKeyEvent):
-        if event.key() == Qt.Key.Key_Left:
-            print("left key pressed")
-            self.seekBack()
-            
-        elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
+    def keyPressEvent(self, event: QKeyEvent):            
+        if event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
             if self.lrcPlayer.show_lyrics:
                 self.on_off_lyrics(False)
             else:
                 self.on_off_lyrics(True)
+                
+        elif event.key() == Qt.Key.Key_Left:
+            print("left key pressed")
+            self.seekBack()                
             
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
@@ -247,6 +248,10 @@ class MusicPlayerUI(QMainWindow):
             print("serach")
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
+            
+        else: 
+            # For other keys, use the default behavior            
+            super().keyPressEvent(event)            
             
     def folder_load_again(self):
         self.ask_for_directory(True)
@@ -462,7 +467,7 @@ class MusicPlayerUI(QMainWindow):
         # Get the item at the clicked position
         item = self.songTableWidget.itemAt(pos)
         
-        if item:
+        if item and not "Album Title:" in item.text():
             # Create the context menu
             context_menu = QMenu(self)
             
@@ -476,9 +481,11 @@ class MusicPlayerUI(QMainWindow):
             context_menu.exec(QCursor.pos())
 
     def copy_item_path(self, item):
-        print("in copy item path")
         file = self.get_music_file_from_click(item)
-        self.app.clipboard().setText(file)
+        if file:
+            self.app.clipboard().setText(file)
+        else:
+            pass
 
     def createWidgetAndLayouts(self):
         """ The main layout of the music player ui"""
@@ -590,7 +597,21 @@ class MusicPlayerUI(QMainWindow):
         right_layout.addWidget(media_widget)
         
         # Set up the media player controls panel
-        self.setupMediaPlayerControlsPanel(right_layout)
+        self.setupMediaPlayerControlsPanel(right_layout)        
+        
+    def slider_key_event(self, event):
+        # to catch key event on slider.
+        if event.key() == Qt.Key.Key_Left:
+            print("left key pressed")
+            self.seekBack()                
+            
+        elif event.key() == Qt.Key.Key_Right:
+            print("right key pressed")
+            self.seekForward()
+            
+        elif event.key() == Qt.Key.Key_Space:
+            print("Space key pressed")
+            self.play_pause()               
 
     def setupMediaPlayerControlsPanel(self, right_layout):
         # Store progress bar in a class variable
@@ -615,6 +636,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Create a QSlider
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider.keyPressEvent = self.slider_key_event
         self.slider.setRange(0, 100)
         self.slider.setValue(0)
 
@@ -776,21 +798,31 @@ class MusicPlayerUI(QMainWindow):
             search_text = self.search_bar.text().lower()
             first_match_found = False  # Flag to track the first match
 
-            for row in range(self.songTableWidget.rowCount()):
-                match = False
+            if search_text == "":  # If the search text is empty, reset the table view
+                for row in range(self.songTableWidget.rowCount()):
+                    self.songTableWidget.setRowHidden(row, False) 
+                        
+            elif search_text == "random":  # If the search text is "random", play a random song
+                self.play_random_song()
                 
-                for column in range(self.songTableWidget.columnCount() - 1):
-                    item = self.songTableWidget.item(row, column)
-                    if item and search_text in item.text().lower():
-                        match = True
-                        if not first_match_found:
-                            # Perform action on the first matching item
-                            self.handleRowDoubleClick(item)
-                            first_match_found = True
-                        break
-                
-                self.songTableWidget.setRowHidden(row, not match)
+            elif search_text == "crash":
+                raise RuntimeError("Purposely crashing the app with an uncaught exception")
             
+            else:
+                for row in range(self.songTableWidget.rowCount()):
+                    match = False
+                    
+                    for column in range(self.songTableWidget.columnCount() - 1):
+                        item = self.songTableWidget.item(row, column)
+                        if item and search_text in item.text().lower() and not "Album Title:" in item.text():
+                            match = True
+                            if not first_match_found:
+                                self.handleRowDoubleClick(item)
+                                first_match_found = True
+                            break
+                    
+                    self.songTableWidget.setRowHidden(row, not match)
+                
             # Clear the search bar and reset the placeholder text
             self.search_bar.clear()
             self.search_bar.setPlaceholderText("Search...")
@@ -993,6 +1025,9 @@ class MusicPlayerUI(QMainWindow):
             return                                     
                                     
     def get_music_file_from_click(self, item):
+        if "Album Title:" in item.text():
+            return
+        
         row = item.row()
         self.file_path = self.songTableWidget.item(row, 7).text()  # Retrieve the file path from the hidden column
         
