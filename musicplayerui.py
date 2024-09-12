@@ -5,12 +5,13 @@ import os
 import sys
 import platform
 from collections import defaultdict
-from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor
+import time
+from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor, QPainter, QPixmap, QPainterPath
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
     QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
 )
-from PyQt6.QtCore import Qt, QCoreApplication
+from PyQt6.QtCore import Qt, QCoreApplication, QRectF
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
@@ -18,7 +19,6 @@ from mutagen.id3 import ID3
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
-from PyQt6.QtGui import QPixmap
 from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
@@ -224,6 +224,9 @@ class MusicPlayerUI(QMainWindow):
                 self.on_off_lyrics(False)
             else:
                 self.on_off_lyrics(True)
+
+        elif event.key() == Qt.Key.Key_W and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.clearTable()
                 
         elif event.key() == Qt.Key.Key_Left:
             print("left key pressed")
@@ -839,31 +842,39 @@ class MusicPlayerUI(QMainWindow):
 
             if search_text == "":  # If the search text is empty, reset the table view
                 self.restore_table()
-                
+
             elif search_text == "random":  # If the search text is "random", play a random song
                 self.play_random_song()
-                
+
             elif search_text == "crash":
                 raise RuntimeError("Purposely crashing the app with an uncaught exception")
-            
+
             else:
                 for row in range(self.songTableWidget.rowCount()):
                     match = False
+                    item = self.songTableWidget.item(row, 0)  # Check the first column of each row
+
+                    # Hide album title rows (rows containing 'Album Title:')
+                    if item and "Album Title:" in item.text():
+                        self.songTableWidget.setRowHidden(row, True)
+                        continue  # Skip further processing for album title rows
                     
+                    # Now filter regular song rows
                     for column in range(self.songTableWidget.columnCount() - 1):
                         item = self.songTableWidget.item(row, column)
-                        if item and search_text in item.text().lower() and not "Album Title:" in item.text():
+                        if item and search_text in item.text().lower():
                             match = True
                             if not first_match_found:
-                                self.handleRowDoubleClick(item)
+                                self.handleRowDoubleClick(item)  # Open the first matching result
                                 first_match_found = True
                             break
-                    
+
                     self.songTableWidget.setRowHidden(row, not match)
-                
+
             # Clear the search bar and reset the placeholder text
             self.search_bar.clear()
             self.search_bar.setPlaceholderText("Search...")
+
         
     def cleanDetails(self):
         # clear the remaining from previous play
@@ -903,17 +914,23 @@ class MusicPlayerUI(QMainWindow):
         
         self.conn.commit()
 
+    def clearTable(self):
+        self.songTableWidget.clear()
+
     def loadSongs(self, load_again=False): # getting songs recursively
+        print("load Again is ", load_again)
         self.initialize_database()    
 
         if load_again:
+            print("in load again")
+            self.media_files.clear()
             self.cleanDetails()
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)
             self.songTableWidget.setHorizontalHeaderLabels(
                 ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
             )
-            
+
         if self.directory is None:
             return
 
@@ -937,6 +954,8 @@ class MusicPlayerUI(QMainWindow):
             result = self.cursor.fetchone()
 
             if result:
+                print(result, "result")
+                print("result exists in database")
                 # If the song is already in the database, use the stored metadata
                 metadata = {
                     'title': result[0],
@@ -949,6 +968,7 @@ class MusicPlayerUI(QMainWindow):
                     'file_type': result[8]
                 }
             else:
+                print("does not exist in database")
                 # Otherwise, extract the metadata and store it in the database
                 self.music_file = item_path
                 metadata = self.get_metadata()
@@ -1219,20 +1239,76 @@ class MusicPlayerUI(QMainWindow):
         else:
             album_image_data = None
 
+
         if album_image_data:
             pixmap = QPixmap()
             pixmap.loadFromData(album_image_data)
             self.passing_image = pixmap
-            
-            image_size = int(self.width() / 5) # extract image size from main window
-            
+
+            image_size = int(self.width() / 5)  # extract image size from main window
+
             target_width = image_size
             target_height = image_size
             scaled_pixmap = pixmap.scaled(target_width, target_height,
-                                          aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
-                                          transformMode=Qt.TransformationMode.SmoothTransformation)
+                                        aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
+                                        transformMode=Qt.TransformationMode.SmoothTransformation)
 
-            self.image_display.setPixmap(scaled_pixmap)
+            # Create a transparent pixmap with the same size as the scaled image
+            rounded_pixmap = QPixmap(target_width, target_height)
+            rounded_pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
+
+            # Start painting the image with QPainter
+            painter = QPainter(rounded_pixmap)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            # Create a QPainterPath for the rounded rectangle
+            path = QPainterPath()
+            radius = 20  # Adjust this for more or less roundness
+            path.addRoundedRect(QRectF(0, 0, target_width, target_height), radius, radius)
+
+            # Clip the image to the rounded rectangle
+            painter.setClipPath(path)
+            
+            # Draw the scaled pixmap into the rounded shape
+            painter.drawPixmap(0, 0, scaled_pixmap)
+            painter.end()
+
+            # Set the final rounded image to QLabel
+            self.image_display.setPixmap(rounded_pixmap)
             self.image_display.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter)
         else:
             self.image_display.setText("No Album Art Found")
+
+    def setRoundedImage(self, image_path):
+        # Load the image
+        pixmap = QPixmap(image_path)
+        
+        # Set the size of the rounded image you want
+        size = min(pixmap.width(), pixmap.height())  # This keeps the image square if it's not already
+        
+        # Scale the pixmap if needed
+        scaled_pixmap = pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+
+        # Create a new QPixmap with transparency (for rounded corners)
+        rounded_pixmap = QPixmap(size, size)
+        rounded_pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
+
+        # Create a QPainter to draw on the new pixmap
+        painter = QPainter(rounded_pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Create a rounded rectangle path
+        path = QPainterPath()
+        radius = 20  # Adjust the radius for more or less roundness
+        path.addRoundedRect(QRectF(0, 0, size, size), radius, radius)
+
+        # Set the clipping region to the rounded rectangle
+        painter.setClipPath(path)
+
+        # Draw the original pixmap into the rounded rectangle
+        painter.drawPixmap(0, 0, scaled_pixmap)
+        painter.end()
+
+        # Set the rounded pixmap on the QLabel
+        self.image_display.setPixmap(rounded_pixmap)
+        self.image_display.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter)
