@@ -918,11 +918,9 @@ class MusicPlayerUI(QMainWindow):
         self.songTableWidget.clear()
 
     def loadSongs(self, load_again=False): # getting songs recursively
-        print("load Again is ", load_again)
         self.initialize_database()    
 
         if load_again:
-            print("in load again")
             self.media_files.clear()
             self.cleanDetails()
             self.songTableWidget.clear()
@@ -954,8 +952,6 @@ class MusicPlayerUI(QMainWindow):
             result = self.cursor.fetchone()
 
             if result:
-                print(result, "result")
-                print("result exists in database")
                 # If the song is already in the database, use the stored metadata
                 metadata = {
                     'title': result[0],
@@ -968,7 +964,6 @@ class MusicPlayerUI(QMainWindow):
                     'file_type': result[8]
                 }
             else:
-                print("does not exist in database")
                 # Otherwise, extract the metadata and store it in the database
                 self.music_file = item_path
                 metadata = self.get_metadata()
@@ -1252,26 +1247,8 @@ class MusicPlayerUI(QMainWindow):
             scaled_pixmap = pixmap.scaled(target_width, target_height,
                                         aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
                                         transformMode=Qt.TransformationMode.SmoothTransformation)
-
-            # Create a transparent pixmap with the same size as the scaled image
-            rounded_pixmap = QPixmap(target_width, target_height)
-            rounded_pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
-
-            # Start painting the image with QPainter
-            painter = QPainter(rounded_pixmap)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-            # Create a QPainterPath for the rounded rectangle
-            path = QPainterPath()
-            radius = 20  # Adjust this for more or less roundness
-            path.addRoundedRect(QRectF(0, 0, target_width, target_height), radius, radius)
-
-            # Clip the image to the rounded rectangle
-            painter.setClipPath(path)
             
-            # Draw the scaled pixmap into the rounded shape
-            painter.drawPixmap(0, 0, scaled_pixmap)
-            painter.end()
+            rounded_pixmap = self.getRoundedCornerPixmap(scaled_pixmap, target_width, target_height)
 
             # Set the final rounded image to QLabel
             self.image_display.setPixmap(rounded_pixmap)
@@ -1279,36 +1256,25 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.image_display.setText("No Album Art Found")
 
-    def setRoundedImage(self, image_path):
-        # Load the image
-        pixmap = QPixmap(image_path)
-        
-        # Set the size of the rounded image you want
-        size = min(pixmap.width(), pixmap.height())  # This keeps the image square if it's not already
-        
-        # Scale the pixmap if needed
-        scaled_pixmap = pixmap.scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-
-        # Create a new QPixmap with transparency (for rounded corners)
-        rounded_pixmap = QPixmap(size, size)
+    def getRoundedCornerPixmap(self, scaled_pixmap, target_width, target_height):
+        # Create a transparent pixmap with the same size as the scaled image
+        rounded_pixmap = QPixmap(target_width, target_height)
         rounded_pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
 
-        # Create a QPainter to draw on the new pixmap
+        # Start painting the image with QPainter
         painter = QPainter(rounded_pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Create a rounded rectangle path
+        # Create a QPainterPath for the rounded rectangle
         path = QPainterPath()
-        radius = 20  # Adjust the radius for more or less roundness
-        path.addRoundedRect(QRectF(0, 0, size, size), radius, radius)
+        radius = 20  # Adjust this for more or less roundness
+        path.addRoundedRect(QRectF(0, 0, target_width, target_height), radius, radius)
 
-        # Set the clipping region to the rounded rectangle
+        # Clip the image to the rounded rectangle
         painter.setClipPath(path)
-
-        # Draw the original pixmap into the rounded rectangle
+        
+        # Draw the scaled pixmap into the rounded shape
         painter.drawPixmap(0, 0, scaled_pixmap)
         painter.end()
-
-        # Set the rounded pixmap on the QLabel
-        self.image_display.setPixmap(rounded_pixmap)
-        self.image_display.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter)
+        
+        return rounded_pixmap
