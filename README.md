@@ -49,17 +49,21 @@ Before using the player, you'll need to download your songs and lyrics in advanc
 
 ### Keyboard Shortcuts
 
-- **Left Arrow, Right Arrow, Spacebar**: Seek backward, seek forward, and play/pause, respectively.
-- **Ctrl + L**: Activate LRC display, or double-click the progress bar.
-- **Ctrl + S**: Focus and place cursor on search bar.
-- **Ctrl + Q**: This shortcut quits the program. The program runs in the background even if you close the main 
-window. 
-- **In LRC view**:
-    - **F**: Toggle full-screen mode.
-    - **D**: Go to the start of current lyric.
-    - **Up Arrow, Down Arrow**: Seek to the previous or next lyric line.
-    - **E**: To activate Note Book
-- **In Lyrics Notebook**:
+**General/In Main Window**
+  - **Left Arrow, Right Arrow, Spacebar**: Seek backward, seek forward, and play/pause, respectively.
+  - **Ctrl + L**: Activate LRC display, or double-click the progress bar.
+  - **Ctrl + S**: Focus and place cursor on search bar. Empty Search reloads default table.
+  - **Ctrl + Q**: This shortcut quits the program. The program runs in the background even if you close the main window.
+  - **Ctrl + I**: Activate/Disable Lyrics.
+  - **Ctrl + G**: Go to current playing music.
+
+**In LRC view**:
+  - **F**: Toggle full-screen mode.
+  - **D**: Go to the start of current lyric.
+  - **Up Arrow, Down Arrow**: Seek to the previous or next lyric line.
+  - **E**: To activate Note Book
+
+**In Lyrics Notebook**:
   - **Ctrl + S**: To save written text.
   - **Esc**, **Ctrl + W**, **Alt + F4**: To exit without saving.
 

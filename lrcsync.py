@@ -34,18 +34,19 @@ class LRCSync:
         self.lyrics = None
         self.lyrics_keys = None
         self.current_time = 0.0
-        self.media_lyric = QLabel()
-        self.media_lyric.setWordWrap(True)
         self.media_font = GetFont(13)
+        self.media_lyric = QLabel()
+        self.media_lyric.setWordWrap(True)        
         self.lrc_font = GetFont(int(self.app.height() * 0.14))
-        self.show_lyrics = self.ej.get_value("show_lyrics")        
+        self.show_lyrics = self.ej.get_value("show_lyrics") 
         
-        if self.show_lyrics:            
-            self.current_lyric = "(Instrumental Intro)"
+        if self.show_lyrics:    
+            self.current_lyric = "April Music Player"
         else:
             self.current_lyric = "Lyrics Disabled"
-            self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
             
+        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
+                    
         self.lyric_sync_connected = None    
         self.media_sync_connected = None
         self.current_lyrics_time = 0.0
@@ -57,6 +58,7 @@ class LRCSync:
         # Construct the full path to the icon file
         self.icon_path = os.path.join(self.script_path, 'icons', 'april-icon.png')
         self.notetaking = NoteTaking(self)
+        self.started_player = False
 
     def updateFileandParse(self, file):
         if file is None:
@@ -187,10 +189,14 @@ class LRCSync:
         self.lrc_display.setGeometry(positionx, positiony, dialog_width, dialog_height)
         
         main_layout = QVBoxLayout(self.lrc_display)
-        self.setup_button_layout(main_layout)        
+        self.setup_button_layout(main_layout)              
 
         if self.show_lyrics:
-            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
+            if self.started_player:                
+                self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
+            else:
+                self.lyric_label.setText(self.lrc_font.get_formatted_text("April Music Player"))
+                
             self.player.player.positionChanged.connect(self.update_display_lyric)
             self.lyric_sync_connected = True
         else:
@@ -217,28 +223,37 @@ class LRCSync:
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
             self.player.seek_backward()
+            
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
             self.player.seek_forward()
+            
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
             self.player.play_pause_music()
+            
         elif event.key() == Qt.Key.Key_Up:
             print("UP key pressed")
             self.go_to_previous_lyric()
+            
         elif event.key() == Qt.Key.Key_Down:
             print("down key pressed")
             self.go_to_next_lyric()
+            
         elif event.key() == Qt.Key.Key_D:
-            self.go_to_the_start_of_current_lyric()                       
+            self.go_to_the_start_of_current_lyric()    
+                               
         elif event.key() == Qt.Key.Key_E:
             print("pressing e")
             self.player.pause()            
             self.createNoteTakingWindow()
+            
         elif event.key() == Qt.Key.Key_Escape:
             self.lrc_display.close()
+            
         elif event.key() == Qt.Key.Key_R:
             self.player.player.setPosition(0)
+            
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
             if self.is_full_screen():
@@ -246,7 +261,7 @@ class LRCSync:
             else:
                 self.lrc_display.showFullScreen()  # Enter full-screen mode
                 
-        elif event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
+        elif event.key() == Qt.Key.Key_I and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
             if self.show_lyrics:
                 self.on_off_lyrics(False)
@@ -363,7 +378,7 @@ class LRCSync:
         if self.file is None:
             self.lyrics = None
         else:
-            with open(self.file, 'r', encoding='utf-8') as file:
+            with open(self.file, 'r', encoding='utf-8-sig') as file:
                 for line in file:
                     time_str, lyric = extract_time_and_lyric(line)
                     if time_str and lyric:
