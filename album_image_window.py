@@ -6,11 +6,21 @@ import os
 class AlbumImageWindow(QDialog):
     def __init__(self, parent=None, image=None, icon=None, imagename=None):
         super().__init__(parent)
-        self.image = image
+        # Resize the image while maintaining aspect ratio
+        new_width = 800
+        new_height = 800  
+        
+        if image.width() > new_width:
+            new_width = image.width()
+            new_height = image.width()
+            
+        self.image = image.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+
         self.image_name = imagename
+        title = self.image_name.split('/')[-1]
 
         # Set up the dialog window
-        self.setWindowTitle("Album Image - Full Resolution")
+        self.setWindowTitle(f"{title} - ({new_width}x{new_height})px")
         if icon:
             self.setWindowIcon(QIcon(icon))
 

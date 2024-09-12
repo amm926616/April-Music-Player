@@ -652,8 +652,6 @@ class MusicPlayerUI(QMainWindow):
             self.play_pause()               
 
     def setupMediaPlayerControlsPanel(self, right_layout):
-        # Store progress bar in a class variable
-        # Create a QProgressBar
         self.progress_bar = DoubleClickableProgressBar(self)
         self.progress_bar.setValue(0)
         self.progress_bar.setStyleSheet("""
