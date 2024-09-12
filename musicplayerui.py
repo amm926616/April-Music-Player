@@ -1,12 +1,11 @@
 import json
 from base64 import b64decode
-import random
 import sqlite3
 import os
 import sys
 import platform
 from collections import defaultdict
-from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup
+from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
     QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
@@ -219,7 +218,7 @@ class MusicPlayerUI(QMainWindow):
         
         
     def keyPressEvent(self, event: QKeyEvent):            
-        if event.key() == Qt.Key.Key_I and Qt.KeyboardModifier.ControlModifier:
+        if event.key() == Qt.Key.Key_I and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
             if self.lrcPlayer.show_lyrics:
                 self.on_off_lyrics(False)
@@ -238,17 +237,27 @@ class MusicPlayerUI(QMainWindow):
             print("Space key pressed")
             self.play_pause()
             
-        elif event.key() == Qt.Key.Key_L and Qt.KeyboardModifier.ControlModifier:
+        elif event.key() == Qt.Key.Key_L and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.on_progress_bar_double_click()            
             
-        elif event.key() == Qt.Key.Key_Q and Qt.KeyboardModifier.ControlModifier:
+        elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             sys.exit()                 
             
-        elif event.key() == Qt.Key.Key_S and Qt.KeyboardModifier.ControlModifier:
+        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("serach")
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
             
+        elif event.key() == Qt.Key.Key_R and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            print("playing random song")
+            self.play_random_song()
+            
+        elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.restore_table() 
+            
+        elif event.key() == Qt.Key.Key_T and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.songTableWidget.setFocus() # set focus on table
+               
         else: 
             # For other keys, use the default behavior            
             super().keyPressEvent(event)            
@@ -275,15 +284,22 @@ class MusicPlayerUI(QMainWindow):
             self.lrcPlayer.show_lyrics = True            
             self.show_lyrics_action.setChecked(True)            
             self.lrcPlayer.sync_lyrics(self.lrc_file)
+            
+            if not self.lrcPlayer.started_player:
+                self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("April Music Player"))                                                            
+                return 
+            
+            self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text(self.lrcPlayer.current_lyric))                                                            
+
         else:
             print("in disabling")
             self.ej.edit_value("show_lyrics", False)  
             self.lrcPlayer.show_lyrics = False                        
-            self.show_lyrics_action.setChecked(False)            
-            self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric) 
-            self.lrcPlayer.media_sync_connected = False
+            self.show_lyrics_action.setChecked(False)        
+            if self.lrcPlayer.media_sync_connected:
+                self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric) 
+                self.lrcPlayer.media_sync_connected = False
             self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("Lyrics Disabled"))                    
-            self.lrcPlayer.current_lyric = "Lyrics Disabled"
             self.lrcPlayer.current_index = 0
                     
     def toggle_on_off_lyrics(self, checked):
@@ -336,11 +352,28 @@ class MusicPlayerUI(QMainWindow):
         color_group.setExclusive(True)
 
         # Add color options with radio buttons
-        colors = ["white", "black", "blue", "yellow", "red", "cyan", "magenta", "orange", "green", "purple", "light gray", "dark gray", "turquoise", "brown", "pink"]
+        colors = [
+            "white", "black", "blue", "yellow", "red", "cyan", "magenta", "orange", "green", "purple", 
+            "light gray", "dark gray", "turquoise", "brown", "pink", "navy", "teal", "olive", "maroon", 
+            "lime", "indigo", "violet", "gold", "silver", "beige", "coral", "crimson", "khaki", 
+            "lavender", "salmon", "sienna", "tan", "plum", "peach", "chocolate"
+            ]
         self.color_actions = {}
+
         for color in colors:
             action = QAction(color, self, checkable=True)
+
+            # Create a colored pixmap for the color sample
+            pixmap = QPixmap(20, 20)  # 20x20 is a reasonable size for an icon
+            pixmap.fill(QColor(color))  # Fill the pixmap with the color
+
+            # Set the pixmap as the action icon
+            icon = QIcon(pixmap)
+            action.setIcon(icon)
+
+            self.color_actions[color] = action            
             action.setActionGroup(color_group)
+            
             action.triggered.connect(self.get_selected_color)  # Connect to method                        
             text_color_menu.addAction(action)
             self.color_actions[color] = action 
@@ -795,15 +828,18 @@ class MusicPlayerUI(QMainWindow):
 
         return metadata
     
+    def restore_table(self):
+        for row in range(self.songTableWidget.rowCount()):
+            self.songTableWidget.setRowHidden(row, False)         
+    
     def filterSongs(self):
         if self.search_bar.hasFocus():
             search_text = self.search_bar.text().lower()
             first_match_found = False  # Flag to track the first match
 
             if search_text == "":  # If the search text is empty, reset the table view
-                for row in range(self.songTableWidget.rowCount()):
-                    self.songTableWidget.setRowHidden(row, False) 
-                        
+                self.restore_table()
+                
             elif search_text == "random":  # If the search text is "random", play a random song
                 self.play_random_song()
                 
@@ -1089,6 +1125,7 @@ class MusicPlayerUI(QMainWindow):
             if "Album Title: " in item.text():
                 return
             else:
+                self.lrcPlayer.started_player = True
                 self.get_music_file_from_click(item)
                 self.updateInformations()
                 self.get_lrc_file()
