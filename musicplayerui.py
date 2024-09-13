@@ -9,7 +9,7 @@ import time
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor, QPainter, QPixmap, QPainterPath
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
-    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea
+    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea, QSizePolicy
 )
 from PyQt6.QtCore import Qt, QCoreApplication, QRectF
 from mutagen import File
@@ -22,7 +22,6 @@ from mutagen.wave import WAVE
 from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
-from clickable_progressbar import DoubleClickableProgressBar
 from clickable_label import ClickableLabel
 from easy_json import EasyJson
 from loadingbar import LoadingBar
@@ -97,17 +96,17 @@ class MusicPlayerUI(QMainWindow):
         self.progress_bar = None
         self.slider = None
         self.prev_button = None
-        self.play_pause_button = QPushButton()
-        self.play_pause_button.setToolTip("Play/Pause")
-        self.repeat_button = QPushButton() 
-        self.repeat_button.setToolTip("Toggle Repeat")   
-        self.shuffle_button = QPushButton()    
-        self.shuffle_button.setToolTip("Toggle Shuffle")
         self.click_count = 0
         self.forw_button = None
         self.config_path = None
         self.app = app
         self.file_path = None
+        self.play_pause_button = QPushButton()
+        self.play_pause_button.setToolTip("Play/Pause")
+        self.repeat_button = QPushButton() 
+        self.repeat_button.setToolTip("Toggle Repeat")   
+        self.shuffle_button = QPushButton()    
+        self.shuffle_button.setToolTip("Toggle Shuffle")       
         self.item = None
         self.media_files = []
         
@@ -241,7 +240,7 @@ class MusicPlayerUI(QMainWindow):
             self.play_pause()
             
         elif event.key() == Qt.Key.Key_L and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.on_progress_bar_double_click()            
+            self.activate_lrc_display()            
             
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             sys.exit()                 
@@ -579,11 +578,14 @@ class MusicPlayerUI(QMainWindow):
         self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle.ico")))        
         self.shuffle_button.clicked.connect(self.player.toggle_shuffle)
         
+        self.playback_management_layout = QHBoxLayout()
+        self.playback_management_layout.addWidget(self.repeat_button)        
+        self.playback_management_layout.addWidget(self.shuffle_button)        
+        
         self.search_bar_layout = QHBoxLayout()
         self.search_bar_layout.addWidget(self.search_bar)
-        self.search_bar_layout.addWidget(self.shuffle_button)
-        self.search_bar_layout.addWidget(self.repeat_button)
-
+        self.search_bar_layout.addLayout(self.playback_management_layout)
+        
         left_layout.addLayout(self.search_bar_layout)
         if self.ej.get_value("music_directory") is None:
             self.ask_for_directory(False)
@@ -649,62 +651,92 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
-            self.play_pause()               
+            self.play_pause()      
+            
+    def update_slider(self, position):         
+        self.update_progress_label(self.player.player.position())        
+        self.slider.setValue(position)
+        
+    def update_slider_range(self, duration):
+        self.slider.setRange(0, duration)
+        
+    def activate_lrc_display(self):
+        if self.lrcPlayer.lrc_display is not None: 
+            pass 
+        else:
+            self.lrcPlayer.startUI(self, self.lrc_file)    
+            
+    def update_progress_label(self, position):
+        # Calculate current time and total time
+        current_time = format_time(position // 1000)  # Convert from ms to seconds
+        total_time = format_time(self.player.get_duration() // 1000)  # Total duration in seconds
+
+        duration_string = f"[{current_time}/{total_time}]"
+        self.duration_label.setText(duration_string)
 
     def setupMediaPlayerControlsPanel(self, right_layout):
-        self.progress_bar = DoubleClickableProgressBar(self)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid grey;
-                border-radius: 5px;
-                text-align: center;
-            }
-
-            QProgressBar::chunk {
-                background-color: #aa0000;
-                width: 10px;
-            }
-        """)
-
-        # Connect the custom double-click signal to a function
-        self.progress_bar.doubleClicked.connect(self.on_progress_bar_double_click)
-
+        self.slider_layout = QHBoxLayout()
+        
+        self.duration_label = QLabel()
+        
         # Create a QSlider
         self.slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider_layout.addWidget(self.slider)
+        self.slider_layout.addWidget(self.duration_label)
         self.slider.keyPressEvent = self.slider_key_event
-        self.slider.setRange(0, 100)
+        self.slider.setRange(0, self.player.get_duration())
         self.slider.setValue(0)
 
-        # Connect the slider value to the progress bar
-        self.slider.valueChanged.connect(self.progress_bar.setValue)
-
         # Connect the slider to the player's position
-        self.slider.sliderMoved.connect(self.set_position)
+        self.player.player.positionChanged.connect(self.update_slider)
+        self.player.player.durationChanged.connect(self.update_slider_range)
+        self.slider.sliderMoved.connect(self.update_player_from_slider)
 
+        self.lrcPlayer.media_lyric.doubleClicked.connect(self.activate_lrc_display)
         right_layout.addWidget(self.lrcPlayer.media_lyric)
         self.lrcPlayer.media_lyric.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
-        right_layout.addWidget(self.progress_bar)
-        right_layout.addWidget(self.slider)
+        right_layout.addLayout(self.slider_layout)
 
         controls_layout = QHBoxLayout()
         self.prev_button = QPushButton()
+        self.prev_button.setToolTip("seek backward(-1s)")
         self.forw_button = QPushButton()
+        self.forw_button.setToolTip("seek forward(+1s)")
+        self.prev_song_button = QPushButton()
+        self.prev_song_button.setToolTip("Previous Song")
+        self.next_song_button = QPushButton()
+        self.next_song_button.setToolTip("Next Song")
+        
+        # Set size policy for the buttons to ensure consistent height
+        # Set size policy for the buttons to ensure consistent height
+        size_policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
+        self.prev_button.setSizePolicy(size_policy)
+        self.forw_button.setSizePolicy(size_policy)
+        self.play_pause_button.setSizePolicy(size_policy)
+        self.prev_song_button.setSizePolicy(size_policy)
+        self.next_song_button.setSizePolicy(size_policy)
+        
         self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
         self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
         self.forw_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-forward.ico")))
+        self.prev_song_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "previous-song.ico")))
+        self.next_song_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "next-song.ico")))
 
         self.prev_button.clicked.connect(self.seekBack)
         self.play_pause_button.clicked.connect(self.play_pause)
         self.forw_button.clicked.connect(self.seekForward)
+        self.prev_song_button.clicked.connect(self.play_previous_song)
+        self.next_song_button.clicked.connect(self.play_next_song)
 
+        controls_layout.addWidget(self.prev_song_button)
         controls_layout.addWidget(self.prev_button)
         controls_layout.addWidget(self.play_pause_button)
         controls_layout.addWidget(self.forw_button)
+        controls_layout.addWidget(self.next_song_button)
 
         right_layout.addLayout(controls_layout)
-        self.connect_progressbar_signals()
+        # self.connect_progressbar_signals()
 
     def updateDisplayData(self):
         metadata = self.get_metadata()
@@ -1107,6 +1139,10 @@ class MusicPlayerUI(QMainWindow):
                     return row
         else:
             print("File path not found.")    
+            
+    def play_previous_song(self):
+        previous_song = self.songTableWidget.get_previous_song_object()
+        self.handleRowDoubleClick(previous_song)
                 
     def play_next_song(self):
         next_song = self.songTableWidget.get_next_song_object()
@@ -1156,15 +1192,7 @@ class MusicPlayerUI(QMainWindow):
             if self.lrcPlayer.media_sync_connected:
                 self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)         
                 self.lrcPlayer.media_sync_connected = False
-        self.player.play()
-                                
-    def on_progress_bar_double_click(self):
-        print("Progress bar was double-clicked!")
-        if self.lrcPlayer.lrc_display is not None: 
-            pass 
-        else:
-            self.lrcPlayer.startUI(self, self.lrc_file)
-            # Add your desired functionality here
+        self.player.play()                    
 
     def seekBack(self):
         self.player.seek_backward()
@@ -1175,29 +1203,7 @@ class MusicPlayerUI(QMainWindow):
     def play_pause(self):
         self.player.play_pause_music()
 
-    def connect_progressbar_signals(self):
-        # Connect signals for the progress bar and slider
-        self.player.player.positionChanged.connect(self.updateProgressBar)
-        self.player.player.durationChanged.connect(self.updateProgressBarRange)
-
-    def updateProgressBar(self, position):
-        # Update the progress bar and slider values based on the current position
-        self.progress_bar.setValue(position)
-        self.slider.setValue(position)
-
-        # Calculate current time and total time
-        current_time = format_time(position // 1000)  # Convert from ms to seconds
-        total_time = format_time(self.player.get_duration() // 1000)  # Total duration in seconds
-
-        # Update the progress bar format to display time
-        self.progress_bar.setFormat(f"{current_time} / {total_time}")
-
-    def updateProgressBarRange(self, duration):
-        # Set the range of the progress bar and slider based on the media duration
-        self.progress_bar.setRange(0, duration)
-        self.slider.setRange(0, duration)
-
-    def set_position(self, position):
+    def update_player_from_slider(self, position):
         # Set the media player position when the slider is moved
         self.player.player.setPosition(position)
         

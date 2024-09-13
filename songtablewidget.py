@@ -12,6 +12,29 @@ class SongTableWidget(QTableWidget):
         super().__init__(parent)
         self.verticalHeader().setVisible(False) # hide the row numbers
         
+        
+    def get_previous_song_object(self):
+        previous_row = self.song_playing_row - 1
+        
+        # Ensure next_row is within bounds
+        if previous_row <= 0:
+            return None  # Or handle the case where no more rows are available
+        
+        # Check if the item exists
+        item = self.item(previous_row, 7)  
+                
+        if item is None:
+            previous_row -= 1
+            if previous_row <= 0:
+                return None  # Or handle the case where no more rows are available
+            item = self.item(previous_row, 7)
+        
+        # Set the new current row
+        self.setCurrentCell(previous_row, 7)
+        
+        return item            
+        
+        
     def get_next_song_object(self):
         current_row = self.song_playing_row
         next_row = current_row + 1
