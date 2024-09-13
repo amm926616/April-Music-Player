@@ -8,6 +8,7 @@ from getfont import GetFont
 from easy_json import EasyJson
 from PIL import Image, ImageDraw, ImageFont
 from notetaking import NoteTaking
+from clickable_label import ClickableLabel
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
@@ -35,7 +36,7 @@ class LRCSync:
         self.lyrics_keys = None
         self.current_time = 0.0
         self.media_font = GetFont(13)
-        self.media_lyric = QLabel()
+        self.media_lyric = ClickableLabel()
         self.media_lyric.setWordWrap(True)        
         self.lrc_font = GetFont(int(self.app.height() * 0.14))
         self.show_lyrics = self.ej.get_value("show_lyrics") 
