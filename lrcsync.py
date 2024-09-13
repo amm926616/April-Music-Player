@@ -60,6 +60,14 @@ class LRCSync:
         self.icon_path = os.path.join(self.script_path, 'icons', 'april-icon.png')
         self.notetaking = NoteTaking(self)
         self.started_player = False
+        
+    def disconnect_syncing(self):
+        if self.lyric_sync_connected:
+            self.player.player.positionChanged.disconnect(self.update_display_lyric)        
+            self.lyric_sync_connected = False
+        if self.media_sync_connected:
+            self.player.player.positionChanged.disconnect(self.update_media_lyric)        
+            self.media_sync_connected = False
 
     def updateFileandParse(self, file):
         if file is None:
