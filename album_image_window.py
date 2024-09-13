@@ -7,10 +7,18 @@ class AlbumImageWindow(QDialog):
     def __init__(self, parent=None, image=None, icon=None, imagename=None):
         super().__init__(parent)
         # Resize the image while maintaining aspect ratio
-        new_width = 800
-        new_height = 800  
+        screen_size = self.parent().screen().availableGeometry()
+        if screen_size.height() > 1200:
+            size = 1200
+        elif 1080 <= screen_size.height() < 1200:
+            size = 1000
+        elif screen_size.height() < 750:
+            size = 700
+
+        new_width = size
+        new_height = size 
         
-        if image.width() > new_width:
+        if image.width() > new_height:
             new_width = image.width()
             new_height = image.width()
             
@@ -28,8 +36,8 @@ class AlbumImageWindow(QDialog):
         image_label = QLabel(self)
         save_button = QPushButton("Save Image to Disk")
         
-        if image:
-            image_label.setPixmap(image)
+        if self.image:
+            image_label.setPixmap(self.image)
 
         # Optional: Align the image to the center
         image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)

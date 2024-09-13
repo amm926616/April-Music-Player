@@ -256,6 +256,7 @@ class MusicPlayerUI(QMainWindow):
         elif event.key() == Qt.Key.Key_R and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("playing random song")
             self.play_random_song()
+            self.simulate_keypress(self.songTableWidget, Qt.Key.Key_G)
             
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.restore_table() 
@@ -1184,6 +1185,7 @@ class MusicPlayerUI(QMainWindow):
             self.songTableWidget.clearSelection()    
             self.restore_table()      
             self.songTableWidget.setFocus()
+            # self.songTableWidget.scroll_to_current_row()
             self.simulate_keypress(self.songTableWidget, Qt.Key.Key_G) # only imitation of key press work. Direct calling the method doesn't work. IDk why.                                                                                                
             self.hidden_rows = False      
                
@@ -1193,6 +1195,7 @@ class MusicPlayerUI(QMainWindow):
             self.lrcPlayer.started_player = False
             self.lrcPlayer.disconnect_syncing()
             self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))                                   
+            self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("April Music Player"))
             self.player.started_playing = False
             
     def simulate_keypress(self, widget, key):
@@ -1255,7 +1258,6 @@ class MusicPlayerUI(QMainWindow):
             album_image_data = extract_mp4_album_art(audio_file)
         else:
             album_image_data = None
-
 
         if album_image_data:
             pixmap = QPixmap()

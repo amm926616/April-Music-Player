@@ -81,7 +81,7 @@ class SongTableWidget(QTableWidget):
         else:
             return None
             
-    def scrollToCurrentRow(self):
+    def scroll_to_current_row(self):
         """Scroll to and highlight the current row."""
         if self.song_playing_row is not None:
             current_item = self.item(self.song_playing_row, 7)
@@ -123,7 +123,7 @@ class SongTableWidget(QTableWidget):
                                 
         elif event.key() == Qt.Key.Key_G and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.clearSelection()               
-            self.scrollToCurrentRow()                         
+            self.scroll_to_current_row()                         
                                 
         else:
             # For other keys, use the default behavior
