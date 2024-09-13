@@ -1169,6 +1169,7 @@ class MusicPlayerUI(QMainWindow):
                 return
             else:
                 self.item = item   
+                self.songTableWidget.song_playing_row = self.item.row()                  
                 self.lrcPlayer.started_player = True
                 self.get_music_file_from_click(item)
                 self.updateInformations()
@@ -1207,9 +1208,8 @@ class MusicPlayerUI(QMainWindow):
             if self.lrcPlayer.media_sync_connected:
                 self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)         
                 self.lrcPlayer.media_sync_connected = False   
-                
-        self.songTableWidget.song_playing_row = self.item.row()                   
-                                       
+
+        self.player.started_playing = True                                                       
         self.player.play()                                           
             
     def seekBack(self):      
