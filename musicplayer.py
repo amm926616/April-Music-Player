@@ -42,8 +42,8 @@ class MusicPlayer:
         self.player.setSource(QUrl.fromLocalFile(self.file_name))
 
     def play(self):
-        self.player.play()
         self.started_playing = True
+        self.player.play()
         
     def disable_shuffle_button(self):
         if self.music_on_repeat:

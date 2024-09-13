@@ -101,6 +101,7 @@ class MusicPlayerUI(QMainWindow):
         self.config_path = None
         self.app = app
         self.file_path = None
+        self.hidden_rows = False
         self.play_pause_button = QPushButton()
         self.play_pause_button.setToolTip("Play/Pause")
         self.repeat_button = QPushButton() 
@@ -223,6 +224,9 @@ class MusicPlayerUI(QMainWindow):
                 self.on_off_lyrics(False)
             else:
                 self.on_off_lyrics(True)
+                
+        elif event.key() == Qt.Key.Key_P and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.stop_song()
 
         elif event.key() == Qt.Key.Key_W and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.clearTable()
@@ -246,7 +250,6 @@ class MusicPlayerUI(QMainWindow):
             sys.exit()                 
             
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            print("serach")
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
             
@@ -554,7 +557,6 @@ class MusicPlayerUI(QMainWindow):
 
         # Connect the itemClicked signal to the custom slot
         self.songTableWidget.itemDoubleClicked.connect(self.handleRowDoubleClick)
-        # self.songTableWidget.itemClicked.connect(self.handleRowSingleClick)
 
         rightLayout = QVBoxLayout()
         rightLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left
@@ -866,6 +868,8 @@ class MusicPlayerUI(QMainWindow):
             self.songTableWidget.setRowHidden(row, False)         
     
     def filterSongs(self):
+        self.hidden_rows = True
+        self.songTableWidget.clearSelection()               
         if self.search_bar.hasFocus():
             search_text = self.search_bar.text().lower()
             first_match_found = False  # Flag to track the first match
@@ -895,7 +899,6 @@ class MusicPlayerUI(QMainWindow):
                         if item and search_text in item.text().lower():
                             match = True
                             if not first_match_found:
-                                self.handleRowDoubleClick(item)  # Open the first matching result
                                 first_match_found = True
                             break
 
@@ -1149,6 +1152,7 @@ class MusicPlayerUI(QMainWindow):
         self.handleRowDoubleClick(next_song)    
         
     def play_random_song(self):
+        self.songTableWidget.clearSelection()
         random_song = choice(self.media_files)
         self.music_file = random_song
         self.updateInformations()
@@ -1159,21 +1163,12 @@ class MusicPlayerUI(QMainWindow):
         random_song_row = self.find_row(self.music_file)
         self.songTableWidget.song_playing_row = random_song_row
     
-    def handleRowSingleClick(self, item):
-        if "Album Title: " in item.text():
-            print("in album row")
-            self.item = None
-            return
-        else:
-            self.get_music_file_from_click(item)
-            self.updateInformations()    
-        self.item = item
-
-    def handleRowDoubleClick(self, item):
+    def handleRowDoubleClick(self, item):            
         if item:
             if "Album Title: " in item.text():
                 return
             else:
+                self.item = item   
                 self.lrcPlayer.started_player = True
                 self.get_music_file_from_click(item)
                 self.updateInformations()
@@ -1181,20 +1176,43 @@ class MusicPlayerUI(QMainWindow):
                 self.player.update_music_file(self.music_file)
                 self.player.default_pause_state()            
                 self.play_song()
-                self.songTableWidget.song_playing_row = item.row()
         else:
             pass
-                
+        
+        if self.hidden_rows:
+            self.songTableWidget.clearSelection()    
+            self.restore_table()      
+            self.songTableWidget.setFocus()
+            self.simulate_keypress(self.songTableWidget, Qt.Key.Key_G) # only imitation of key press work. Direct calling the method doesn't work. IDk why.                                                                                                
+            self.hidden_rows = False      
+               
+    def stop_song(self):
+        if self.player.started_playing:
+            self.player.player.stop()
+            self.lrcPlayer.started_player = False
+            self.lrcPlayer.disconnect_syncing()
+            self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))                                   
+            self.player.started_playing = False
+            
+    def simulate_keypress(self, widget, key):
+        """Simulate keypress for the given widget."""
+        key_event = QKeyEvent(QKeyEvent.Type.KeyPress, key, Qt.KeyboardModifier.ControlModifier)
+        QCoreApplication.postEvent(widget, key_event)
+                                            
     def play_song(self):
+        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))                                 
         if self.lrcPlayer.show_lyrics:
             self.lrcPlayer.sync_lyrics(self.lrc_file)  
         else:
             if self.lrcPlayer.media_sync_connected:
                 self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)         
-                self.lrcPlayer.media_sync_connected = False
-        self.player.play()                    
-
-    def seekBack(self):
+                self.lrcPlayer.media_sync_connected = False   
+                
+        self.songTableWidget.song_playing_row = self.item.row()                   
+                                       
+        self.player.play()                                           
+            
+    def seekBack(self):      
         self.player.seek_backward()
 
     def seekForward(self):
