@@ -144,6 +144,8 @@ class SongTableWidget(QTableWidget):
                     i -= 1  # Adjust index because we removed a row
 
             i += 1
+            
+        self.files_on_playlist = [i for i in rows_to_remove if i not in self.files_on_playlist]
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
