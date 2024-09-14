@@ -45,7 +45,8 @@ class AlbumTreeWidget(QWidget):
     def filter_items(self):
         search_text = self.search_bar.text().lower()
         matched_songs = []  # List to store matched and visible songs
-        matched_items = []
+        matched_albums = []  # List to store matched and visible albums
+        matched_artists = []  # List to store matched and visible artists
 
         def matches_search(text):
             if search_text in text.lower():
@@ -58,15 +59,16 @@ class AlbumTreeWidget(QWidget):
             artist_item = self.tree_widget.topLevelItem(i)
             artist_visible = False
 
+            if matches_search(artist_item.text(0)):
+                matched_artists.append(artist_item)
+
             for j in range(artist_item.childCount()):
                 album_item = artist_item.child(j)
                 album_visible = matches_search(album_item.text(0))
-                artist_visible = matches_search(artist_item.text(0)) or artist_visible
-
-                album_item.setHidden(not album_visible)
+                artist_visible = artist_visible or album_visible
 
                 if album_visible:
-                    artist_visible = True
+                    matched_albums.append(album_item)
 
                 # Collect songs if they match the search text
                 for k in range(album_item.childCount()):
@@ -77,10 +79,17 @@ class AlbumTreeWidget(QWidget):
                     if not song_item.isHidden():
                         matched_songs.append(song_item)
 
-            artist_item.setHidden(not artist_visible)       
+            artist_item.setHidden(not artist_visible)
 
         # Assign matched item
-        self.matched_item = matched_songs[0] if matched_songs else self.matched_items[0]
+        if matched_songs:
+            self.matched_item = matched_songs[0]
+        elif matched_albums:
+            self.matched_item = matched_albums[0]
+        elif matched_artists:
+            self.matched_item = matched_artists[0]
+        else:
+            self.matched_item = None
         
     def initUI(self):
         self.search_bar = QLineEdit()
