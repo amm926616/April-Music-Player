@@ -105,6 +105,8 @@ class MusicPlayerUI(QMainWindow):
         self.hidden_rows = False
         self.play_pause_button = QPushButton()
         self.play_pause_button.setToolTip("Play/Pause")
+        self.loop_playlist_button = QPushButton()
+        self.loop_playlist_button.setToolTip("Loop Playlist")
         self.repeat_button = QPushButton() 
         self.repeat_button.setToolTip("Toggle Repeat")   
         self.shuffle_button = QPushButton()    
@@ -141,7 +143,7 @@ class MusicPlayerUI(QMainWindow):
 
         self.music_file = None
         self.lrc_file = None
-        self.player = MusicPlayer(self.play_pause_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
+        self.player = MusicPlayer(self.play_pause_button, self.loop_playlist_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
@@ -170,7 +172,7 @@ class MusicPlayerUI(QMainWindow):
             return
 
     def createUI(self):
-        self.setWindowTitle("April Music Player - Digest Lyrics")
+        self.setWindowTitle("April Music Player - Digest Lyrics")        
         self.setGeometry(100, 100, 800, 400)
 
         # Construct the full path to the icon file
@@ -250,7 +252,7 @@ class MusicPlayerUI(QMainWindow):
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             sys.exit()                 
             
-        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+        elif event.key() == Qt.Key.Key_F and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
             
@@ -560,15 +562,14 @@ class MusicPlayerUI(QMainWindow):
         # Creating the 3 main layouts
     
         song_collection_layout = QVBoxLayout()
-        self.song_tree_widget = AlbumTreeWidget(self)
-        # self.loadSongsToCollection()
-        song_collection_layout.addWidget(self.song_tree_widget)
+        self.albumtreewidget = AlbumTreeWidget(self, self.songTableWidget)
+        self.loadSongsToCollection()
+        song_collection_layout.addWidget(self.albumtreewidget)
 
         playlistLayout = QVBoxLayout()
         playlistLayout.addWidget(self.songTableWidget)
             
         mediaLayout = QVBoxLayout()
-        # mediaLayout.setContentsMargins(5, 0, 0, 0)  # 5 pixels to the left
         
         main_layout.addLayout(song_collection_layout, 3)
         main_layout.addLayout(playlistLayout, 13)
@@ -577,6 +578,8 @@ class MusicPlayerUI(QMainWindow):
         self.setupSongListWidget(playlistLayout)
         self.setupMediaPlayerWidget(mediaLayout)
         
+    def loop_playlist(self):
+        pass
         
     def setupSongListWidget(self, left_layout):
         self.search_bar = QLineEdit()
@@ -586,6 +589,9 @@ class MusicPlayerUI(QMainWindow):
         # Connect search bar returnPressed signal to the search method
         self.search_bar.returnPressed.connect(self.filterSongs)
         
+        self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))
+        self.loop_playlist_button.clicked.connect(self.player.toggle_loop_playlist)
+        
         self.repeat_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "repeat.ico")))        
         self.repeat_button.clicked.connect(self.player.toggle_repeat)
         
@@ -593,17 +599,18 @@ class MusicPlayerUI(QMainWindow):
         self.shuffle_button.clicked.connect(self.player.toggle_shuffle)
         
         self.playback_management_layout = QHBoxLayout()
+        self.playback_management_layout.addWidget(self.loop_playlist_button)
         self.playback_management_layout.addWidget(self.repeat_button)        
         self.playback_management_layout.addWidget(self.shuffle_button)        
         
         self.search_bar_layout = QHBoxLayout()
+        self.search_bar_layout.addLayout(self.playback_management_layout)        
         self.search_bar_layout.addWidget(self.search_bar)
-        self.search_bar_layout.addLayout(self.playback_management_layout)
         
         left_layout.addLayout(self.search_bar_layout)
         if self.ej.get_value("music_directory") is None:
             self.ask_for_directory(False)
-        self.loadSongs()
+        # self.loadSongs()
 
     def setupMediaPlayerWidget(self, right_layout):
         # Create a widget to hold the media player components
@@ -614,6 +621,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Create and configure the track display label
         self.track_display = QLabel("No Track Playing")
+        QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))        
         self.track_display.setFont(QFont("Komika Axis"))
         self.track_display.setWordWrap(True)
         self.track_display.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -884,7 +892,6 @@ class MusicPlayerUI(QMainWindow):
         self.songTableWidget.clearSelection()               
         if self.search_bar.hasFocus():
             search_text = self.search_bar.text().lower()
-            first_match_found = False  # Flag to track the first match
 
             if search_text == "":  # If the search text is empty, reset the table view
                 self.restore_table()
@@ -896,13 +903,17 @@ class MusicPlayerUI(QMainWindow):
                 raise RuntimeError("Purposely crashing the app with an uncaught exception")
 
             else:
+                found_at_least_one = False  # Flag to track if at least one match is found
                 for row in range(self.songTableWidget.rowCount()):
                     match = False
                     item = self.songTableWidget.item(row, 0)  # Check the first column of each row
 
-                    # Hide album title rows (rows containing 'Album Title:')
+                    # Hide album title rows (rows containing 'Album Title:') only if matches are found
                     if item and "Album Title:" in item.text():
-                        self.songTableWidget.setRowHidden(row, True)
+                        if found_at_least_one:
+                            self.songTableWidget.setRowHidden(row, True)
+                        else:
+                            self.songTableWidget.setRowHidden(row, False)
                         continue  # Skip further processing for album title rows
                     
                     # Now filter regular song rows
@@ -910,16 +921,18 @@ class MusicPlayerUI(QMainWindow):
                         item = self.songTableWidget.item(row, column)
                         if item and search_text in item.text().lower():
                             match = True
-                            if not first_match_found:
-                                first_match_found = True
+                            found_at_least_one = True  # Set flag to True if at least one match is found
                             break
-
-                    self.songTableWidget.setRowHidden(row, not match)
-
+                    
+                    # Only hide rows if there is at least one match
+                    if found_at_least_one:
+                        self.songTableWidget.setRowHidden(row, not match)
+                    else:
+                        self.songTableWidget.setRowHidden(row, False)  # Ensure no rows are hidden if no matches are found
+                        
             # Clear the search bar and reset the placeholder text
             self.search_bar.clear()
             self.search_bar.setPlaceholderText("Search...")
-
         
     def cleanDetails(self):
         # clear the remaining from previous play
@@ -928,39 +941,9 @@ class MusicPlayerUI(QMainWindow):
         self.track_display.setText("No Track Playing")
         self.image_display.clear()
         self.song_details.clear()
-           
-    def initialize_database(self):
-        # Connect to the SQLite database (creates the file if it doesn't exist)
-        self.conn = sqlite3.connect(os.path.join(self.config_path, "songs.db"))
-        self.cursor = self.conn.cursor()
-
-        # Create the table for storing song metadata if it doesn't exist
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS songs (
-                title TEXT,
-                artist TEXT,
-                album TEXT,
-                year TEXT,
-                genre TEXT,
-                track_number TEXT,
-                duration INTEGER,
-                file_path TEXT PRIMARY KEY,
-                file_type TEXT
-            )
-        ''')
-            
-        # Create the table for storing notes for lyrics if it doesn't exist
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS notes (
-                lrc_filename TEXT PRIMARY KEY,
-                json_notes TEXT
-            );
-        ''')
-        
-        self.conn.commit()
-        
+                   
     def loadSongsToCollection(self):
-        self.initialize_database()
+        self.albumtreewidget.initialize_database()
 
         if self.directory is None:
             return
@@ -976,10 +959,14 @@ class MusicPlayerUI(QMainWindow):
 
         songs_by_artist = defaultdict(list)
         
+        loadingBar = LoadingBar(self, len(self.media_files))
+        loadingBar.show()
+                
         # Check if the database already has the songs stored
         for index, item_path in enumerate(self.media_files):
-            self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
-            result = self.cursor.fetchone()
+            loadingBar.update(index + 1)            
+            self.albumtreewidget.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
+            result = self.albumtreewidget.cursor.fetchone()
 
             if result:
                 # If the song is already in the database, use the stored metadata
@@ -998,7 +985,7 @@ class MusicPlayerUI(QMainWindow):
                 self.music_file = item_path
                 metadata = self.get_metadata()
 
-                self.cursor.execute('''
+                self.albumtreewidget.cursor.execute('''
                     INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
@@ -1012,36 +999,15 @@ class MusicPlayerUI(QMainWindow):
                     item_path,
                     metadata['file_type']
                 ))
-                self.conn.commit()
+                self.albumtreewidget.conn.commit()
 
             artist = metadata['artist'] if metadata['artist'] else 'Unknown Artist'
             album = metadata['album'] if metadata['album'] else 'Unknown Album'
             track_number = metadata['track_number']
             songs_by_artist[artist].append((album, track_number, item_path, metadata))
 
-        # Clear the existing items in the QTreeWidget
-        self.song_tree_widget.tree_widget.clear()
-
-        # Build the tree structure
-        for artist in sorted(songs_by_artist.keys()):
-            artist_item = QTreeWidgetItem([artist])
-            self.song_tree_widget.tree_widget.addTopLevelItem(artist_item)
-
-            songs_by_album = defaultdict(list)
-            for album, track_number, item_path, metadata in songs_by_artist[artist]:
-                songs_by_album[album].append((track_number, item_path, metadata))
-
-            for album in sorted(songs_by_album.keys()):
-                album_item = QTreeWidgetItem([album])
-                artist_item.addChild(album_item)
-
-                sorted_songs = sorted(songs_by_album[album], key=lambda x: extract_track_number(x[0]))
-                for track_number, item_path, metadata in sorted_songs:
-                    title = metadata['title']
-                    track_item = QTreeWidgetItem([f"{track_number}. {title}"])
-                    album_item.addChild(track_item)
-
-        self.conn.close()        
+        self.albumtreewidget.loadSongsToCollection(songs_by_artist)
+        loadingBar.close()
 
     def clearTable(self):
         self.songTableWidget.clear()
@@ -1071,14 +1037,10 @@ class MusicPlayerUI(QMainWindow):
 
         songs_by_artist = defaultdict(list)
         
-        loadingBar = LoadingBar(self, len(self.media_files))
-        loadingBar.show()
-
         # Check if the database already has the songs stored
         for index, item_path in enumerate(self.media_files):
-            loadingBar.update(index + 1)
-            self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
-            result = self.cursor.fetchone()
+            self.albumtreewidget.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
+            result = self.albumtreewidget.cursor.fetchone()
 
             if result:
                 # If the song is already in the database, use the stored metadata
@@ -1097,7 +1059,7 @@ class MusicPlayerUI(QMainWindow):
                 self.music_file = item_path
                 metadata = self.get_metadata()
 
-                self.cursor.execute('''
+                self.albumtreewidget.cursor.execute('''
                     INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
@@ -1139,12 +1101,6 @@ class MusicPlayerUI(QMainWindow):
 
                 # Disable item interaction
                 album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
-
-                # Set the text color to your desired color (e.g., blue)
-                # album_name_item.setForeground(QColor('#403e3e'))
-
-                # Optionally, set the background color too
-                # album_name_item.setBackground(QColor('#302121'))
 
                 self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
                 self.songTableWidget.setItem(row_position, 0, album_name_item)
@@ -1195,8 +1151,7 @@ class MusicPlayerUI(QMainWindow):
                     file_type_item.setFlags(file_type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.songTableWidget.setItem(row_position, 8, file_type_item)
                     
-        self.conn.close()
-        loadingBar.close()
+        self.albumtreewidget.conn.close()
                             
     def updateInformations(self):
         if self.music_file:
@@ -1248,8 +1203,10 @@ class MusicPlayerUI(QMainWindow):
         self.handleRowDoubleClick(next_song)    
         
     def play_random_song(self):
+        if not self.songTableWidget.files_on_playlist:
+            return 
         self.songTableWidget.clearSelection()
-        random_song = choice(self.media_files)
+        random_song = choice(self.songTableWidget.files_on_playlist)
         self.music_file = random_song
         self.updateInformations()
         self.get_lrc_file()

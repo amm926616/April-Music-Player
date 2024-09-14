@@ -8,11 +8,12 @@ class SongTableWidget(QTableWidget):
         self.seekRight = seekRight
         self.seekLeft = seekLeft
         self.play_pause = play_pause
-        self.song_playing_row = None        
+        self.song_playing_row = None  
+        self.files_on_playlist = []      
                         
         super().__init__(parent)                
         self.verticalHeader().setVisible(False) # hide the row numbers
-        
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         
     def get_previous_song_object(self):
         previous_row = self.song_playing_row - 1
@@ -92,12 +93,66 @@ class SongTableWidget(QTableWidget):
                 self.setCurrentCell(self.song_playing_row, 7)    
         else:
             return 
-    
+        
+    def delete_selected_rows(self):
+        # Get a list of selected rows
+        selected_rows = set(index.row() for index in self.selectedIndexes())
+        
+        # Create a set to keep track of rows to remove
+        rows_to_remove = set()
+        
+        # Collect all rows to be removed, including any empty album title rows
+        for row in sorted(selected_rows, reverse=True):
+            # Get the file path from the hidden column (assuming file path is in the 7th column, index 7)
+            file_path_item = self.item(row, 7)
+            if file_path_item:
+                file_path = file_path_item.text()
+                # Remove the file path from files_on_playlist
+                if file_path in self.files_on_playlist:
+                    self.files_on_playlist.remove(file_path)
+            
+            # Add the row to the set of rows to remove
+            rows_to_remove.add(row)
+        
+        # Remove the selected rows
+        for row in sorted(rows_to_remove, reverse=True):
+            self.removeRow(row)
+        
+        # Check for any remaining "Album Title:" rows without songs
+        row_count = self.rowCount()
+        i = 0
+        while i < row_count:
+            item = self.item(i, 0)  # Assuming album title is in the first column (index 0)
+            if item and item.text().startswith("Album Title:"):
+                album_title_text = item.text()
+                album_title = album_title_text[len("Album Title: "):]  # Extract the album title part
+                
+                # Check if the album has remaining songs
+                has_songs = False
+                j = i + 1
+                while j < row_count:
+                    next_item = self.item(j, 0)  # Check next rows for song items
+                    if next_item and not next_item.text().startswith("Album Title:"):
+                        has_songs = True
+                        break
+                    j += 1
+                
+                if not has_songs:
+                    # Remove the album title row if no songs are left
+                    self.removeRow(i)
+                    row_count -= 1  # Adjust row count because we removed a row
+                    i -= 1  # Adjust index because we removed a row
+
+            i += 1
+        
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
             print("UP key pressed")
             self.setNextRow(self.currentItem())
+            
+        elif event.key() == Qt.Key.Key_Delete:
+            self.delete_selected_rows()
                     
         elif event.key() == Qt.Key.Key_Down:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
