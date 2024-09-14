@@ -38,7 +38,7 @@ class SongTableWidget(QTableWidget):
         
         # Set the background image on the viewport (the visible area of the table)
         self.viewport().setStyleSheet("""
-            background-image: url(/home/adam178/MyGitRepos/april-music-player/icons/resized.png);
+            background-image: url(/home/adam178/MyGitRepos/april-music-player/icons/resized.svg);
             background-repeat: no-repeat;
             background-position: center;
             background-size: cover;
