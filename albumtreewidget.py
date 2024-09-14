@@ -34,9 +34,7 @@ class AlbumTreeWidget(QWidget):
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             if self.search_bar.hasFocus:
-                print("fjas;kfjsa;fj;sajf;sk~~~~~~~~~", self.matched_item.text(0))                                
                 self.on_item_double_clicked(self.matched_item)
-                print("search bar enter")
                 self.search_bar.clear()
                 self.search_bar.setPlaceholderText("Search...")
         else:
@@ -177,9 +175,7 @@ class AlbumTreeWidget(QWidget):
                 print("No file path found for the selected song.")
         else:
             print(f"Unknown item double-clicked: {item.text(0)}")
-            
-        print("all songs on playlists ", self.songTableWidget.files_on_playlist)
-            
+                        
     def add_song_by_file_path(self, file_path):
         self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (file_path,))
         song = self.cursor.fetchone()
