@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 
 class SongTableWidget(QTableWidget):
     def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None):
+        self.parent = parent
         self.rowDoubleClick = rowDoubleClick
         self.seekRight = seekRight
         self.seekLeft = seekLeft
@@ -16,6 +17,15 @@ class SongTableWidget(QTableWidget):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         
     def get_previous_song_object(self):
+        if self.parent.player.music_on_shuffle:
+            self.parent.play_random_song()
+            return 
+        
+        if self.parent.player.music_on_repeat:
+                self.parent.player.player.setPosition(0)
+                self.parent.player.player.play() 
+                return
+                
         previous_row = self.song_playing_row - 1
         
         # Ensure next_row is within bounds
@@ -38,13 +48,28 @@ class SongTableWidget(QTableWidget):
         
         
     def get_next_song_object(self):
+        if self.parent.player.music_on_shuffle:
+            self.parent.play_random_song()
+            return 
+        
+        if self.parent.player.music_on_repeat:
+                self.parent.player.player.setPosition(0)
+                self.parent.player.player.play() 
+                return
+        
         current_row = self.song_playing_row
         next_row = current_row + 1
         
         # Ensure next_row is within bounds
         if next_row >= self.rowCount():
-            return None  # Or handle the case where no more rows are available
-        
+            if self.parent.player.playlist_on_loop or self.parent.player.music_on_repeat:
+                next_row = 0
+            elif self.parent.player.music_on_shuffle:
+                self.parent.play_random_song()
+            else:
+                self.parent.stop_song()      
+                self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text("End Of Playlist"))            
+                    
         # Check if the item exists
         item = self.item(next_row, 7)
         
