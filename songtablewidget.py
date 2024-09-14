@@ -19,6 +19,41 @@ class SongTableWidget(QTableWidget):
         
         # Always show the vertical scrollbar
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        # self.setStyleSheet("""
+        #     QTableWidget {
+        #         background-color: transparent;  /* Make sure the table background is transparent */
+        #     }
+        #     QTableWidget::item {
+        #         background-color: transparent;  /* Ensure that all table items are transparent */
+        #         border: none;  /* Remove borders around cells */
+        #     }
+        #     QTableWidget::item:hover {
+        #         background-color: rgba(200, 200, 255, 100);  /* Hover effect */
+        #     }
+        #     QTableWidget::item:selected {
+        #         background-color: rgba(100, 150, 250, 150);  /* Selection color */
+        #     }
+        # """)
+        
+        # Set the background image on the viewport (the visible area of the table)
+        self.viewport().setStyleSheet("""
+            background-image: url(/home/adam178/MyGitRepos/april-music-player/icons/resized.png);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        """)
+
+    #     # Make sure the cells are transparent
+    #     self.make_cells_transparent()
+
+    # def make_cells_transparent(self):
+    #     """Ensure all cells have a transparent background."""
+    #     for row in range(self.rowCount()):
+    #         for col in range(self.columnCount()):
+    #             item = self.item(row, col)
+    #             if item:
+    #                 item.setBackground(Qt.transparent)   
         
     def get_previous_song_object(self):
         if self.parent.player.music_on_shuffle:
