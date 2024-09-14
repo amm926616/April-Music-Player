@@ -8,8 +8,9 @@ class SongTableWidget(QTableWidget):
         self.seekRight = seekRight
         self.seekLeft = seekLeft
         self.play_pause = play_pause
-        self.song_playing_row = None
-        super().__init__(parent)
+        self.song_playing_row = None        
+                        
+        super().__init__(parent)                
         self.verticalHeader().setVisible(False) # hide the row numbers
         
         
