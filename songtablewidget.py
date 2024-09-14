@@ -10,11 +10,50 @@ class SongTableWidget(QTableWidget):
         self.seekLeft = seekLeft
         self.play_pause = play_pause
         self.song_playing_row = None  
-        self.files_on_playlist = []      
+        self.files_on_playlist = []                 
                         
-        super().__init__(parent)                
-        self.verticalHeader().setVisible(False) # hide the row numbers
+        super().__init__(parent)
+        
+        # Hide the vertical header (row numbers)
+        self.verticalHeader().setVisible(False)  
+        
+        # Always show the vertical scrollbar
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        # self.setStyleSheet("""
+        #     QTableWidget {
+        #         background-color: transparent;  /* Make sure the table background is transparent */
+        #     }
+        #     QTableWidget::item {
+        #         background-color: transparent;  /* Ensure that all table items are transparent */
+        #         border: none;  /* Remove borders around cells */
+        #     }
+        #     QTableWidget::item:hover {
+        #         background-color: rgba(200, 200, 255, 100);  /* Hover effect */
+        #     }
+        #     QTableWidget::item:selected {
+        #         background-color: rgba(100, 150, 250, 150);  /* Selection color */
+        #     }
+        # """)
+        
+        # Set the background image on the viewport (the visible area of the table)
+        self.viewport().setStyleSheet("""
+            background-image: url(/home/adam178/MyGitRepos/april-music-player/icons/resized.svg);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        """)
+
+    #     # Make sure the cells are transparent
+    #     self.make_cells_transparent()
+
+    # def make_cells_transparent(self):
+    #     """Ensure all cells have a transparent background."""
+    #     for row in range(self.rowCount()):
+    #         for col in range(self.columnCount()):
+    #             item = self.item(row, col)
+    #             if item:
+    #                 item.setBackground(Qt.transparent)   
         
     def get_previous_song_object(self):
         if self.parent.player.music_on_shuffle:
@@ -170,7 +209,8 @@ class SongTableWidget(QTableWidget):
 
             i += 1
             
-        self.files_on_playlist = [i for i in rows_to_remove if i not in self.files_on_playlist]
+        self.files_on_playlist = [self.item(i, 7) for i in self.files_on_playlist if i not in rows_to_remove]
+        print("remaining files ", self.files_on_playlist)
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:

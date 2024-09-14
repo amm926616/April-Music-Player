@@ -541,6 +541,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Initialize the table widget
         self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.player.seek_forward, self.player.seek_backward, self.player.play_pause_music)  
+
         self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)      
         self.songTableWidget.setColumnCount(9)  # 7 for metadata + 1 for file path
@@ -1207,7 +1208,9 @@ class MusicPlayerUI(QMainWindow):
             return 
         self.songTableWidget.clearSelection()
         random_song = choice(self.songTableWidget.files_on_playlist)
+        print("songs on playlist ", self.songTableWidget.files_on_playlist)
         self.music_file = random_song
+        print("current music file ", self.music_file)
         self.updateInformations()
         self.get_lrc_file()
         self.player.update_music_file(self.music_file)
