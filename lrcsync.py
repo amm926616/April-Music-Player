@@ -38,7 +38,7 @@ class LRCSync:
         self.media_font = GetFont(13)
         self.media_lyric = ClickableLabel()
         self.media_lyric.setWordWrap(True)        
-        self.lrc_font = GetFont(int(self.app.height() * 0.14))
+        self.lrc_font = GetFont(int(self.ej.get_value("lrc_font_size")))
         self.show_lyrics = self.ej.get_value("show_lyrics") 
         
         if self.show_lyrics:    

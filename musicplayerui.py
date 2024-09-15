@@ -29,6 +29,7 @@ from songtablewidget import SongTableWidget
 from albumtreewidget import AlbumTreeWidget
 from random import choice
 from fontsettingdialog import FontSettingsWindow
+from tagger import TagDialog
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -292,7 +293,7 @@ class MusicPlayerUI(QMainWindow):
             self.ej.edit_value("chinese_font", os.path.join(self.script_path , "fonts/NotoSerifKR-ExtraBold.ttf"))
 
         if self.ej.get_value("lrc_font_size") is None:
-            self.ej.edit_value("lrc_font_size", int(self.height() * 0.06))
+            self.ej.edit_value("lrc_font_size", int(self.height() * 0.14))
 
         # other menubar contents
         if self.ej.get_value("sync_threshold") is None:
@@ -301,7 +302,7 @@ class MusicPlayerUI(QMainWindow):
             self.ej.edit_value("lyrics_color", "white") 
         if self.ej.get_value("show_lyrics") is None:
             self.ej.edit_value("show_lyrics", True)
-            
+                        
     def on_off_lyrics(self, checked):
         if checked:
             self.ej.edit_value("show_lyrics", True)
@@ -546,6 +547,9 @@ class MusicPlayerUI(QMainWindow):
             # Connect the action to a method
             copy_action.triggered.connect(lambda: self.copy_item_path(item))
             
+            file_tagger_action = context_menu.addAction("Edit Song's Metadata")
+            file_tagger_action.triggered.connect(self.activate_file_tagger)            
+            
             # Show the context menu at the cursor position
             context_menu.exec(QCursor.pos())
 
@@ -555,7 +559,19 @@ class MusicPlayerUI(QMainWindow):
             self.app.clipboard().setText(file)
         else:
             pass
+        
+    def activate_file_tagger(self):
+        currentRow = self.songTableWidget.currentRow()
+        music_file = self.songTableWidget.item(currentRow, 7).text()
+        tagger = TagDialog(self, self.music_file, self.songTableWidget, self.albumtreewidget, self.albumtreewidget.cursor)
+        if tagger.exec():
+            if music_file:
+                meta_data = tagger.get_metadata()
+                tagger.tag_file(music_file, meta_data)
+                tagger.update_current_row()
+                # tagger.update_tag_file_in_tree(meta_data)
 
+        
     def createWidgetAndLayouts(self):
         """ The main layout of the music player ui"""
         self.central_widget = QWidget(self)
@@ -602,10 +618,7 @@ class MusicPlayerUI(QMainWindow):
         main_layout.addLayout(mediaLayout, 4)
         
         self.setupSongListWidget(playlistLayout)
-        self.setupMediaPlayerWidget(mediaLayout)
-        
-    def loop_playlist(self):
-        pass
+        self.setupMediaPlayerWidget(mediaLayout)    
         
     def setupSongListWidget(self, left_layout):
         self.search_bar = QLineEdit()

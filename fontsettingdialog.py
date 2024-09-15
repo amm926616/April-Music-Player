@@ -4,9 +4,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QFontDatabase, QIcon
 from easy_json import EasyJson
+from fontTools.ttLib import TTFont
+
 
 class FontSettingsWindow(QWidget):
     def __init__(self, parent):
+        self.parent = parent
         super().__init__()
         self.ej = EasyJson()
         self.setGeometry(200, 200, 400, 200)
@@ -25,12 +28,15 @@ class FontSettingsWindow(QWidget):
 
         # Main layout
         main_layout = QVBoxLayout()
+        label = QLabel("[Current Configured Fonts with Languages]")
+        main_layout.addWidget(label)        
 
         # Create sections for each language using a loop
         for language in self.languages:
             current_font = self.ej.get_value(f"{language.lower()}_font")
+            font_name = self.get_font_name_from_file(current_font)
             label = QLabel(f"{language}:", self)  # Language label
-            font_label = QLabel(f"Current Font: {current_font}", self)  # Font display label
+            font_label = QLabel(f"{font_name}", self)  # Font display label
             change_button = QPushButton("Change Font", self)  # Change font button
             change_button.clicked.connect(lambda _, lang=language: self.load_font(lang))
 
@@ -44,8 +50,9 @@ class FontSettingsWindow(QWidget):
         # LRC Font size configuration
         self.lrc_font_size_label = QLabel("LRC Font Size:", self)
         self.lrc_font_size_spinbox = QSpinBox(self)
-        self.lrc_font_size_spinbox.setRange(10, 50)
+        self.lrc_font_size_spinbox.setRange(10, 100)
         self.lrc_font_size_spinbox.setValue(self.ej.get_value("lrc_font_size"))  # Default font size
+        self.lrc_font_size_spinbox.valueChanged.connect(self.update_lrc_font_size)
 
         # LRC font size layout
         font_size_layout = QHBoxLayout()
@@ -56,6 +63,12 @@ class FontSettingsWindow(QWidget):
         main_layout.addLayout(font_size_layout)
 
         self.setLayout(main_layout)
+        
+    def update_lrc_font_size(self, value):
+        self.ej.edit_value("lrc_font_size", value)
+        self.parent.lrcPlayer.lrc_font.font_size = value
+        self.parent.lrcPlayer.lrc_font.reloadFont()                   
+        
 
     def create_language_layout(self, language_label, font_label, change_button):
         """ Helper function to create a horizontal layout for each language section """
@@ -79,7 +92,19 @@ class FontSettingsWindow(QWidget):
                     self.fonts[language] = font_families[0]
                     self.update_font_display(language)
                     self.ej.edit_value(f"{language.lower()}_font", font_file)
+                    self.parent.lrcPlayer.media_font.reloadFont()
+                    self.parent.lrcPlayer.lrc_font.reloadFont()                    
 
     def update_font_display(self, language):
         """ Update the QLabel for the selected language with the chosen font """
         self.font_labels[language].setText(f"Current Font: {self.fonts[language]}")
+        
+    def get_font_name_from_file(self,font_path):
+        font = TTFont(font_path)
+        name_records = font['name'].names
+        for record in name_records:
+            if record.nameID == 4:  # Name ID 4 usually contains the full font name
+                font_name = record.toStr()
+                return font_name
+        return "Unknown Font"  # Default if nameID 4 is not found
+        

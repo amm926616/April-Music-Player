@@ -29,14 +29,19 @@ class AlbumTreeWidget(QWidget):
         self.config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player')
         self.conn = None
         self.cursor = None
+        self.search_bar = QLineEdit()        
         self.initUI()
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
-            if self.search_bar.hasFocus:
+            if self.search_bar.hasFocus():
                 self.on_item_double_clicked(self.matched_item)
                 self.search_bar.clear()
                 self.search_bar.setPlaceholderText("Search...")
+            elif self.tree_widget.hasFocus():  # Check if the tree widget has focus
+                selected_items = self.tree_widget.selectedItems()
+                if selected_items:  # Make sure an item is selected
+                    self.on_item_double_clicked(selected_items[0])  # Call the method for the selected item
         else:
             super().keyPressEvent(event)                    
 
@@ -90,7 +95,6 @@ class AlbumTreeWidget(QWidget):
             self.matched_item = None
         
     def initUI(self):
-        self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search...")
 
         self.tree_widget = QTreeWidget()
@@ -264,6 +268,4 @@ class AlbumTreeWidget(QWidget):
         # Add the file path to the list
         file_path = song[7]  # Assuming file_path is at index 7
         if file_path not in self.songTableWidget.files_on_playlist:
-            self.songTableWidget.files_on_playlist.append(file_path)
-            
-                
+            self.songTableWidget.files_on_playlist.append(file_path)                          
