@@ -21,11 +21,13 @@ class GetFont:
         english_font = self.ej.get_value("english_font")
         korean_font = self.ej.get_value("korean_font")
         japanese_font = self.ej.get_value("japanese_font")
+        chinese_font = self.ej.get_value("chinese_font")
         
         self.language_dict = {
             "korean": {"font_name": self.get_font_name(korean_font), "file_path": korean_font, "size": font_size},
             "english": {"font_name": self.get_font_name(english_font), "file_path": english_font, "size": font_size},
-            "japanese": {"font_name": self.get_font_name(japanese_font), "file_path": japanese_font, "size": font_size},
+            "japanese": {"font_name": self.get_font_name(japanese_font), "file_path": japanese_font, "size": font_size}, 
+            "chinese": {"font_name": self.get_font_name(chinese_font), "file_path": chinese_font, "size": font_size}           
         }
         
         self.fonts_loaded = False

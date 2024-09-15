@@ -28,7 +28,7 @@ from loadingbar import LoadingBar
 from songtablewidget import SongTableWidget
 from albumtreewidget import AlbumTreeWidget
 from random import choice
-from fontsettingdialog import FontSettingsDialog
+from fontsettingdialog import FontSettingsWindow
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -291,6 +291,9 @@ class MusicPlayerUI(QMainWindow):
         if self.ej.get_value("chinese_font") is None:
             self.ej.edit_value("chinese_font", os.path.join(self.script_path , "fonts/NotoSerifKR-ExtraBold.ttf"))
 
+        if self.ej.get_value("lrc_font_size") is None:
+            self.ej.edit_value("lrc_font_size", int(self.height() * 0.06))
+
         # other menubar contents
         if self.ej.get_value("sync_threshold") is None:
             self.ej.edit_value("sync_threshold", 0.3)
@@ -326,16 +329,9 @@ class MusicPlayerUI(QMainWindow):
     def toggle_on_off_lyrics(self, checked):
         self.on_off_lyrics(checked)
         
-    def open_font_settings(self):
-        # List of languages
-        languages = ['English', 'Korean', 'Japanese', 'Chinese']
-        dialog = FontSettingsDialog(languages, self)
-        if dialog.exec():
-            font_settings = dialog.get_font_settings()
-            print("Font settings:", font_settings)
-            # You can apply these settings to your app
-            # e.g., changing fonts in the interface, etc.  
-                    
+    def show_font_settings(self):
+        self.font_settings_window.show()
+    
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
@@ -367,9 +363,11 @@ class MusicPlayerUI(QMainWindow):
         self.show_lyrics_action.setChecked(self.ej.get_value("show_lyrics"))
         self.show_lyrics_action.triggered.connect(self.toggle_on_off_lyrics)
         
-        # QAction to open font settings dialog
-        font_settings_action = QAction('Configure Fonts', self)
-        font_settings_action.triggered.connect(self.open_font_settings)              
+        # Add Font Settings to options menu
+        self.font_settings_action = QAction("Font Settings", self)
+        self.font_settings_action.triggered.connect(self.show_font_settings)
+
+        self.font_settings_window = FontSettingsWindow(self)             
                     
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
@@ -377,7 +375,7 @@ class MusicPlayerUI(QMainWindow):
         help_menu = menubar.addMenu("Help")
         
         options_menu.addAction(self.show_lyrics_action)
-        options_menu.addAction(font_settings_action)        
+        options_menu.addAction(self.font_settings_action)
         
         # Add a sub-menu for text color selection with radio buttons
         text_color_menu = QMenu("Choose Lyrics Color", self)

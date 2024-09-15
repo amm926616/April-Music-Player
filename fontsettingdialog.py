@@ -1,87 +1,85 @@
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QDialogButtonBox, QTableWidget, QTableWidgetItem, QHBoxLayout, QWidget, QPushButton, QLabel)
+from PyQt6.QtWidgets import (
+    QFileDialog, QLabel, QPushButton,
+    QVBoxLayout, QWidget, QSpinBox, QHBoxLayout
+)
+from PyQt6.QtGui import QFontDatabase, QIcon
+from easy_json import EasyJson
 
-class FontSettingsDialog(QDialog):
-    def __init__(self, languages, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle('Font Settings')
-        layout = QVBoxLayout()
+class FontSettingsWindow(QWidget):
+    def __init__(self, parent):
+        super().__init__()
+        self.ej = EasyJson()
+        self.setGeometry(200, 200, 400, 200)
+        self.setWindowTitle("Font Settings")
+        self.setWindowIcon(QIcon(parent.icon_path))
 
-        # Table for language, font display, and font size controls
-        self.table = QTableWidget(len(languages), 3)  # Rows = number of languages, Columns = 3
-        self.table.verticalHeader().setVisible(False)  
-        self.table.horizontalHeader().setVisible(False)  
-        
+        # List of languages
+        self.languages = ["English", "Korean", "Japanese", "Chinese"]
 
-        self.languages = languages
-        self.font_labels = []  # To store the QLabel for each language's font
-        self.font_size_spins = []
+        # Dictionary to store widgets for each language
+        self.font_labels = {}
+        self.change_buttons = {}
 
-        for row, language in enumerate(languages):
-            # Set the language name
-            self.table.setItem(row, 0, QTableWidgetItem(language))
+        # Dictionary to store the current font for each language
+        self.fonts = {language: None for language in self.languages}
 
-            # Display current font in a QLabel
-            font_layout = QHBoxLayout()
-            font_label = QLabel("")
-            self.font_labels.append(font_label)
+        # Main layout
+        main_layout = QVBoxLayout()
 
-            # Button to change font
-            change_font_button = QPushButton("Change Font")
-            change_font_button.clicked.connect(lambda: self.change_font(row))  # Change font for the current row
+        # Create sections for each language using a loop
+        for language in self.languages:
+            current_font = self.ej.get_value(f"{language.lower()}_font")
+            label = QLabel(f"{language}:", self)  # Language label
+            font_label = QLabel(f"Current Font: {current_font}", self)  # Font display label
+            change_button = QPushButton("Change Font", self)  # Change font button
+            change_button.clicked.connect(lambda _, lang=language: self.load_font(lang))
 
-            font_layout.addWidget(font_label)
-            font_layout.addWidget(change_font_button)
+            # Store the font label and button in dictionaries for future reference
+            self.font_labels[language] = font_label
+            self.change_buttons[language] = change_button
 
-            # Create a QWidget to hold QLabel and QPushButton
-            font_widget = QWidget()
-            font_widget.setLayout(font_layout)
-            self.table.setCellWidget(row, 1, font_widget)
+            # Add the created layout for each language to the main layout
+            main_layout.addLayout(self.create_language_layout(label, font_label, change_button))
 
-            # Font size with + and - buttons
-            size_layout = QHBoxLayout()
-            decrease_button = QPushButton("−")
-            increase_button = QPushButton("+")
-            font_size_spin = QLabel("12")  # Initialize font size to 12
-            self.font_size_spins.append(font_size_spin)
+        # LRC Font size configuration
+        self.lrc_font_size_label = QLabel("LRC Font Size:", self)
+        self.lrc_font_size_spinbox = QSpinBox(self)
+        self.lrc_font_size_spinbox.setRange(10, 50)
+        self.lrc_font_size_spinbox.setValue(self.ej.get_value("lrc_font_size"))  # Default font size
 
-            decrease_button.clicked.connect(lambda: self.adjust_font_size(row, -1))
-            increase_button.clicked.connect(lambda: self.adjust_font_size(row, 1))
+        # LRC font size layout
+        font_size_layout = QHBoxLayout()
+        font_size_layout.addWidget(self.lrc_font_size_label)
+        font_size_layout.addWidget(self.lrc_font_size_spinbox)
 
-            size_layout.addWidget(decrease_button)
-            size_layout.addWidget(font_size_spin)
-            size_layout.addWidget(increase_button)
+        # Add the LRC font size layout to the main layout
+        main_layout.addLayout(font_size_layout)
 
-            size_widget = QWidget()
-            size_widget.setLayout(size_layout)
-            self.table.setCellWidget(row, 2, size_widget)
+        self.setLayout(main_layout)
 
-        layout.addWidget(self.table)
+    def create_language_layout(self, language_label, font_label, change_button):
+        """ Helper function to create a horizontal layout for each language section """
+        layout = QHBoxLayout()
+        layout.addWidget(language_label)
+        layout.addWidget(font_label)
+        layout.addWidget(change_button)
+        return layout
 
-        # Dialog buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+    def load_font(self, language):
+        """ Open a file dialog and load a font for the selected language """
+        font_file, _ = QFileDialog.getOpenFileName(
+            self, "Open Font File", "", "Font Files (*.ttf *.otf)"
+        )
+        if font_file:
+            font_id = QFontDatabase.addApplicationFont(font_file)
+            if font_id != -1:
+                font_families = QFontDatabase.applicationFontFamilies(font_id)
+                if font_families:
+                    # Set the font for the selected language and update the QLabel
+                    self.fonts[language] = font_families[0]
+                    self.update_font_display(language)
+                    self.ej.edit_value(f"{language.lower()}_font", font_file)
 
-        self.setLayout(layout)
-
-    def change_font(self, row):
-        # Handle the font change logic (open a font picker or similar)
-        # For now, we'll just simulate a font change
-        self.font_labels[row].setText("New Font Selected")
-
-    def adjust_font_size(self, row, change):
-        current_size = int(self.font_size_spins[row].text())
-        new_size = max(8, min(current_size + change, 72))  # Font size between 8 and 72
-        self.font_size_spins[row].setText(str(new_size))
-
-    def get_font_settings(self):
-        settings = []
-        for i, language in enumerate(self.languages):
-            settings.append({
-                'language': language,
-                'font_name': self.font_labels[i].text(),
-                'font_size': int(self.font_size_spins[i].text())
-            })
-        return settings
-
+    def update_font_display(self, language):
+        """ Update the QLabel for the selected language with the chosen font """
+        self.font_labels[language].setText(f"Current Font: {self.fonts[language]}")
