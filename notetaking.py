@@ -10,7 +10,11 @@ import zlib
 
 class NoteTaking():
     def __init__(self, lrcSync):
-        self.lrcSync = lrcSync
+        # Database Initialization
+        self.lrcSync = lrcSync        
+        self.conn = None        
+        self.initialize_database()
+        
         self.window = QDialog()   
         self.window.closeEvent = self.noteWindowClose 
         self.window.keyPressEvent = self.keyPressEvent
@@ -49,6 +53,22 @@ class NoteTaking():
 
         self.window.setLayout(self.layout) 
         
+    def initialize_database(self):
+        if self.conn:
+            self.conn.close()  # Close the previous connection if it exists
+        self.conn = sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db"))
+        self.cursor = self.conn.cursor()
+
+        # Create the table for storing notes for lyrics if it doesn't exist
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS notes (
+                lrc_filename TEXT PRIMARY KEY,
+                json_notes TEXT
+            );
+        ''')
+        
+        self.conn.commit()         
+        
     def saveToDatabase(self):
         # Retrieve the notes from the text box
         text = self.textBox.toHtml()
@@ -66,7 +86,7 @@ class NoteTaking():
     def push_note_to_database(self, compressed_html_base64):
         try:
             # Connect to the SQLite database
-            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "songs.db")) as conn:
+            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db")) as conn:
                 cursor = conn.cursor()
 
                 # Fetch the existing notes for the current file
@@ -113,7 +133,7 @@ class NoteTaking():
         # Load existing notes
         try:
             # Connect to the SQLite database
-            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "songs.db")) as conn:
+            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db")) as conn:
                 cursor = conn.cursor()
                 
                 # Query to fetch JSON notes based on file_path
