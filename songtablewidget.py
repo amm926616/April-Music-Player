@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QTableWidget
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
+import os
 
 class SongTableWidget(QTableWidget):
     def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None):
@@ -36,9 +37,15 @@ class SongTableWidget(QTableWidget):
         #     }
         # """)
         
-        # Set the background image on the viewport (the visible area of the table)
-        self.viewport().setStyleSheet("""
-            background-image: url(/home/adam178/MyGitRepos/april-music-player/icons/resized.svg);
+        # Set the background image on the viewport (the visible area of the table)        
+        svg_file = os.path.join(self.parent.script_path, "icons", "resized.svg")
+        
+        # Check if the OS is Windows
+        if os.name == 'nt':  # 'nt' stands for Windows
+            svg_file = svg_file.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window  
+            
+        self.viewport().setStyleSheet(f"""
+            background-image: url({svg_file});
             background-repeat: no-repeat;
             background-position: center;
             background-size: cover;
@@ -209,8 +216,9 @@ class SongTableWidget(QTableWidget):
 
             i += 1
             
-        self.files_on_playlist = [self.item(i, 7) for i in self.files_on_playlist if i not in rows_to_remove]
-        print("remaining files ", self.files_on_playlist)
+        print("Remaining Files On Playlist: ")            
+        for j in self.files_on_playlist:
+            print(j)
         
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
