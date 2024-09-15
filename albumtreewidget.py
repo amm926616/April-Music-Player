@@ -124,14 +124,6 @@ class AlbumTreeWidget(QWidget):
             )
         ''')
         
-        # Create the table for storing notes for lyrics if it doesn't exist
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS notes (
-                lrc_filename TEXT PRIMARY KEY,
-                json_notes TEXT
-            );
-        ''')
-        
         self.conn.commit()                    
                     
     def loadSongsToCollection(self, songs_by_artist):
@@ -175,6 +167,10 @@ class AlbumTreeWidget(QWidget):
                 print("No file path found for the selected song.")
         else:
             print(f"Unknown item double-clicked: {item.text(0)}")
+            
+        print("\nfiles_on_playlist:")    
+        for i in self.songTableWidget.files_on_playlist:
+            print(i)
                         
     def add_song_by_file_path(self, file_path):
         self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (file_path,))
@@ -192,7 +188,6 @@ class AlbumTreeWidget(QWidget):
                 item = QTableWidgetItem(str(data))
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.songTableWidget.setItem(self.songTableWidget.rowCount() - 1, i, item) 
-                self.songTableWidget.files_on_playlist.append(file_path)
 
     def add_songs_by_album(self, album):
         if not self.cursor:
