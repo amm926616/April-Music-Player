@@ -1,4 +1,6 @@
 from PyQt6.QtGui import QFontDatabase, QFont, QTextDocument, QTextCursor, QTextCharFormat
+from fontTools.ttLib import TTFont
+from easy_json import EasyJson
 import os
 
 """
@@ -14,14 +16,30 @@ from PyQt6.QtGui import QFont, QFontDatabase, QTextCharFormat, QTextDocument, QT
 
 class GetFont:
     def __init__(self, font_size=14):
-        self.script_path = os.path.dirname(os.path.abspath(__file__))
+        self.script_path = os.path.dirname(os.path.abspath(__file__))        
+        self.ej = EasyJson()
+        english_font = self.ej.get_value("english_font")
+        korean_font = self.ej.get_value("korean_font")
+        japanese_font = self.ej.get_value("japanese_font")
+        
         self.language_dict = {
-            "korean": {"font_name": "Noto Serif KR ExtraBold", "file_path": os.path.join(self.script_path , "fonts/NotoSerifKR-ExtraBold.ttf"), "size": font_size},
-            "english": {"font_name": "Positive Forward", "file_path": os.path.join(self.script_path , "fonts/PositiveForward.otf"), "size": font_size},
-            "japanese": {"font_name": "Noto Sans JP Bold", "file_path": os.path.join(self.script_path , "fonts/NotoSansJP-Bold.otf"), "size": font_size},
+            "korean": {"font_name": self.get_font_name(korean_font), "file_path": korean_font, "size": font_size},
+            "english": {"font_name": self.get_font_name(english_font), "file_path": english_font, "size": font_size},
+            "japanese": {"font_name": self.get_font_name(japanese_font), "file_path": japanese_font, "size": font_size},
         }
+        
         self.fonts_loaded = False
         self.formats = {}
+        
+    def get_font_name(self, font_path):
+        font = TTFont(font_path)
+        name_records = font['name'].names
+        for record in name_records:
+            # Name ID 4 is usually the full font name
+            if record.nameID == 4:
+                font_name = record.toStr()
+                return font_name
+        return None        
 
     def loadFonts(self):
         for lang, font_info in self.language_dict.items():

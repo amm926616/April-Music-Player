@@ -1,8 +1,16 @@
 import json
 import os
+import platform
 
 class EasyJson:
-    def __init__(self, config_file):
+    def __init__(self, config_file=None):
+        if platform.system() == "Windows":
+            self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
+        else:
+            self.config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player')
+                        
+        config_file = os.path.join(self.config_path, "config.json")
+        
         self.config_file = config_file
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         
@@ -13,7 +21,6 @@ class EasyJson:
         self.edit_value("lyrics_color", "white")
     
     def get_value(self, key):
-        print("in ej, get value")
         if not os.path.exists(self.config_file):
             print(f"Error: The file {self.config_file} does not exist.")
             return None
@@ -35,7 +42,6 @@ class EasyJson:
         return data[key]
     
     def edit_value(self, key, value):
-        print("in edit value")
         if not os.path.exists(self.config_file):
             print(f"Error: The file {self.config_file} does not exist.")
             return
