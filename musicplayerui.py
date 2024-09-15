@@ -165,7 +165,7 @@ class MusicPlayerUI(QMainWindow):
         if dir_path:
             self.directory = dir_path
             self.save_config("music_directory", self.directory)
-            self.loadSongs(loadAgain)
+            self.loadSongsToCollection(loadAgain)
         else:
             # If the user cancels, show a message and close the app or ask again
             QMessageBox.warning(self, "No Directory Selected", "A music directory is required to proceed.")
@@ -943,9 +943,19 @@ class MusicPlayerUI(QMainWindow):
         self.image_display.clear()
         self.song_details.clear()
                    
-    def loadSongsToCollection(self):
+    def loadSongsToCollection(self, loadAgain=False):
         self.albumtreewidget.initialize_database()
-
+        
+        if loadAgain:
+            self.albumtreewidget.tree_widget.clear()
+            self.media_files.clear()
+            self.cleanDetails()
+            self.songTableWidget.clear()
+            self.songTableWidget.setRowCount(0)        
+            self.songTableWidget.setHorizontalHeaderLabels(
+                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
+            )
+            
         if self.directory is None:
             return
 
