@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QTableWidget
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 import os
@@ -15,6 +15,13 @@ class SongTableWidget(QTableWidget):
                         
         super().__init__(parent)
         
+        # Enable sorting and connect signal
+        self.setSortingEnabled(True)
+        
+        header = self.horizontalHeader()
+        header.setSortIndicatorShown(True)
+        header.sortIndicatorChanged.connect(self.sort_table)   
+             
         # Hide the vertical header (row numbers)
         self.verticalHeader().setVisible(False)  
         
@@ -61,6 +68,42 @@ class SongTableWidget(QTableWidget):
     #             item = self.item(row, col)
     #             if item:
     #                 item.setBackground(Qt.transparent)   
+    
+    def populate_table(self):
+        # Assume this method populates the table and updates self.table_data
+        # Example: Clear the table and reinsert data
+        self.clearContents()
+        self.setRowCount(0)
+        
+        # Add rows to the table and update self.table_data
+        for row_data in self.table_data:
+            row_position = self.rowCount()
+            self.insertRow(row_position)
+            for col_idx, item in enumerate(row_data):
+                self.setItem(row_position, col_idx, QTableWidgetItem(item))
+    
+    def set_table_data(self, data):
+        # Set the table data and populate the table
+        self.table_data = data
+        self.populate_table()
+
+    def sort_table(self, column, order):
+        # Separate album rows and song rows
+        album_rows = [row for row in self.table_data if row[0].startswith('Album Title: ')]
+        song_rows = [row for row in self.table_data if not row[0].startswith('Album Title: ')]
+        
+        # Sort song rows based on the specified column
+        if order == Qt.AscendingOrder:
+            song_rows.sort(key=lambda x: x[column])
+        else:
+            song_rows.sort(key=lambda x: x[column], reverse=True)
+        
+        # Combine album rows and sorted song rows
+        sorted_data = album_rows + song_rows
+        
+        # Update the table data and repopulate it
+        self.table_data = sorted_data
+        self.populate_table()    
         
     def get_previous_song_object(self):
         if self.parent.player.music_on_shuffle:
@@ -71,6 +114,9 @@ class SongTableWidget(QTableWidget):
                 self.parent.player.player.setPosition(0)
                 self.parent.player.player.play() 
                 return
+            
+        if self.song_playing_row is None:
+            return            
                 
         previous_row = self.song_playing_row - 1
         
@@ -93,7 +139,7 @@ class SongTableWidget(QTableWidget):
         return item            
         
         
-    def get_next_song_object(self):
+    def get_next_song_object(self, fromstart=None):
         if self.parent.player.music_on_shuffle:
             self.parent.play_random_song()
             return 
@@ -102,9 +148,15 @@ class SongTableWidget(QTableWidget):
                 self.parent.player.player.setPosition(0)
                 self.parent.player.player.play() 
                 return
+            
+        if self.song_playing_row is None:
+            return
         
         current_row = self.song_playing_row
         next_row = current_row + 1
+        
+        if fromstart:
+            next_row = 0
         
         # Ensure next_row is within bounds
         if next_row >= self.rowCount():
@@ -168,11 +220,21 @@ class SongTableWidget(QTableWidget):
     def delete_selected_rows(self):
         # Get a list of selected rows
         selected_rows = set(index.row() for index in self.selectedIndexes())
-        
+        selected_album_names = set()
+        album_title_rows = []
+
+        # Collect album names and corresponding album title rows
+        for i in selected_rows:
+            album_name_item = self.item(i, 2)  # Assuming album name is in column 2
+            if album_name_item:  # Check if the item exists
+                album_name = album_name_item.text()  # Extract the text (album name)
+                selected_album_names.add(album_name)
+                album_title_rows.append(f"Album Title: [{album_name}]")
+
         # Create a set to keep track of rows to remove
         rows_to_remove = set()
-        
-        # Collect all rows to be removed, including any empty album title rows
+
+        # Collect all rows to be removed
         for row in sorted(selected_rows, reverse=True):
             # Get the file path from the hidden column (assuming file path is in the 7th column, index 7)
             file_path_item = self.item(row, 7)
@@ -181,45 +243,32 @@ class SongTableWidget(QTableWidget):
                 # Remove the file path from files_on_playlist
                 if file_path in self.files_on_playlist:
                     self.files_on_playlist.remove(file_path)
-            
+
             # Add the row to the set of rows to remove
             rows_to_remove.add(row)
-        
+
         # Remove the selected rows
         for row in sorted(rows_to_remove, reverse=True):
             self.removeRow(row)
-        
-        # Check for any remaining "Album Title:" rows without songs
-        row_count = self.rowCount()
-        i = 0
-        while i < row_count:
-            item = self.item(i, 0)  # Assuming album title is in the first column (index 0)
-            if item and item.text().startswith("Album Title:"):
-                album_title_text = item.text()
-                album_title = album_title_text[len("Album Title: "):]  # Extract the album title part
-                
-                # Check if the album has remaining songs
-                has_songs = False
-                j = i + 1
-                while j < row_count:
-                    next_item = self.item(j, 0)  # Check next rows for song items
-                    if next_item and not next_item.text().startswith("Album Title:"):
-                        has_songs = True
-                        break
-                    j += 1
-                
-                if not has_songs:
-                    # Remove the album title row if no songs are left
-                    self.removeRow(i)
-                    row_count -= 1  # Adjust row count because we removed a row
-                    i -= 1  # Adjust index because we removed a row
 
-            i += 1
-            
-        print("Remaining Files On Playlist: ")            
-        for j in self.files_on_playlist:
-            print(j)
-        
+        # Check for any remaining album title rows without related songs
+        for album_name in selected_album_names:
+            album_title_row_text = f"Album Title: [{album_name}]"
+            matched_songs_with_same_album_name = self.findItems(album_name, Qt.MatchFlag.MatchExactly)
+
+            # Collect rows that still have songs with the same album name
+            same_album_name_songs = set()
+            for item in matched_songs_with_same_album_name:
+                if item.column() == 2:
+                    same_album_name_songs.add(item.row())
+
+            # If no related songs are left, remove the album title row
+            if not same_album_name_songs:
+                matched_album_title_row = self.findItems(album_title_row_text, Qt.MatchFlag.MatchExactly)
+                for item in matched_album_title_row:
+                    print("Removing album title row ", item)
+                    self.removeRow(item.row())
+                            
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
