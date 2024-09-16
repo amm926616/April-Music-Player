@@ -143,7 +143,7 @@ class AlbumTreeWidget(QWidget):
         ''')
 
         self.conn.commit()
-        
+            
     def loadSongsToCollection(self, directory, loadAgain=False):
         self.initialize_database()
         
@@ -172,8 +172,19 @@ class AlbumTreeWidget(QWidget):
         songs_by_artist = defaultdict(list)
         
         loadingBar = LoadingBar(self, len(self.parent.media_files))
-        loadingBar.show()
-                
+        loadingBar.show()                        
+        
+        # Query the database for all stored songs
+        self.cursor.execute('SELECT file_path FROM songs')
+        all_db_songs = self.cursor.fetchall()
+        
+        # Remove songs from the database if the file does not exist on the device
+        for db_song in all_db_songs:
+            file_path = db_song[0]
+            if not os.path.exists(file_path):
+                self.cursor.execute('DELETE FROM songs WHERE file_path=?', (file_path,))
+                self.conn.commit()
+
         # Check if the database already has the songs stored
         for index, item_path in enumerate(self.parent.media_files):
             loadingBar.update(index + 1)            
