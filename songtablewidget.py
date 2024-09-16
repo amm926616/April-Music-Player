@@ -1,48 +1,27 @@
 from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QKeyEvent, QFont
 from PyQt6.QtCore import Qt
 import os
+import json
 
 class SongTableWidget(QTableWidget):
-    def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None):
+    def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None, config_path=None):
         self.parent = parent
         self.rowDoubleClick = rowDoubleClick
         self.seekRight = seekRight
         self.seekLeft = seekLeft
         self.play_pause = play_pause
         self.song_playing_row = None  
-        self.files_on_playlist = []                 
-                        
+        self.files_on_playlist = []          
+        self.config_path = config_path
+        self.json_file = os.path.join(self.config_path, "table_data.json")                        
         super().__init__(parent)
-        
-        # Enable sorting and connect signal
-        self.setSortingEnabled(True)
-        
-        header = self.horizontalHeader()
-        header.setSortIndicatorShown(True)
-        header.sortIndicatorChanged.connect(self.sort_table)   
-             
+                        
         # Hide the vertical header (row numbers)
         self.verticalHeader().setVisible(False)  
         
         # Always show the vertical scrollbar
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-
-        # self.setStyleSheet("""
-        #     QTableWidget {
-        #         background-color: transparent;  /* Make sure the table background is transparent */
-        #     }
-        #     QTableWidget::item {
-        #         background-color: transparent;  /* Ensure that all table items are transparent */
-        #         border: none;  /* Remove borders around cells */
-        #     }
-        #     QTableWidget::item:hover {
-        #         background-color: rgba(200, 200, 255, 100);  /* Hover effect */
-        #     }
-        #     QTableWidget::item:selected {
-        #         background-color: rgba(100, 150, 250, 150);  /* Selection color */
-        #     }
-        # """)
         
         # Set the background image on the viewport (the visible area of the table)        
         svg_file = os.path.join(self.parent.script_path, "icons", "resized.png")
@@ -57,53 +36,161 @@ class SongTableWidget(QTableWidget):
             background-position: center;
             background-size: fill;  /* Ensures the SVG fits within the viewport */
         """)
-
-    #     # Make sure the cells are transparent
-    #     self.make_cells_transparent()
-
-    # def make_cells_transparent(self):
-    #     """Ensure all cells have a transparent background."""
-    #     for row in range(self.rowCount()):
-    #         for col in range(self.columnCount()):
-    #             item = self.item(row, col)
-    #             if item:
-    #                 item.setBackground(Qt.transparent)   
-    
-    def populate_table(self):
-        # Assume this method populates the table and updates self.table_data
-        # Example: Clear the table and reinsert data
-        self.clearContents()
-        self.setRowCount(0)
         
-        # Add rows to the table and update self.table_data
-        for row_data in self.table_data:
-            row_position = self.rowCount()
-            self.insertRow(row_position)
-            for col_idx, item in enumerate(row_data):
-                self.setItem(row_position, col_idx, QTableWidgetItem(item))
-    
-    def set_table_data(self, data):
-        # Set the table data and populate the table
-        self.table_data = data
-        self.populate_table()
-
-    def sort_table(self, column, order):
-        # Separate album rows and song rows
-        album_rows = [row for row in self.table_data if row[0].startswith('Album Title: ')]
-        song_rows = [row for row in self.table_data if not row[0].startswith('Album Title: ')]
+        # load the previous tabledata from init method. 
+        self.load_table_data()  
         
-        # Sort song rows based on the specified column
-        if order == Qt.AscendingOrder:
-            song_rows.sort(key=lambda x: x[column])
+        self.setSortingEnabled(False)  # Disable default sorting to use custom sorting
+
+        # Set up the horizontal header and connect the sectionClicked signal
+        header = self.horizontalHeader()
+        header.setSortIndicatorShown(True)
+        header.sectionClicked.connect(self.handle_header_click)
+
+        # Store the current sort order for toggling between ascending/descending
+        self.sort_order = Qt.SortOrder.AscendingOrder
+
+    # Slot to handle header click
+    def handle_header_click(self, column_index):
+        # Toggle between ascending and descending order on each click
+        if self.sort_order == Qt.SortOrder.AscendingOrder:
+            self.sort_order = Qt.SortOrder.DescendingOrder
         else:
-            song_rows.sort(key=lambda x: x[column], reverse=True)
+            self.sort_order = Qt.SortOrder.AscendingOrder
         
-        # Combine album rows and sorted song rows
-        sorted_data = album_rows + song_rows
+        # Call custom sort_items method with the clicked column and the current sort order
+        self.sort_items(column_index, self.sort_order)
+
+    # Custom sort_items method with sorting logic
+    def sort_items(self, column_index, order):
+        self.setSortingEnabled(False)  # Disable sorting temporarily
+
+        # Extract current data from the table
+        data = self.get_current_table_data()
+
+        # Custom sorting logic that keeps album title rows above their related song rows
+        def custom_sort_key(row):
+            if row[0].startswith("Album Title:"):
+                # Keep album title rows at the top by assigning a low priority value
+                return (row[0], "")
+            else:
+                # For song rows, use the album name in column 2 (or the desired column) for sorting
+                album_name = row[1]
+                return (album_name, row[column_index])
+
+        # Sort the data using the custom key and the desired order
+        sorted_data = sorted(data, key=custom_sort_key, reverse=(order == Qt.SortOrder.DescendingOrder))
+
+        # Clear the table and repopulate it with sorted data
+        self.set_table_data(sorted_data)
+
+        self.setSortingEnabled(True)  # Re-enable sorting
+
+    # Helper function to extract table data
+    def get_current_table_data(self):
+        data = []
+        for row in range(self.rowCount()):
+            row_data = []
+            for column in range(self.columnCount()):
+                item = self.item(row, column)
+                row_data.append(item.text() if item else "")
+            data.append(row_data)
+        return data
+
+    # Helper function to set the table data after sorting
+    def set_table_data(self, data):
+        self.setRowCount(0)  # Clear current rows
+        for row_data in data:
+            row = self.rowCount()
+            self.insertRow(row)
+            for column, item_data in enumerate(row_data):
+                item = QTableWidgetItem(item_data)
+                self.setItem(row, column, item)
+
+                     
+    def load_table_data(self):
+        # Load the data from the JSON file
+        with open(self.json_file, 'r') as file:
+            data = json.load(file)
+
+        # Set the row and column count based on the data
+        self.setRowCount(len(data))
+        self.setColumnCount(len(data[0]["items"]) if data else 0)
+
+        # Populate the table with the loaded data and restore the formatting
+        for row, row_data in enumerate(data):
+            for column, item_text in enumerate(row_data["items"]):
+                table_item = QTableWidgetItem(item_text)
+                
+                if row_data["row_type"] == "album_title":
+                    # Restore the font
+                    if row_data["font"]:
+                        font = QFont()
+                        font.fromString(row_data["font"])
+                        table_item.setFont(font)
+
+                    # Restore the colspan
+                    if row_data["colspan"]:
+                        self.setSpan(row, column, 1, row_data["colspan"])
+
+                self.setItem(row, column, table_item)
+
+    def save_table_data(self):
+        # Get the current data from the table widget
+        data = []
         
-        # Update the table data and repopulate it
-        self.table_data = sorted_data
-        self.populate_table()    
+        row_count = self.rowCount()
+        column_count = self.columnCount()
+
+        # Iterate over rows and columns to extract data and metadata
+        for row in range(row_count):
+            row_data = {
+                "items": [],
+                "row_type": "normal",  # Default is a normal row
+                "font": None,  # Default is no special font
+                "colspan": None  # Default is no colspan
+            }
+            
+            for column in range(column_count):
+                item = self.item(row, column)
+                if item:
+                    row_data["items"].append(item.text())
+                    
+                    # If this is an "Album Title" row, capture its metadata
+                    if item.text().startswith("Album Title:"):
+                        row_data["row_type"] = "album_title"
+                        row_data["font"] = item.font().toString()  # Save font settings as string
+                        row_data["colspan"] = self.columnSpan(row, column)
+
+                else:
+                    row_data["items"].append("")
+            
+            data.append(row_data)
+
+        # Save the data and metadata to a file
+        with open(self.json_file, 'w') as file:
+            json.dump(data, file, indent=4)
+
+    def get_table_data(self, table_widget):
+        # Get the number of rows and columns
+        row_count = table_widget.rowCount()
+        column_count = table_widget.columnCount()
+
+        # Create a list to store table data
+        table_data = []
+
+        # Iterate over rows and columns to extract the data
+        for row in range(row_count):
+            row_data = []
+            for column in range(column_count):
+                item = table_widget.item(row, column)  # Get the QTableWidgetItem
+                if item:
+                    row_data.append(item.text())  # Get the text from the item
+                else:
+                    row_data.append('')  # Handle empty cells
+            table_data.append(row_data)
+
+        return table_data        
         
     def get_previous_song_object(self):
         if self.parent.player.music_on_shuffle:
@@ -275,6 +362,12 @@ class SongTableWidget(QTableWidget):
             print("UP key pressed")
             self.setNextRow(self.currentItem())
             
+        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.save_table_data()
+            
+        elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.load_table_data()
+            
         elif event.key() == Qt.Key.Key_Delete:
             self.delete_selected_rows()
                     
@@ -296,7 +389,7 @@ class SongTableWidget(QTableWidget):
             self.seekLeft()    
             
         elif event.key() == Qt.Key.Key_Space:
-            self.play_pause()    
+            self.parent.play_pause()    
             
         elif event.key() == Qt.Key.Key_Enter:
             self.rowDoubleClick()
