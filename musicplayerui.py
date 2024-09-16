@@ -6,9 +6,9 @@ import sys
 import platform
 from collections import defaultdict
 import time
-from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor, QPainter, QPixmap, QPainterPath
+from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor, QPainter, QPixmap, QPainterPath, QTextDocument
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction, QTreeWidgetItem,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction, 
     QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea, QSizePolicy
 )
 from PyQt6.QtCore import Qt, QCoreApplication, QRectF
@@ -29,6 +29,11 @@ from albumtreewidget import AlbumTreeWidget
 from random import choice
 from fontsettingdialog import FontSettingsWindow
 from tagger import TagDialog
+
+def html_to_plain_text(html):
+    doc = QTextDocument()
+    doc.setHtml(html)
+    return doc.toPlainText()
 
 def extract_mp3_album_art(audio_file):
     """Extract album art from an MP3 file."""
@@ -171,6 +176,9 @@ class MusicPlayerUI(QMainWindow):
             # If the user cancels, show a message and close the app or ask again
             QMessageBox.warning(self, "No Directory Selected", "A music directory is required to proceed.")
             return
+        
+    def reload_directory(self):
+        self.albumtreewidget.loadSongsToCollection(self.directory, True)
 
     def createUI(self):
         self.setWindowTitle("April Music Player - Digest Lyrics")        
@@ -335,6 +343,9 @@ class MusicPlayerUI(QMainWindow):
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
+        
+        reload_folder = QAction("Reload Folder", self)
+        reload_folder.triggered.connect(self.reload_directory)
 
         # Actions that will become buttons for each menu
         load_folder = QAction("Set Main Music Folder", self)
@@ -443,6 +454,7 @@ class MusicPlayerUI(QMainWindow):
         self.threshold_actions[self.ej.get_value("sync_threshold")].setChecked(True)
             
         # Linking actions and menus
+        file_menu.addAction(reload_folder)
         file_menu.addAction(load_folder)
         file_menu.addAction(close_action)
         help_menu.addAction(fromMe)
@@ -921,7 +933,7 @@ class MusicPlayerUI(QMainWindow):
     
     def filterSongs(self):
         self.hidden_rows = True
-        self.songTableWidget.clearSelection()               
+        self.songTableWidget.clearSelection()  # Clear previous selections (highlighting)    
         if self.search_bar.hasFocus():
             search_text = self.search_bar.text().lower()
 
@@ -940,28 +952,28 @@ class MusicPlayerUI(QMainWindow):
                     match = False
                     item = self.songTableWidget.item(row, 0)  # Check the first column of each row
 
-                    # Hide album title rows (rows containing 'Album Title:') only if matches are found
+                    # Hide album title rows (rows containing 'Album Title:')
                     if item and "Album Title:" in item.text():
-                        if found_at_least_one:
-                            self.songTableWidget.setRowHidden(row, True)
-                        else:
-                            self.songTableWidget.setRowHidden(row, False)
+                        self.songTableWidget.setRowHidden(row, True)
                         continue  # Skip further processing for album title rows
                     
                     # Now filter regular song rows
-                    for column in range(self.songTableWidget.columnCount() - 1):
+                    for column in range(2):  # Check first two columns for a match
                         item = self.songTableWidget.item(row, column)
                         if item and search_text in item.text().lower():
                             match = True
                             found_at_least_one = True  # Set flag to True if at least one match is found
                             break
                     
-                    # Only hide rows if there is at least one match
+                    # Highlight matched rows and hide unmatched rows if at least one match is found
                     if found_at_least_one:
                         self.songTableWidget.setRowHidden(row, not match)
+                        # if match:
+                        #     self.songTableWidget.selectRow(row)  # Highlight the row if it matches                        
+                        #     self.songTableWidget.scroll_to_current_row()                                                    
                     else:
-                        self.songTableWidget.setRowHidden(row, False)  # Ensure no rows are hidden if no matches are found
-                        
+                        self.songTableWidget.setRowHidden(row, True) # Hide the other rows
+
             # Clear the search bar and reset the placeholder text
             self.search_bar.clear()
             self.search_bar.setPlaceholderText("Search...")
@@ -1163,8 +1175,8 @@ class MusicPlayerUI(QMainWindow):
         previous_song = self.songTableWidget.get_previous_song_object()
         self.handleRowDoubleClick(previous_song)
                 
-    def play_next_song(self):
-        next_song = self.songTableWidget.get_next_song_object()
+    def play_next_song(self, fromStart=None):
+        next_song = self.songTableWidget.get_next_song_object(fromStart)
         self.handleRowDoubleClick(next_song)    
         
     def play_random_song(self):
@@ -1240,8 +1252,13 @@ class MusicPlayerUI(QMainWindow):
     def seekForward(self):
         self.player.seek_forward()
 
-    def play_pause(self):
-        self.player.play_pause_music()
+    def play_pause(self): 
+        current_text = html_to_plain_text(self.lrcPlayer.media_lyric.text())
+        if current_text == "End Of Playlist":
+            self.play_next_song(True)                               
+            self.play_song()
+        else:
+            self.player.play_pause_music()
 
     def update_player_from_slider(self, position):
         # Set the media player position when the slider is moved
