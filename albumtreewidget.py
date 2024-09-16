@@ -5,7 +5,6 @@ from collections import defaultdict
 import sqlite3
 import os
 from fuzzywuzzy import fuzz
-from regex import D
 from loadingbar import LoadingBar
 
 
@@ -58,39 +57,45 @@ class AlbumTreeWidget(QWidget):
         matched_artists = []  # List to store matched and visible artists
 
         def matches_search(text):
-            if search_text in text.lower():
-                return True
-            if search_text and fuzz.partial_ratio(search_text, text.lower()) > 80:
-                return True
-            return False
+            # Simplify the matching function by checking directly for fuzzy match if needed
+            return search_text in text.lower() or (search_text and fuzz.partial_ratio(search_text, text.lower()) > 80)
 
         for i in range(self.tree_widget.topLevelItemCount()):
             artist_item = self.tree_widget.topLevelItem(i)
-            artist_visible = False
+            artist_visible = False  # To track if artist should be visible due to albums/songs
 
+            # Check if artist matches the search
             if matches_search(artist_item.text(0)):
                 matched_artists.append(artist_item)
+                artist_visible = True
 
             for j in range(artist_item.childCount()):
                 album_item = artist_item.child(j)
-                album_visible = matches_search(album_item.text(0))
-                artist_visible = artist_visible or album_visible
+                album_visible = False  # To track if album should be visible due to songs
 
-                if album_visible:
+                # Check if album matches the search
+                if matches_search(album_item.text(0)):
                     matched_albums.append(album_item)
+                    album_visible = True
 
-                # Collect songs if they match the search text
                 for k in range(album_item.childCount()):
                     song_item = album_item.child(k)
                     song_visible = matches_search(song_item.text(0))
                     song_item.setHidden(not song_visible)
 
-                    if not song_item.isHidden():
+                    # If a song is visible, album and artist should be visible too
+                    if song_visible:
                         matched_songs.append(song_item)
+                        album_visible = True
+                        artist_visible = True
 
+                # Set album visibility
+                album_item.setHidden(not album_visible)
+
+            # Set artist visibility
             artist_item.setHidden(not artist_visible)
 
-        # Assign matched item
+        # Assign the first matched item in priority: song > album > artist
         if matched_songs:
             self.matched_item = matched_songs[0]
         elif matched_albums:
@@ -99,7 +104,7 @@ class AlbumTreeWidget(QWidget):
             self.matched_item = matched_artists[0]
         else:
             self.matched_item = None
-
+            
     def initUI(self):
         self.search_bar.setPlaceholderText("Search...")
 
@@ -142,7 +147,7 @@ class AlbumTreeWidget(QWidget):
         if loadAgain:
             self.tree_widget.clear()
             self.parent.media_files.clear()
-            self.cleanDetails()
+            self.parent.cleanDetails()
             self.songTableWidget.clear()
             self.songTableWidget.setRowCount(0)        
             self.songTableWidget.setHorizontalHeaderLabels(
