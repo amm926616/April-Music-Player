@@ -111,7 +111,7 @@ class MusicPlayer:
             
         self.disable_loop_playlist()
                 
-    def play_pause_music(self):        
+    def play_pause_music(self):  
         if self.started_playing:  # pause state activating
             if not self.in_pause_state:
                 # Record the current position before pausing

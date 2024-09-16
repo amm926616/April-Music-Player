@@ -42,7 +42,6 @@ class GetFont:
         for record in name_records:
             if record.nameID == 4:  # Full font name
                 font_name = record.toStr()
-                print(font_name)
                 return font_name
         return None
 
