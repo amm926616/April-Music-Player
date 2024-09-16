@@ -1,6 +1,5 @@
 import json
 from base64 import b64decode
-import sqlite3
 import os
 import sys
 import platform
@@ -226,8 +225,7 @@ class MusicPlayerUI(QMainWindow):
         self.hide()
         if self.lrcPlayer.lrc_display is not None:
             self.lrcPlayer.lrc_display.close()
-        event.ignore()
-        
+        event.ignore()        
         
     def keyPressEvent(self, event: QKeyEvent):            
         if event.key() == Qt.Key.Key_I and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -259,6 +257,7 @@ class MusicPlayerUI(QMainWindow):
             self.activate_lrc_display()            
             
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.songTableWidget.save_table_data()
             sys.exit()                 
             
         elif event.key() == Qt.Key.Key_F and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -586,7 +585,7 @@ class MusicPlayerUI(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Initialize the table widget
-        self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.player.seek_forward, self.player.seek_backward, self.player.play_pause_music)  
+        self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.player.seek_forward, self.player.seek_backward, self.play_pause, self.config_path)  
 
         self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)      
@@ -1204,19 +1203,22 @@ class MusicPlayerUI(QMainWindow):
                 self.songTableWidget.song_playing_row = self.item.row()                  
                 self.lrcPlayer.started_player = True
                 self.get_music_file_from_click(item)
-                self.updateInformations()
-                self.get_lrc_file()
-                self.player.update_music_file(self.music_file)
-                self.player.default_pause_state()            
-                self.play_song()
+                if self.music_file:
+                    self.updateInformations()
+                    self.get_lrc_file()
+                    self.player.update_music_file(self.music_file)
+                    self.player.default_pause_state()            
+                    self.play_song()
+                else:
+                    return
         else:
-            pass
+            return
         
         if self.hidden_rows:
             self.songTableWidget.clearSelection()    
             self.restore_table()      
             self.songTableWidget.setFocus()
-            # self.songTableWidget.scroll_to_current_row()
+            self.songTableWidget.scroll_to_current_row()
             self.simulate_keypress(self.songTableWidget, Qt.Key.Key_G) # only imitation of key press work. Direct calling the method doesn't work. IDk why.                                                                                                
             self.hidden_rows = False      
                
@@ -1279,8 +1281,11 @@ class MusicPlayerUI(QMainWindow):
             self.lrcPlayer.file = None
             
     def double_click_on_image(self):
-        album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file)
-        album_window.exec()
+        if self.music_file is None:
+            return
+        else:
+            album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file)
+            album_window.exec()
 
     def extract_and_set_album_art(self):
         audio_file = File(self.music_file)
