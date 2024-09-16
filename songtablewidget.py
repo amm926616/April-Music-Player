@@ -45,7 +45,7 @@ class SongTableWidget(QTableWidget):
         # """)
         
         # Set the background image on the viewport (the visible area of the table)        
-        svg_file = os.path.join(self.parent.script_path, "background-images", "background.svg")
+        svg_file = os.path.join(self.parent.script_path, "icons", "resized.png")
         
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
@@ -55,7 +55,7 @@ class SongTableWidget(QTableWidget):
             background-image: url({svg_file});
             background-repeat: no-repeat;
             background-position: center;
-            background-size: contain;  /* Ensures the SVG fits within the viewport */
+            background-size: fill;  /* Ensures the SVG fits within the viewport */
         """)
 
     #     # Make sure the cells are transparent

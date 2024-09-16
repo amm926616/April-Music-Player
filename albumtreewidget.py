@@ -40,7 +40,10 @@ class AlbumTreeWidget(QWidget):
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             if self.search_bar.hasFocus():
-                self.on_item_double_clicked(self.matched_item)
+                if self.matched_item:
+                    self.on_item_double_clicked(self.matched_item)
+                else: 
+                    return 
                 self.search_bar.clear()
                 self.search_bar.setPlaceholderText("Search...")
             elif self.tree_widget.hasFocus():  # Check if the tree widget has focus

@@ -97,7 +97,7 @@ class FontSettingsWindow(QWidget):
 
     def update_font_display(self, language):
         """ Update the QLabel for the selected language with the chosen font """
-        self.font_labels[language].setText(f"Current Font: {self.fonts[language]}")
+        self.font_labels[language].setText(f"{self.fonts[language]}")
         
     def get_font_name_from_file(self,font_path):
         font = TTFont(font_path)
