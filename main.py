@@ -9,19 +9,20 @@ import os
 APP_KEY = 'aprilmusicplayer'
 SERVER_NAME = 'MusicPlayerServer'
 
+
 class SingleInstanceApp:
     def __init__(self):
         self.shared_memory = QSharedMemory(APP_KEY)
         self.server = None
-        
+
     def setup_signal_handlers(self):
         """Setup signal handlers to ensure cleanup on crash or termination."""
         signal.signal(signal.SIGINT, self.cleanup_stale_server)
-        signal.signal(signal.SIGTERM, self.cleanup_stale_server)        
-        
+        signal.signal(signal.SIGTERM, self.cleanup_stale_server)
+
     def cleanup_stale_server(self):
         """Remove any existing server with the same name to avoid conflicts."""
-        QLocalServer.removeServer(SERVER_NAME)           
+        QLocalServer.removeServer(SERVER_NAME)
 
     def is_another_instance_running(self):
         if self.shared_memory.attach():
@@ -31,13 +32,13 @@ class SingleInstanceApp:
         else:
             print("Error creating shared memory:", self.shared_memory.errorString())
             return True
-        
+
     def load_stylesheet(self):
         """Load the QSS file from the specified path."""
         script_path = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(script_path, "style.qss")
         with open(file_path, "r") as f:
-            return f.read()        
+            return f.read()
 
     def bring_up_main_window(self):
         # Connect to the local server and send a message to bring up the window
@@ -48,7 +49,7 @@ class SingleInstanceApp:
             socket.flush()
             socket.waitForBytesWritten(1000)
             socket.disconnectFromServer()
-        else:          
+        else:
             print("Failed to connect to server:", socket.errorString())
         socket.close()
 
@@ -97,9 +98,10 @@ class SingleInstanceApp:
         self.shared_memory.detach()
         sys.exit(exit_code)
 
+
 if __name__ == "__main__":
     instance_app = SingleInstanceApp()
-    
+
     if instance_app.is_another_instance_running():
         instance_app.bring_up_main_window()
         sys.exit(1)  # Exit the new instance

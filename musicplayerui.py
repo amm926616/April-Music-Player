@@ -24,7 +24,6 @@ from lrcsync import LRCSync
 from musicplayer import MusicPlayer
 from clickable_label import ClickableLabel
 from easy_json import EasyJson
-from loadingbar import LoadingBar
 from songtablewidget import SongTableWidget
 from albumtreewidget import AlbumTreeWidget
 from random import choice
@@ -167,7 +166,7 @@ class MusicPlayerUI(QMainWindow):
         if dir_path:
             self.directory = dir_path
             self.save_config("music_directory", self.directory)
-            self.loadSongsToCollection(loadAgain)
+            self.albumtreewidget.loadSongsToCollection(self.directory, loadAgain)
         else:
             # If the user cancels, show a message and close the app or ask again
             QMessageBox.warning(self, "No Directory Selected", "A music directory is required to proceed.")
@@ -563,14 +562,8 @@ class MusicPlayerUI(QMainWindow):
     def activate_file_tagger(self):
         currentRow = self.songTableWidget.currentRow()
         music_file = self.songTableWidget.item(currentRow, 7).text()
-        tagger = TagDialog(self, self.music_file, self.songTableWidget, self.albumtreewidget, self.albumtreewidget.cursor)
-        if tagger.exec():
-            if music_file:
-                meta_data = tagger.get_metadata()
-                tagger.tag_file(music_file, meta_data)
-                tagger.update_current_row()
-                # tagger.update_tag_file_in_tree(meta_data)
-
+        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumtreewidget, self.albumtreewidget.cursor)
+        tagger.exec()
         
     def createWidgetAndLayouts(self):
         """ The main layout of the music player ui"""
@@ -605,7 +598,7 @@ class MusicPlayerUI(QMainWindow):
     
         song_collection_layout = QVBoxLayout()
         self.albumtreewidget = AlbumTreeWidget(self, self.songTableWidget)
-        self.loadSongsToCollection()
+        self.albumtreewidget.loadSongsToCollection(self.directory)
         song_collection_layout.addWidget(self.albumtreewidget)
 
         playlistLayout = QVBoxLayout()
@@ -979,84 +972,7 @@ class MusicPlayerUI(QMainWindow):
         self.player.player.stop()
         self.track_display.setText("No Track Playing")
         self.image_display.clear()
-        self.song_details.clear()
-                   
-    def loadSongsToCollection(self, loadAgain=False):
-        self.albumtreewidget.initialize_database()
-        
-        if loadAgain:
-            self.albumtreewidget.tree_widget.clear()
-            self.media_files.clear()
-            self.cleanDetails()
-            self.songTableWidget.clear()
-            self.songTableWidget.setRowCount(0)        
-            self.songTableWidget.setHorizontalHeaderLabels(
-                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
-            )
-            
-        if self.directory is None:
-            return
-
-        media_extensions = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a'}
-
-        # Recursively find all media files
-        self.media_files.clear()
-        for root, _, files in os.walk(self.directory):
-            for file in files:
-                if os.path.splitext(file)[1].lower() in media_extensions:
-                    self.media_files.append(os.path.join(root, file))
-
-        songs_by_artist = defaultdict(list)
-        
-        loadingBar = LoadingBar(self, len(self.media_files))
-        loadingBar.show()
-                
-        # Check if the database already has the songs stored
-        for index, item_path in enumerate(self.media_files):
-            loadingBar.update(index + 1)            
-            self.albumtreewidget.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
-            result = self.albumtreewidget.cursor.fetchone()
-
-            if result:
-                # If the song is already in the database, use the stored metadata
-                metadata = {
-                    'title': result[0],
-                    'artist': result[1],
-                    'album': result[2],
-                    'year': result[3],
-                    'genre': result[4],
-                    'track_number': result[5],
-                    'duration': result[6],
-                    'file_type': result[8]
-                }
-            else:
-                # Otherwise, extract the metadata and store it in the database
-                self.music_file = item_path
-                metadata = self.get_metadata()
-
-                self.albumtreewidget.cursor.execute('''
-                    INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    metadata['title'],
-                    metadata['artist'],
-                    metadata['album'],
-                    str(metadata['year']),
-                    metadata['genre'],
-                    metadata['track_number'],
-                    metadata['duration'],
-                    item_path,
-                    metadata['file_type']
-                ))
-                self.albumtreewidget.conn.commit()
-
-            artist = metadata['artist'] if metadata['artist'] else 'Unknown Artist'
-            album = metadata['album'] if metadata['album'] else 'Unknown Album'
-            track_number = metadata['track_number']
-            songs_by_artist[artist].append((album, track_number, item_path, metadata))
-
-        self.albumtreewidget.loadSongsToCollection(songs_by_artist)
-        loadingBar.close()
+        self.song_details.clear()                   
 
     def clearTable(self):
         self.songTableWidget.clear()

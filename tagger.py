@@ -1,13 +1,59 @@
-from PyQt6.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QWidget, QLabel, QPushButton
+from PyQt6.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QWidget, QLabel, QPushButton, QTreeWidgetItem
 from PyQt6.QtCore import Qt
-from mutagen.id3 import ID3
-from mutagen.oggvorbis import OggVorbis
 from mutagen.flac import FLAC
+from mutagen.oggvorbis import OggVorbis
+from mutagen.id3 import ID3, TIT2, TPE1, TALB, TCON, TDRC, TRCK
+
+
+def tag_file(file_path, metadata):
+    # Determine the file type and initialize the appropriate audio object
+    if file_path.lower().endswith('.mp3'):
+        audio = ID3(file_path)
+        # Update metadata using ID3 frames
+        audio['TIT2'] = TIT2(encoding=3, text=metadata.get('title', ''))
+        audio['TPE1'] = TPE1(encoding=3, text=metadata.get('artist', ''))
+        audio['TALB'] = TALB(encoding=3, text=metadata.get('album', ''))
+        audio['TCON'] = TCON(encoding=3, text=metadata.get('genre', ''))
+        audio['TDRC'] = TDRC(encoding=3, text=metadata.get('year', ''))
+        audio['TRCK'] = TRCK(encoding=3, text=metadata.get('track_number', ''))
+        audio.save()
+
+    elif file_path.lower().endswith('.flac'):
+        audio = FLAC(file_path)
+        # Update metadata using FLAC fields
+        audio['title'] = metadata.get('title', '')
+        audio['artist'] = metadata.get('artist', '')
+        audio['album'] = metadata.get('album', '')
+        audio['genre'] = metadata.get('genre', '')
+        audio['date'] = metadata.get('year', '')
+        audio['tracknumber'] = metadata.get('track_number', '')
+        audio.save()
+
+    elif file_path.lower().endswith('.ogg'):
+        audio = OggVorbis(file_path)
+        # Update metadata using OggVorbis fields
+        audio['title'] = metadata.get('title', '')
+        audio['artist'] = metadata.get('artist', '')
+        audio['album'] = metadata.get('album', '')
+        audio['genre'] = metadata.get('genre', '')
+        audio['date'] = metadata.get('year', '')
+        audio['tracknumber'] = metadata.get('track_number', '')
+        audio.save()
+
+    else:
+        print("Unsupported file type.")
+        return
 
 class TagDialog(QDialog):
     def __init__(self, parent=None, file_path=None, songTableWidget=None, albumTreeWidget=None, db_cursor=None):
         super().__init__(parent)
-        self.songtablewidget = songTableWidget
+        self.tracknumber_edit = None
+        self.year_edit = None
+        self.genre_edit = None
+        self.album_edit = None
+        self.artist_edit = None
+        self.title_edit = None
+        self.songTableWidget = songTableWidget
         self.albumTreeWidget = albumTreeWidget  # Reference to your QTreeWidget
         self.db_cursor = db_cursor  # Database cursor for updating the metadata
         self.setWindowTitle("Edit Metadata")
@@ -64,22 +110,50 @@ class TagDialog(QDialog):
         # Determine the file type
         if self.file_path.lower().endswith('.mp3'):
             audiofile = ID3(self.file_path)
+            
+            # Fetch metadata using ID3 tags
+            title = audiofile.get('TIT2')  # Title
+            artist = audiofile.get('TPE1')  # Artist
+            album = audiofile.get('TALB')  # Album
+            genre = audiofile.get('TCON')  # Genre
+            year = audiofile.get('TDRC')  # Year/Date
+            track_number = audiofile.get('TRCK')  # Track number
+
+            # Set text fields, safely extracting text from ID3 tags
+            self.title_edit.setText(title.text[0] if title else '')
+            self.artist_edit.setText(artist.text[0] if artist else '')
+            self.album_edit.setText(album.text[0] if album else '')
+            self.genre_edit.setText(genre.text[0] if genre else '')
+            
+            # For the year (TDRC), convert ID3TimeStamp to string if it exists
+            self.year_edit.setText(str(year.text[0]) if year else '')
+            
+            # Track number (TRCK) is also handled the same way
+            self.tracknumber_edit.setText(track_number.text[0] if track_number else '')
+
         elif self.file_path.lower().endswith('.flac'):
             audiofile = FLAC(self.file_path)
+            self.title_edit.setText(audiofile.get('title', [''])[0] if 'title' in audiofile else '')
+            self.artist_edit.setText(audiofile.get('artist', [''])[0] if 'artist' in audiofile else '')
+            self.album_edit.setText(audiofile.get('album', [''])[0] if 'album' in audiofile else '')
+            self.genre_edit.setText(audiofile.get('genre', [''])[0] if 'genre' in audiofile else '')
+            self.year_edit.setText(audiofile.get('date', [''])[0] if 'date' in audiofile else '')
+            self.tracknumber_edit.setText(audiofile.get('tracknumber', [''])[0] if 'tracknumber' in audiofile else '')
+
         elif self.file_path.lower().endswith('.ogg'):
             audiofile = OggVorbis(self.file_path)
+            self.title_edit.setText(audiofile.get('title', [''])[0] if 'title' in audiofile else '')
+            self.artist_edit.setText(audiofile.get('artist', [''])[0] if 'artist' in audiofile else '')
+            self.album_edit.setText(audiofile.get('album', [''])[0] if 'album' in audiofile else '')
+            self.genre_edit.setText(audiofile.get('genre', [''])[0] if 'genre' in audiofile else '')
+            self.year_edit.setText(audiofile.get('date', [''])[0] if 'date' in audiofile else '')
+            self.tracknumber_edit.setText(audiofile.get('tracknumber', [''])[0] if 'tracknumber' in audiofile else '')
+
         else:
             print("Unsupported file type.")
             return
 
-        self.title_edit.setText(audiofile.get('title', [''])[0] if 'title' in audiofile else '')
-        self.artist_edit.setText(audiofile.get('artist', [''])[0] if 'artist' in audiofile else '')
-        self.album_edit.setText(audiofile.get('album', [''])[0] if 'album' in audiofile else '')
-        self.genre_edit.setText(audiofile.get('genre', [''])[0] if 'genre' in audiofile else '')
-        self.year_edit.setText(audiofile.get('date', [''])[0] if 'date' in audiofile else '')
-        self.tracknumber_edit.setText(audiofile.get('track_number', [''])[0] if 'track_number' in audiofile else '')
-
-    def get_metadata(self):
+    def get_user_added_metadata(self):
         return {
             'title': self.title_edit.text(),
             'artist': self.artist_edit.text(),
@@ -89,72 +163,17 @@ class TagDialog(QDialog):
             'track_number': self.tracknumber_edit.text()
         }
 
-    def tag_file(self, file_path, metadata):
-        if file_path.lower().endswith('.mp3'):
-            audio = ID3(file_path)
-        elif file_path.lower().endswith('.flac'):
-            audio = FLAC(file_path)
-        elif file_path.lower().endswith('.ogg'):
-            audio = OggVorbis(file_path)
-        else:
-            print("Unsupported file type.")
-            return
-
-        audio['title'] = metadata['title']
-        audio['artist'] = metadata['artist']
-        audio['album'] = metadata['album']
-        audio['genre'] = metadata['genre']
-        audio['date'] = metadata['year']
-        audio['track_number'] = metadata['track_number']
-        audio.save()
-
-    def update_current_row(self):
-        # Retrieve updated metadata from the dialog
-        metadata = self.get_metadata()
-        
-        # Update each column in the current row of the song table widget
-        row = self.songtablewidget.currentRow()
-        self.songtablewidget.item(row, 0).setText(metadata['title'])
-        self.songtablewidget.item(row, 1).setText(metadata['artist'])
-        self.songtablewidget.item(row, 2).setText(metadata['album'])
-        self.songtablewidget.item(row, 3).setText(metadata['genre'])
-        self.songtablewidget.item(row, 4).setText(metadata['year'])
-        self.songtablewidget.item(row, 5).setText(metadata['track_number'])
-
-    def update_tree_and_database(self):
-        # Retrieve the updated metadata
-        metadata = self.get_metadata()
-
-        # Update the QTreeWidgetItem
-        tree_items = self.albumTreeWidget.tree_widget.findItems(self.file_path, Qt.MatchFlag.MatchExactly | Qt.MatchFlag.MatchRecursive, 2)
-        if tree_items:
-            tree_item = tree_items[0]  # Assuming only one match
-            tree_item.setText(0, metadata['title'])
-            tree_item.setText(1, metadata['artist'])
-            tree_item.setText(2, metadata['album'])
-
-        # Update the database
-        query = """
-        UPDATE songs 
-        SET title = ?, artist = ?, album = ?, genre = ?, year = ?, track_number = ? 
-        WHERE file_path = ?
-        """
-        self.db_cursor.execute(query, (
-            metadata['title'], metadata['artist'], metadata['album'],
-            metadata['genre'], metadata['year'], metadata['track_number'],
-            self.file_path
-        ))
-
     def on_accept(self):
         # Tag the file with the new metadata
-        metadata = self.get_metadata()
-        self.tag_file(self.file_path, metadata)
+        metadata = self.get_user_added_metadata()
+        tag_file(self.file_path, metadata)
 
         # Update the current row in the song table
-        self.update_current_row()
-
-        # Update the tree widget and database
-        self.update_tree_and_database()
-
+        self.albumTreeWidget.updateSongMetadata(self.file_path, metadata)
+        
         # Accept the dialog
         self.accept()
+        
+
+
+            
