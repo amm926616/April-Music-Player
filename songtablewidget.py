@@ -41,72 +41,6 @@ class SongTableWidget(QTableWidget):
         self.load_table_data()  
         
         self.setSortingEnabled(False)  # Disable default sorting to use custom sorting
-
-        # Set up the horizontal header and connect the sectionClicked signal
-        header = self.horizontalHeader()
-        header.setSortIndicatorShown(True)
-        header.sectionClicked.connect(self.handle_header_click)
-
-        # Store the current sort order for toggling between ascending/descending
-        self.sort_order = Qt.SortOrder.AscendingOrder
-
-    # Slot to handle header click
-    def handle_header_click(self, column_index):
-        # Toggle between ascending and descending order on each click
-        if self.sort_order == Qt.SortOrder.AscendingOrder:
-            self.sort_order = Qt.SortOrder.DescendingOrder
-        else:
-            self.sort_order = Qt.SortOrder.AscendingOrder
-        
-        # Call custom sort_items method with the clicked column and the current sort order
-        self.sort_items(column_index, self.sort_order)
-
-    # Custom sort_items method with sorting logic
-    def sort_items(self, column_index, order):
-        self.setSortingEnabled(False)  # Disable sorting temporarily
-
-        # Extract current data from the table
-        data = self.get_current_table_data()
-
-        # Custom sorting logic that keeps album title rows above their related song rows
-        def custom_sort_key(row):
-            if row[0].startswith("Album Title:"):
-                # Keep album title rows at the top by assigning a low priority value
-                return (row[0], "")
-            else:
-                # For song rows, use the album name in column 2 (or the desired column) for sorting
-                album_name = row[1]
-                return (album_name, row[column_index])
-
-        # Sort the data using the custom key and the desired order
-        sorted_data = sorted(data, key=custom_sort_key, reverse=(order == Qt.SortOrder.DescendingOrder))
-
-        # Clear the table and repopulate it with sorted data
-        self.set_table_data(sorted_data)
-
-        self.setSortingEnabled(True)  # Re-enable sorting
-
-    # Helper function to extract table data
-    def get_current_table_data(self):
-        data = []
-        for row in range(self.rowCount()):
-            row_data = []
-            for column in range(self.columnCount()):
-                item = self.item(row, column)
-                row_data.append(item.text() if item else "")
-            data.append(row_data)
-        return data
-
-    # Helper function to set the table data after sorting
-    def set_table_data(self, data):
-        self.setRowCount(0)  # Clear current rows
-        for row_data in data:
-            row = self.rowCount()
-            self.insertRow(row)
-            for column, item_data in enumerate(row_data):
-                item = QTableWidgetItem(item_data)
-                self.setItem(row, column, item)
-
                      
     def load_table_data(self):
         # Load the data from the JSON file
@@ -123,6 +57,11 @@ class SongTableWidget(QTableWidget):
                 table_item = QTableWidgetItem(item_text)
                 
                 if row_data["row_type"] == "album_title":
+                    table_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+
+                    # Disable item interaction
+                    table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+                    
                     # Restore the font
                     if row_data["font"]:
                         font = QFont()
@@ -131,9 +70,15 @@ class SongTableWidget(QTableWidget):
 
                     # Restore the colspan
                     if row_data["colspan"]:
-                        self.setSpan(row, column, 1, row_data["colspan"])
+                        self.setSpan(row, 0, 1, row_data["colspan"])
+                        
+                    self.setItem(row, 0, table_item)
+                        
+                else:
+                    table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
                 self.setItem(row, column, table_item)
+                print(row, column, table_item.text())
 
     def save_table_data(self):
         # Get the current data from the table widget

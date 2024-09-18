@@ -1,6 +1,7 @@
 import json
 import os
 import platform
+import inspect
 
 class EasyJson:
     def __init__(self, config_file=None):
@@ -12,8 +13,8 @@ class EasyJson:
         config_file = os.path.join(self.config_path, "config.json")
         
         self.config_file = config_file
-        self.script_path = os.path.dirname(os.path.abspath(__file__))
-        
+        self.script_path = os.path.dirname(os.path.abspath(__file__))             
+            
     def setupBackgroundImage(self):
         self.edit_value("background_image", os.path.join(self.script_path, "background-images", "default.jpg"))
         
@@ -21,6 +22,12 @@ class EasyJson:
         self.edit_value("lyrics_color", "white")
     
     def get_value(self, key):
+        # Get the frame of the caller
+        caller_frame = inspect.currentframe().f_back
+        # Get file name and line number of the caller
+        caller_info = inspect.getframeinfo(caller_frame)
+        print(f"Called from File: {caller_info.filename}, Line: {caller_info.lineno}")
+        
         if not os.path.exists(self.config_file):
             print(f"Error: The file {self.config_file} does not exist.")
             return None
