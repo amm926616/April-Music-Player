@@ -44,8 +44,20 @@ class SongTableWidget(QTableWidget):
                      
     def load_table_data(self):
         # Load the data from the JSON file
-        with open(self.json_file, 'r') as file:
-            data = json.load(file)
+        if not os.path.exists(self.json_file):
+            # File doesn't exist, return 0
+            return 0
+
+        try:
+            with open(self.json_file, 'r') as file:
+                data = json.load(file)
+                # Check if the file is empty or contains an empty list
+                if not data:
+                    return 0
+                return data
+        except json.JSONDecodeError:
+            # File is empty or invalid JSON, return 0
+            return 0
 
         # Set the row and column count based on the data
         self.setRowCount(len(data))
