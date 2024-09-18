@@ -288,26 +288,22 @@ class MusicPlayerUI(QMainWindow):
         QMessageBox.about(self, "Default Background Image", "Default lyric background image is restored")
         
     def default_menubar_content(self):
-        # default fonts
-        if self.ej.get_value("english_font") is None:
-            self.ej.edit_value("english_font", os.path.join(self.script_path , "fonts/PositiveForward.otf"))
-        if self.ej.get_value("korean_font") is None:
-            self.ej.edit_value("korean_font", os.path.join(self.script_path , "fonts/NotoSerifKR-ExtraBold.ttf"))
-        if self.ej.get_value("japanese_font") is None:
-            self.ej.edit_value("japanese_font", os.path.join(self.script_path , "fonts/NotoSansJP-Bold.otf"))
-        if self.ej.get_value("chinese_font") is None:
-            self.ej.edit_value("chinese_font", os.path.join(self.script_path , "fonts/NotoSerifKR-ExtraBold.ttf"))
+        # Define default values for the configuration
+        default_values = {
+            "english_font": os.path.join(self.script_path, "fonts/PositiveForward.otf"),
+            "korean_font": os.path.join(self.script_path, "fonts/NotoSerifKR-ExtraBold.ttf"),
+            "japanese_font": os.path.join(self.script_path, "fonts/NotoSansJP-Bold.otf"),
+            "chinese_font": os.path.join(self.script_path, "fonts/NotoSerifKR-ExtraBold.ttf"),
+            "lrc_font_size": int(self.height() * 0.14),
+            "sync_threshold": 0.3,
+            "lyrics_color": "white",
+            "show_lyrics": True
+        }
 
-        if self.ej.get_value("lrc_font_size") is None:
-            self.ej.edit_value("lrc_font_size", int(self.height() * 0.14))
-
-        # other menubar contents
-        if self.ej.get_value("sync_threshold") is None:
-            self.ej.edit_value("sync_threshold", 0.3)
-        if self.ej.get_value("lyrics_color") is None:
-            self.ej.edit_value("lyrics_color", "white") 
-        if self.ej.get_value("show_lyrics") is None:
-            self.ej.edit_value("show_lyrics", True)
+        # Iterate over the default values and set them if not present
+        for key, default_value in default_values.items():
+            if self.ej.get_value(key) is None:
+                self.ej.edit_value(key, default_value)
                         
     def on_off_lyrics(self, checked):
         if checked:
@@ -402,6 +398,7 @@ class MusicPlayerUI(QMainWindow):
             "lime", "indigo", "violet", "gold", "silver", "beige", "coral", "crimson", "khaki", 
             "lavender", "salmon", "sienna", "tan", "plum", "peach", "chocolate"
             ]
+        
         self.color_actions = {}
 
         for color in colors:
@@ -708,7 +705,7 @@ class MusicPlayerUI(QMainWindow):
         # to catch key event on slider.
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
-            self.seekBack()                
+            self.seekBack()
             
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
