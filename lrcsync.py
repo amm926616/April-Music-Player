@@ -250,6 +250,9 @@ class LRCSync:
             self.go_to_next_lyric()
             
         elif event.key() == Qt.Key.Key_D:
+            if self.player.in_pause_state:
+                self.player.play_pause_music()
+                self.player.in_pause_state = False                        
             self.go_to_the_start_of_current_lyric()    
                                
         elif event.key() == Qt.Key.Key_E:
@@ -261,6 +264,9 @@ class LRCSync:
             self.lrc_display.close()
             
         elif event.key() == Qt.Key.Key_R:
+            if self.player.in_pause_state:
+                self.player.play_pause_music()    
+                self.player.in_pause_state = False        
             self.player.player.setPosition(0)
             
         elif event.key() == Qt.Key.Key_F:
