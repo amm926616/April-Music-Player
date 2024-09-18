@@ -43,54 +43,71 @@ class SongTableWidget(QTableWidget):
         self.setSortingEnabled(False)  # Disable default sorting to use custom sorting
                      
     def load_table_data(self):
-        # Load the data from the JSON file
+        print("Started loading table data")
+        
+        # Check if the JSON file exists
         if not os.path.exists(self.json_file):
-            # File doesn't exist, return 0
+            print(f"File {self.json_file} does not exist.")
             return 0
 
         try:
+            # Open and load the JSON data
             with open(self.json_file, 'r') as file:
                 data = json.load(file)
-                # Check if the file is empty or contains an empty list
                 if not data:
+                    print("Empty data in JSON file.")
                     return 0
-                return data
+
         except json.JSONDecodeError:
-            # File is empty or invalid JSON, return 0
+            print(f"Error decoding JSON from {self.json_file}")
             return 0
 
-        # Set the row and column count based on the data
-        self.setRowCount(len(data))
-        self.setColumnCount(len(data[0]["items"]) if data else 0)
+        # Clear existing table content
+        self.clearContents()
+        self.setRowCount(0)
+        
+        # Set up the row and column counts based on the loaded data
+        row_count = len(data)
+        if row_count == 0:
+            print("No data to load.")
+            return 0
 
-        # Populate the table with the loaded data and restore the formatting
+        column_count = len(data[0]["items"]) if data else 0
+        self.setColumnCount(column_count)
+
+        # Populate the table widget with the loaded data
         for row, row_data in enumerate(data):
+            self.insertRow(row)
+            
             for column, item_text in enumerate(row_data["items"]):
                 table_item = QTableWidgetItem(item_text)
-                
-                if row_data["row_type"] == "album_title":
-                    table_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
 
-                    # Disable item interaction
+                if row_data["row_type"] == "album_title":
+                    # Album Title row: Set font, colspan, and disable selection
+                    table_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
                     
                     # Restore the font
-                    if row_data["font"]:
+                    if row_data.get("font"):
                         font = QFont()
                         font.fromString(row_data["font"])
                         table_item.setFont(font)
 
                     # Restore the colspan
-                    if row_data["colspan"]:
+                    if row_data.get("colspan"):
                         self.setSpan(row, 0, 1, row_data["colspan"])
-                        
-                    self.setItem(row, 0, table_item)
-                        
-                else:
-                    table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
-                self.setItem(row, column, table_item)
-                print(row, column, table_item.text())
+                    # Add the item to the first column (since it spans all columns)
+                    self.setItem(row, column, table_item)
+
+                else:
+                    # Normal rows: Add items and disable editing
+                    table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    self.setItem(row, column, table_item)
+                    
+                print(f"Loaded item at row {row}, column {column}: {item_text}")
+
+        print("Finished loading table data.")
 
     def save_table_data(self):
         # Get the current data from the table widget
@@ -118,15 +135,18 @@ class SongTableWidget(QTableWidget):
                         row_data["row_type"] = "album_title"
                         row_data["font"] = item.font().toString()  # Save font settings as string
                         row_data["colspan"] = self.columnSpan(row, column)
-
                 else:
-                    row_data["items"].append("")
-            
+                    row_data["items"].append("")  # Handle empty cells
+                    
             data.append(row_data)
 
         # Save the data and metadata to a file
-        with open(self.json_file, 'w') as file:
-            json.dump(data, file, indent=4)
+        try:
+            with open(self.json_file, 'w') as file:
+                json.dump(data, file, indent=4)
+            print(f"Data successfully saved to {self.json_file}")
+        except IOError as e:
+            print(f"Failed to save data to {self.json_file}: {e}")
 
     def get_table_data(self, table_widget):
         # Get the number of rows and columns
@@ -214,8 +234,8 @@ class SongTableWidget(QTableWidget):
                     
         # Check if the item exists
         item = self.item(next_row, 7)
-        
-        if item is None:
+                        
+        if len(item.text()) == 0:
             next_row += 1
             if next_row >= self.rowCount():
                 return None  # Or handle the case where no more rows are available
@@ -353,7 +373,10 @@ class SongTableWidget(QTableWidget):
                                 
         elif event.key() == Qt.Key.Key_G and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.clearSelection()               
-            self.scroll_to_current_row()                         
+            self.scroll_to_current_row()       
+            
+        elif event.key() == Qt.Key.Key_F2:
+            self.parent.activate_file_tagger()                  
                                 
         else:
             # For other keys, use the default behavior
