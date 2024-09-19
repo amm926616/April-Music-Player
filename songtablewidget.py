@@ -340,12 +340,6 @@ class SongTableWidget(QTableWidget):
             print("UP key pressed")
             self.setNextRow(self.currentItem())
             
-        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.save_table_data()
-            
-        elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.load_table_data()
-            
         elif event.key() == Qt.Key.Key_Delete:
             self.delete_selected_rows()
                     
