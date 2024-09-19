@@ -31,7 +31,7 @@ class AlbumTreeWidget(QWidget):
         self.tree_widget = None
         self.songTableWidget = songTableWidget
         self.matched_item = None
-        self.config_path = os.path.join(os.path.expanduser("~"), '.config', 'april-music-player')
+        self.config_path = self.parent.config_path
         self.conn = None
         self.cursor = None
         self.search_bar = QLineEdit()
