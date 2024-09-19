@@ -22,6 +22,12 @@ class GetFont:
         self.load_font_settings()  # Initialize the font settings
         self.fonts_loaded = False
         self.formats = {}
+        
+        self.LANGUAGE_RANGES = {
+            "english": (0x0041, 0x007A),  # A-Z, a-z
+            "korean": (0xAC00, 0xD7A3),
+            "japanese": [(0x3040, 0x309F), (0x30A0, 0x30FF), (0x4E00, 0x9FFF)]
+        }        
 
     def load_font_settings(self):
         english_font = self.ej.get_value("english_font")
@@ -44,11 +50,16 @@ class GetFont:
                 font_name = record.toStr()
                 return font_name
         return None
-
+    
     def loadFonts(self):
+        loaded_fonts = set()
         for lang, font_info in self.language_dict.items():
-            if font_info["file_path"]:  # Load from file if path exists
-                QFontDatabase.addApplicationFont(font_info["file_path"])
+            if font_info["file_path"] and font_info["file_path"] not in loaded_fonts:
+                try:
+                    QFontDatabase.addApplicationFont(font_info["file_path"])
+                    loaded_fonts.add(font_info["file_path"])
+                except Exception as e:
+                    print(f"Error loading font {font_info['font_name']}: {e}")
             self.formats[lang] = self.create_text_format(font_info["font_name"], font_info["size"])
         self.fonts_loaded = True
 
@@ -59,16 +70,14 @@ class GetFont:
         return text_format
 
     def detect_language(self, char):
-        if 'a' <= char <= 'z' or 'A' <= char <= 'Z':
+        code = ord(char)
+        if self.LANGUAGE_RANGES["english"][0] <= code <= self.LANGUAGE_RANGES["english"][1]:
             return "english"
-        elif '\uAC00' <= char <= '\uD7A3':
+        elif self.LANGUAGE_RANGES["korean"][0] <= code <= self.LANGUAGE_RANGES["korean"][1]:
             return "korean"
-        elif '\u3040' <= char <= '\u309F':  # Hiragana
-            return "japanese"
-        elif '\u30A0' <= char <= '\u30FF':  # Katakana
-            return "japanese"
-        elif '\u4E00' <= char <= '\u9FFF':  # Kanji
-            return "japanese"
+        for range_set in self.LANGUAGE_RANGES["japanese"]:
+            if isinstance(range_set, tuple) and range_set[0] <= code <= range_set[1]:
+                return "japanese"
         return None
 
     def apply_fonts_to_text(self, text):
@@ -80,7 +89,16 @@ class GetFont:
 
         for char in text:
             language = self.detect_language(char) or "english"
-            cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
+            format_with_stroke = self.formats.get(language, self.formats["english"])
+
+            # Set stroke effect (simulated by color change)
+            format_with_stroke.setForeground(QColor(0, 0, 0))  # Stroke color
+            cursor.setCharFormat(format_with_stroke)
+            cursor.insertText(char)
+
+            # Set main text color
+            format_with_stroke.setForeground(QColor(255, 255, 255))  # Main text color
+            cursor.setCharFormat(format_with_stroke)
             cursor.insertText(char)
 
         return doc.toHtml()
