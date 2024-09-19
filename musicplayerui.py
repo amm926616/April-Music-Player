@@ -93,6 +93,8 @@ class MusicPlayerUI(QMainWindow):
 
         # Define the config path
         self.script_path = os.path.dirname(os.path.abspath(__file__))
+        QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))
+        
         self.central_widget = None
         self.songTableWidget = None
         self.search_bar = None
@@ -661,7 +663,6 @@ class MusicPlayerUI(QMainWindow):
 
         # Create and configure the track display label
         self.track_display = QLabel("No Track Playing")
-        QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))        
         self.track_display.setFont(QFont("Komika Axis"))
         self.track_display.setWordWrap(True)
         self.track_display.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -1066,7 +1067,6 @@ class MusicPlayerUI(QMainWindow):
                 album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
 
                 # funcky cool font for album title
-                QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))
                 font = QFont("Komika Axis", 10)
 
                 album_name_item.setFont(font)

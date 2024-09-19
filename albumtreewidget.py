@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QTreeWidgetItem, QWidget, QLineEdit, QTreeWidget, QVBoxLayout, QTableWidgetItem
-from PyQt6.QtGui import QFontDatabase, QFont, QKeyEvent
+from PyQt6.QtGui import QFont, QKeyEvent
 from PyQt6.QtCore import Qt
 from collections import defaultdict
 import sqlite3
@@ -313,7 +313,6 @@ class AlbumTreeWidget(QWidget):
         album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
 
         # Set font for album title
-        QFontDatabase.addApplicationFont(os.path.join(self.config_path, "fonts/KOMIKAX_.ttf"))
         font = QFont("Komika Axis", 10)
         album_name_item.setFont(font)
         album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
@@ -346,7 +345,6 @@ class AlbumTreeWidget(QWidget):
             album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
 
             # Set font for album title
-            QFontDatabase.addApplicationFont(os.path.join(self.config_path, "fonts/KOMIKAX_.ttf"))
             font = QFont("Komika Axis", 10)
             album_name_item.setFont(font)
             album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
