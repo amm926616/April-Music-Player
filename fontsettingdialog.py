@@ -71,10 +71,10 @@ class FontSettingsWindow(QWidget):
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.close()
             
-    def closeEvent(self, event):
-        print("Cleaning up UI components")
-        self.deleteLater()
-        super(FontSettingsWindow, self).closeEvent(event)  # Call the base class closeEvent     
+    # def closeEvent(self, event):
+    #     print("Cleaning up UI components")
+    #     self.deleteLater()
+    #     super(FontSettingsWindow, self).closeEvent(event)  # Call the base class closeEvent     
         
     def update_lrc_font_size(self, value):
         self.ej.edit_value("lrc_font_size", value)
