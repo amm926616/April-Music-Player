@@ -89,16 +89,7 @@ class GetFont:
 
         for char in text:
             language = self.detect_language(char) or "english"
-            format_with_stroke = self.formats.get(language, self.formats["english"])
-
-            # Set stroke effect (simulated by color change)
-            format_with_stroke.setForeground(QColor(0, 0, 0))  # Stroke color
-            cursor.setCharFormat(format_with_stroke)
-            cursor.insertText(char)
-
-            # Set main text color
-            format_with_stroke.setForeground(QColor(255, 255, 255))  # Main text color
-            cursor.setCharFormat(format_with_stroke)
+            cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
             cursor.insertText(char)
 
         return doc.toHtml()

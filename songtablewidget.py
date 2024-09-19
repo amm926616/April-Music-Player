@@ -105,8 +105,6 @@ class SongTableWidget(QTableWidget):
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.setItem(row, column, table_item)
                     
-                print(f"Loaded item at row {row}, column {column}: {item_text}")
-
         print("Finished loading table data.")
 
     def save_table_data(self):
