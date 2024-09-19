@@ -232,6 +232,11 @@ class SongTableWidget(QTableWidget):
                     
         # Check if the item exists
         item = self.item(next_row, 7)
+        
+        if item is None:
+            self.parent.stop_song()      
+            self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text("End Of Playlist"))                        
+            return
                         
         if len(item.text()) == 0:
             next_row += 1
@@ -249,7 +254,6 @@ class SongTableWidget(QTableWidget):
             if "Album Title:" in currentItem.text():    
                 next_row = self.currentRow() - 1  # Get the previous row index
                 self.setCurrentCell(next_row, 7)   # Set the current cell in the next row and column 7
-                print("Next row ", next_row)
                 
                 # Return the item at next_row and column 7
                 return self.item(next_row, 7)
@@ -262,7 +266,6 @@ class SongTableWidget(QTableWidget):
             if "Album Title:" in currentItem.text():    
                 previous_row  = self.currentRow() + 1                
                 self.setCurrentCell(previous_row, 7)
-                print("previous row ", previous_row)
                 
                 return self.item(previous_row, 7)
         else:
@@ -328,7 +331,6 @@ class SongTableWidget(QTableWidget):
             if not same_album_name_songs:
                 matched_album_title_row = self.findItems(album_title_row_text, Qt.MatchFlag.MatchExactly)
                 for item in matched_album_title_row:
-                    print("Removing album title row ", item)
                     self.removeRow(item.row())
                             
     def keyPressEvent(self, event: QKeyEvent):
