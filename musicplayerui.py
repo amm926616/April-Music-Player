@@ -280,7 +280,19 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_T and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.songTableWidget.setFocus() # set focus on table
-               
+            
+        elif event.key() == Qt.Key.Key_1 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            print("F1 button pressed")
+            self.player.toggle_loop_playlist()
+
+        elif event.key() == Qt.Key.Key_2 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            print("F2 button pressed")
+            self.player.toggle_repeat()
+
+        elif event.key() == Qt.Key.Key_3 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            print("F3 button pressed")
+            self.player.toggle_shuffle()      
+                    
         else: 
             # For other keys, use the default behavior            
             super().keyPressEvent(event)            
