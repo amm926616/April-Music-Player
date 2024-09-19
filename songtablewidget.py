@@ -105,6 +105,7 @@ class SongTableWidget(QTableWidget):
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.setItem(row, column, table_item)
                     
+        self.files_on_playlist.append(row_data["items"][7])                    
         print("Finished loading table data.")
 
     def save_table_data(self):
