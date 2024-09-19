@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QWidget, QLabel, QPushButton, QTreeWidgetItem
+from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
@@ -93,7 +94,7 @@ class TagDialog(QDialog):
         ok_button = QPushButton("OK", self)
         ok_button.clicked.connect(self.on_accept)
         cancel_button = QPushButton("Cancel", self)
-        cancel_button.clicked.connect(self.reject)
+        cancel_button.clicked.connect(self.close)
 
         buttons_layout.addWidget(ok_button)
         buttons_layout.addWidget(cancel_button)
@@ -105,6 +106,18 @@ class TagDialog(QDialog):
         # Pre-fill the dialog with existing metadata
         if self.file_path:
             self.populate_metadata()
+            
+    def keyPressEvent(self, event: QKeyEvent):            
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()  
+            
+        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.on_accept()
+            
+    def closeEvent(self, event):
+        print("Cleaning up UI components")
+        self.deleteLater()
+        super(TagDialog, self).closeEvent(event)  # Call the base class closeEvent            
 
     def populate_metadata(self):
         # Determine the file type
@@ -173,6 +186,7 @@ class TagDialog(QDialog):
         
         # Accept the dialog
         self.accept()
+        self.close()
         
 
 

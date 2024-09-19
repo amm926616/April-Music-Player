@@ -2,10 +2,10 @@ from PyQt6.QtWidgets import (
     QFileDialog, QLabel, QPushButton,
     QVBoxLayout, QWidget, QSpinBox, QHBoxLayout
 )
-from PyQt6.QtGui import QFontDatabase, QIcon
+from PyQt6.QtGui import QFontDatabase, QIcon, QKeyEvent
 from easy_json import EasyJson
 from fontTools.ttLib import TTFont
-
+from PyQt6.QtCore import Qt
 
 class FontSettingsWindow(QWidget):
     def __init__(self, parent):
@@ -63,6 +63,18 @@ class FontSettingsWindow(QWidget):
         main_layout.addLayout(font_size_layout)
 
         self.setLayout(main_layout)
+        
+    def keyPressEvent(self, event: QKeyEvent):            
+        if event.key() == Qt.Key.Key_Escape:
+            self.close()  
+            
+        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.close()
+            
+    def closeEvent(self, event):
+        print("Cleaning up UI components")
+        self.deleteLater()
+        super(FontSettingsWindow, self).closeEvent(event)  # Call the base class closeEvent     
         
     def update_lrc_font_size(self, value):
         self.ej.edit_value("lrc_font_size", value)
