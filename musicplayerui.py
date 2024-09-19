@@ -27,7 +27,7 @@ from songtablewidget import SongTableWidget
 from albumtreewidget import AlbumTreeWidget
 from random import choice
 from fontsettingdialog import FontSettingsWindow
-from tagger import TagDialog
+from tag_dialog import TagDialog
 
 def html_to_plain_text(html):
     doc = QTextDocument()

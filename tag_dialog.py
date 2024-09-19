@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QWidget, QLabel, QPushButton, QTreeWidgetItem
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QLabel, QPushButton, QGroupBox, QHBoxLayout, QFormLayout
+from PyQt6.QtGui import QKeyEvent, QIcon
 from PyQt6.QtCore import Qt
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
-from mutagen.id3 import ID3, TIT2, TPE1, TALB, TCON, TDRC, TRCK
+from mutagen.id3 import ID3, TIT2, TPE1, TALB, TCON, TDRC, TRCK, COMM
 
 
 def tag_file(file_path, metadata):
@@ -17,6 +17,11 @@ def tag_file(file_path, metadata):
         audio['TCON'] = TCON(encoding=3, text=metadata.get('genre', ''))
         audio['TDRC'] = TDRC(encoding=3, text=metadata.get('year', ''))
         audio['TRCK'] = TRCK(encoding=3, text=metadata.get('track_number', ''))
+
+        # Add comment metadata (COMM frame) with required 'lang' and 'desc' fields
+        audio['COMM'] = COMM(encoding=3, lang='eng', desc='', text=metadata.get('comment', ''))
+
+        # Save changes
         audio.save()
 
     elif file_path.lower().endswith('.flac'):
@@ -27,6 +32,7 @@ def tag_file(file_path, metadata):
         audio['album'] = metadata.get('album', '')
         audio['genre'] = metadata.get('genre', '')
         audio['date'] = metadata.get('year', '')
+        audio['comment'] = metadata.get('comment', '')
         audio['tracknumber'] = metadata.get('track_number', '')
         audio.save()
 
@@ -38,6 +44,7 @@ def tag_file(file_path, metadata):
         audio['album'] = metadata.get('album', '')
         audio['genre'] = metadata.get('genre', '')
         audio['date'] = metadata.get('year', '')
+        audio['comment'] = metadata.get('comment', '')        
         audio['tracknumber'] = metadata.get('track_number', '')
         audio.save()
 
@@ -64,49 +71,74 @@ class TagDialog(QDialog):
         self.initUI()
 
     def initUI(self):
+        # Main layout
         layout = QVBoxLayout()
 
-        # Create input fields for metadata
+        # Group box for metadata input fields
+        metadata_group = QGroupBox("Song's Metadata")
+        metadata_layout = QFormLayout()
+
+        # Create input fields for metadata with placeholder text
         self.title_edit = QLineEdit(self)
+        self.title_edit.setPlaceholderText("Enter song title")
         self.artist_edit = QLineEdit(self)
+        self.artist_edit.setPlaceholderText("Enter artist name")
         self.album_edit = QLineEdit(self)
+        self.album_edit.setPlaceholderText("Enter album name")
         self.genre_edit = QLineEdit(self)
+        self.genre_edit.setPlaceholderText("Enter genre")
         self.year_edit = QLineEdit(self)
+        self.year_edit.setPlaceholderText("Enter year (e.g. 2024)")
+        self.comment_edit = QLineEdit(self)
+        self.comment_edit.setPlaceholderText("Add comment")
         self.tracknumber_edit = QLineEdit(self)
+        self.tracknumber_edit.setPlaceholderText("Enter track number")
 
-        layout.addWidget(QLabel("Title:", self))
-        layout.addWidget(self.title_edit)
-        layout.addWidget(QLabel("Artist:", self))
-        layout.addWidget(self.artist_edit)
-        layout.addWidget(QLabel("Album:", self))
-        layout.addWidget(self.album_edit)
-        layout.addWidget(QLabel("Genre:", self))
-        layout.addWidget(self.genre_edit)
-        layout.addWidget(QLabel("Year:", self))
-        layout.addWidget(self.year_edit)
-        layout.addWidget(QLabel("Track Number:", self))
-        layout.addWidget(self.tracknumber_edit)
+        # Add fields to form layout
+        metadata_layout.addRow(QLabel("Title:"), self.title_edit)
+        metadata_layout.addRow(QLabel("Artist:"), self.artist_edit)
+        metadata_layout.addRow(QLabel("Album:"), self.album_edit)
+        metadata_layout.addRow(QLabel("Genre:"), self.genre_edit)
+        metadata_layout.addRow(QLabel("Year:"), self.year_edit)
+        metadata_layout.addRow(QLabel("Comment"), self.comment_edit)
+        metadata_layout.addRow(QLabel("Track Number:"), self.tracknumber_edit)
 
-        # Add OK and Cancel buttons
-        buttons = QWidget(self)
-        buttons_layout = QVBoxLayout(buttons)
+        # Add form layout to group box
+        metadata_group.setLayout(metadata_layout)
+        layout.addWidget(metadata_group)
+
+        # Add spacing between form and buttons
+        layout.addSpacing(15)
+
+        # Buttons layout (aligned horizontally)
+        buttons_layout = QHBoxLayout()
         
         ok_button = QPushButton("OK", self)
+        ok_button.setIcon(QIcon("ok_icon.png"))  # Optional: Set icon if you have one
         ok_button.clicked.connect(self.on_accept)
+
         cancel_button = QPushButton("Cancel", self)
+        cancel_button.setIcon(QIcon("cancel_icon.png"))  # Optional: Set icon if you have one
         cancel_button.clicked.connect(self.close)
 
+        # Add buttons to horizontal layout
+        buttons_layout.addStretch(1)
         buttons_layout.addWidget(ok_button)
         buttons_layout.addWidget(cancel_button)
-        
-        layout.addWidget(buttons)
+
+        # Add buttons layout to the main layout
+        layout.addLayout(buttons_layout)
 
         self.setLayout(layout)
 
         # Pre-fill the dialog with existing metadata
         if self.file_path:
             self.populate_metadata()
-            
+
+    def populate_metadata(self):
+        # Populate fields with existing metadata from file
+        pass
+                
     def keyPressEvent(self, event: QKeyEvent):            
         if event.key() == Qt.Key.Key_Escape:
             self.close()  
@@ -131,6 +163,7 @@ class TagDialog(QDialog):
             genre = audiofile.get('TCON')  # Genre
             year = audiofile.get('TDRC')  # Year/Date
             track_number = audiofile.get('TRCK')  # Track number
+            comment = audiofile.get('COMM::eng')  # Comment (assuming language is 'eng')
 
             # Set text fields, safely extracting text from ID3 tags
             self.title_edit.setText(title.text[0] if title else '')
@@ -143,6 +176,9 @@ class TagDialog(QDialog):
             
             # Track number (TRCK) is also handled the same way
             self.tracknumber_edit.setText(track_number.text[0] if track_number else '')
+            
+            # Set the comment if it exists (COMM::eng)
+            self.comment_edit.setText(comment.text[0] if comment else '')
 
         elif self.file_path.lower().endswith('.flac'):
             audiofile = FLAC(self.file_path)
@@ -152,6 +188,7 @@ class TagDialog(QDialog):
             self.genre_edit.setText(audiofile.get('genre', [''])[0] if 'genre' in audiofile else '')
             self.year_edit.setText(audiofile.get('date', [''])[0] if 'date' in audiofile else '')
             self.tracknumber_edit.setText(audiofile.get('tracknumber', [''])[0] if 'tracknumber' in audiofile else '')
+            self.comment_edit.setText(audiofile.get('comment', [''])[0] if 'comment' in audiofile else '')
 
         elif self.file_path.lower().endswith('.ogg'):
             audiofile = OggVorbis(self.file_path)
@@ -161,6 +198,7 @@ class TagDialog(QDialog):
             self.genre_edit.setText(audiofile.get('genre', [''])[0] if 'genre' in audiofile else '')
             self.year_edit.setText(audiofile.get('date', [''])[0] if 'date' in audiofile else '')
             self.tracknumber_edit.setText(audiofile.get('tracknumber', [''])[0] if 'tracknumber' in audiofile else '')
+            self.comment_edit.setText(audiofile.get('comment', [''])[0] if 'comment' in audiofile else '')
 
         else:
             print("Unsupported file type.")
@@ -173,6 +211,7 @@ class TagDialog(QDialog):
             'album': self.album_edit.text(),
             'genre': self.genre_edit.text(),
             'year': self.year_edit.text(),
+            'comment': self.comment_edit.text(),
             'track_number': self.tracknumber_edit.text()
         }
 
@@ -184,10 +223,8 @@ class TagDialog(QDialog):
         # Update the current row in the song table
         self.albumTreeWidget.updateSongMetadata(self.file_path, metadata)
         
+        self.parent.updateSongDetails()
+        
         # Accept the dialog
         self.accept()
         self.close()
-        
-
-
-            
