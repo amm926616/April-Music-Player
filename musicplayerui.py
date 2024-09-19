@@ -266,6 +266,10 @@ class MusicPlayerUI(QMainWindow):
             self.search_bar.setFocus()
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
             
+        elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.albumtreewidget.search_bar.setFocus()
+            self.albumtreewidget.search_bar.setCursorPosition(len(self.search_bar.text()))                             
+            
         elif event.key() == Qt.Key.Key_R and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("playing random song")
             self.play_random_song()
