@@ -298,6 +298,21 @@ class AlbumTreeWidget(QWidget):
                 item = QTableWidgetItem(str(data))
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.songTableWidget.setItem(self.songTableWidget.rowCount() - 1, i, item)
+                
+    def add_album_title_row(self, album):
+            # Insert a row with the album name
+            row_position = self.songTableWidget.rowCount()
+            self.songTableWidget.insertRow(row_position)
+            album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
+
+            # Set font for album title
+            font = QFont("Komika Axis", 10)
+            album_name_item.setFont(font)
+            album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+
+            self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
+            self.songTableWidget.setItem(row_position, 0, album_name_item)        
 
     def add_songs_by_album(self, album):
         if not self.cursor:
@@ -307,23 +322,16 @@ class AlbumTreeWidget(QWidget):
         self.cursor.execute('SELECT * FROM songs WHERE album=?', (album,))
         songs = self.cursor.fetchall()
 
-        # Insert a row with the album name
-        row_position = self.songTableWidget.rowCount()
-        self.songTableWidget.insertRow(row_position)
-        album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
+        sorted_songs_data = sorted(songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
+        sorted_songs = [song[7] for song in sorted_songs_data]
 
-        # Set font for album title
-        font = QFont("Komika Axis", 10)
-        album_name_item.setFont(font)
-        album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-        album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+        files_on_playlist_set = set(self.songTableWidget.files_on_playlist)  # Convert to set once
+        
+        if set(sorted_songs).issubset(files_on_playlist_set):
+            return
 
-        self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
-        self.songTableWidget.setItem(row_position, 0, album_name_item)
-
-        sorted_songs = sorted(songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
-
-        for song in sorted_songs:
+        self.add_album_title_row(album)
+        for song in sorted_songs_data:
             self.add_song_row(song)
 
     def add_songs_by_artist(self, artist):
@@ -338,24 +346,17 @@ class AlbumTreeWidget(QWidget):
         for song in songs:
             sorted_albums[song[2]].append(song)  # song[2] is the album
 
+        files_on_playlist_set = set(self.songTableWidget.files_on_playlist)
+
         for album, album_songs in sorted(sorted_albums.items()):
-            # Insert a row with the album name
-            row_position = self.songTableWidget.rowCount()
-            self.songTableWidget.insertRow(row_position)
-            album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
+            sorted_songs_data = sorted(album_songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
+            sorted_songs = [song[7] for song in sorted_songs_data]  # Use sorted_songs_data
 
-            # Set font for album title
-            font = QFont("Komika Axis", 10)
-            album_name_item.setFont(font)
-            album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-            album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
-
-            self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
-            self.songTableWidget.setItem(row_position, 0, album_name_item)
-
-            sorted_songs = sorted(album_songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
-
-            for song in sorted_songs:
+            if set(sorted_songs).issubset(files_on_playlist_set):
+                return            
+            
+            self.add_album_title_row(album)       
+            for song in sorted_songs_data:
                 self.add_song_row(song)
 
     def add_song_row(self, song):
