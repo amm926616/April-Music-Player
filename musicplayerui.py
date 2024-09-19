@@ -351,7 +351,7 @@ class MusicPlayerUI(QMainWindow):
         self.on_off_lyrics(checked)
         
     def show_font_settings(self):
-        self.font_settings_window.show()
+        self.font_settings_window.exec()
     
     def createMenuBar(self):
         # this is the menubar that will hold all together
