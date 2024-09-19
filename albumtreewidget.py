@@ -249,7 +249,7 @@ class AlbumTreeWidget(QWidget):
     def loadSongsToAlbumTree(self, songs_by_artist):
         self.tree_widget.clear()  # Clear existing items
 
-        for artist in sorted(songs_by_artist.keys()):
+        for artist in sorted(songs_by_artist.keys(), key=lambda x: x.lower()):
             artist_item = QTreeWidgetItem([artist])
             artist_item.setData(0, Qt.ItemDataRole.UserRole, self.ARTIST_ROLE)
             self.tree_widget.addTopLevelItem(artist_item)
@@ -303,10 +303,13 @@ class AlbumTreeWidget(QWidget):
                 self.songTableWidget.files_on_playlist.append(file_path)
                 self.songTableWidget.insertRow(self.songTableWidget.rowCount())
 
-            for i, data in enumerate(song):
-                item = QTableWidgetItem(str(data))
-                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                self.songTableWidget.setItem(self.songTableWidget.rowCount() - 1, i, item)
+                for i, data in enumerate(song):
+                    item = QTableWidgetItem(str(data))
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    self.songTableWidget.setItem(self.songTableWidget.rowCount() - 1, i, item)
+                    
+            else:
+                return
                 
     def add_album_title_row(self, album):
             # Insert a row with the album name
