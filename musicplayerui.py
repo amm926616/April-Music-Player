@@ -818,12 +818,12 @@ class MusicPlayerUI(QMainWindow):
         # self.connect_progressbar_signals()
 
     def updateDisplayData(self):
-        metadata = self.get_metadata()
+        metadata = self.get_metadata(self.music_file)
         updated_text = f'{metadata["artist"]} - {metadata["title"]}'
         self.track_display.setText(updated_text)
 
-    def updateSongDetails(self):
-        metadata = self.get_metadata()
+    def updateSongDetails(self, song_file):
+        metadata = self.get_metadata(song_file)
         minutes = metadata["duration"] // 60
         seconds = metadata["duration"] % 60
         # Define the bold HTML tag
@@ -840,7 +840,7 @@ class MusicPlayerUI(QMainWindow):
             f'<div>{BOLD}Track Number{END}: {metadata["track_number"]}</div>'
             f'<div>{BOLD}Comment{END}: {metadata["comment"]}</div>'
             f'<div>{BOLD}Duration{END}: {minutes}:{seconds:02d}</div>'
-            f'<div>{BOLD}File Path{END}: {self.file_path}</div>'            
+            f'<div>{BOLD}File Path{END}: {song_file}</div>'            
         )
     
         self.song_details.setText(updated_text)
@@ -848,11 +848,11 @@ class MusicPlayerUI(QMainWindow):
         self.song_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         self.song_details.setWordWrap(True)
 
-    def get_metadata(self):
-        if self.music_file is None:
+    def get_metadata(self, song_file):
+        if song_file is None:
             return
         
-        file_extension = self.music_file.lower().split('.')[-1]
+        file_extension = song_file.lower().split('.')[-1]
 
         metadata = {
             'title': 'Unknown Title',
@@ -868,7 +868,7 @@ class MusicPlayerUI(QMainWindow):
 
         try:
             if file_extension == "mp3":
-                audio = ID3(self.music_file)
+                audio = ID3(song_file)
                 metadata['title'] = audio.get('TIT2', 'Unknown Title').text[0] if audio.get('TIT2') else 'Unknown Title'
                 metadata['artist'] = audio.get('TPE1', 'Unknown Artist').text[0] if audio.get(
                     'TPE1') else 'Unknown Artist'
@@ -880,12 +880,12 @@ class MusicPlayerUI(QMainWindow):
                 metadata['comment'] = audio.get('COMM', 'No Comment').text[0] if audio.get('COMM') else 'No Comment'
 
                 # Extract duration
-                mp3_audio = MP3(self.music_file)
+                mp3_audio = MP3(song_file)
                 metadata['duration'] = int(mp3_audio.info.length)
                 metadata['file_type'] = str(file_extension)
 
             elif file_extension == 'ogg':
-                audio = OggVorbis(self.music_file)
+                audio = OggVorbis(song_file)
                 metadata['title'] = audio.get('title', ['Unknown Title'])[0]
                 metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
                 metadata['album'] = audio.get('album', ['Unknown Album'])[0]
@@ -900,7 +900,7 @@ class MusicPlayerUI(QMainWindow):
                 metadata['file_type'] = str(file_extension)
                 
             elif file_extension == 'flac':
-                audio = FLAC(self.music_file)
+                audio = FLAC(song_file)
                 metadata['title'] = audio.get('title', ['Unknown Title'])[0]
                 metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
                 metadata['album'] = audio.get('album', ['Unknown Album'])[0]
@@ -915,7 +915,7 @@ class MusicPlayerUI(QMainWindow):
                 metadata['file_type'] = str(file_extension)
                 
             elif file_extension == 'wav':
-                audio = WAVE(self.music_file)
+                audio = WAVE(song_file)
                 try:
                     metadata['title'] = audio.get('title', 'Unknown Title')
                     metadata['artist'] = audio.get('artist', 'Unknown Artist')
@@ -1047,7 +1047,7 @@ class MusicPlayerUI(QMainWindow):
             else:
                 # Otherwise, extract the metadata and store it in the database
                 self.music_file = item_path
-                metadata = self.get_metadata()
+                metadata = self.get_metadata(self.music_file)
 
                 self.albumtreewidget.cursor.execute('''
                     INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
@@ -1146,7 +1146,7 @@ class MusicPlayerUI(QMainWindow):
         if self.music_file:
             self.updateDisplayData()
             self.extract_and_set_album_art()
-            self.updateSongDetails()   
+            self.updateSongDetails(self.music_file)   
         else:
             return                                     
                                     

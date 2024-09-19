@@ -55,6 +55,7 @@ def tag_file(file_path, metadata):
 class TagDialog(QDialog):
     def __init__(self, parent=None, file_path=None, songTableWidget=None, albumTreeWidget=None, db_cursor=None):
         super().__init__(parent)
+        self.parent = parent
         self.tracknumber_edit = None
         self.year_edit = None
         self.genre_edit = None
@@ -223,7 +224,7 @@ class TagDialog(QDialog):
         # Update the current row in the song table
         self.albumTreeWidget.updateSongMetadata(self.file_path, metadata)
         
-        self.parent.updateSongDetails()
+        self.parent.updateSongDetails(self.file_path)
         
         # Accept the dialog
         self.accept()
