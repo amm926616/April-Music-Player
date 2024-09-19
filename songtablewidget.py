@@ -232,14 +232,14 @@ class SongTableWidget(QTableWidget):
                 self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text("End Of Playlist"))            
                     
         # Check if the item exists
-        item = self.item(next_row, 7)
+        item = self.item(next_row, 0)
         
         if item is None:
             self.parent.stop_song()      
             self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text("End Of Playlist"))                        
             return
                         
-        if len(item.text()) == 0:
+        if "Album Title:" in item.text():
             next_row += 1
             if next_row >= self.rowCount():
                 return None  # Or handle the case where no more rows are available
