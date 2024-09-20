@@ -1195,10 +1195,10 @@ class MusicPlayerUI(QMainWindow):
         if not self.songTableWidget.files_on_playlist:
             return 
         self.songTableWidget.clearSelection()
-        random_song = choice(self.songTableWidget.files_on_playlist)
-        print("songs on playlist ", self.songTableWidget.files_on_playlist)
+
+        random_song = choice(self.songTableWidget.files_on_playlist.remove(self.music_file))
+
         self.music_file = random_song
-        print("current music file ", self.music_file)
         self.updateInformations()
         self.get_lrc_file()
         self.player.update_music_file(self.music_file)
@@ -1296,6 +1296,8 @@ class MusicPlayerUI(QMainWindow):
     def double_click_on_image(self):
         if self.music_file is None:
             return
+        elif self.image_display.text() == "No Album Art Found":
+            return 
         else:
             album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file)
             album_window.exec()
