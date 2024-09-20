@@ -11,7 +11,7 @@ from notetaking import NoteTaking
 from clickable_label import ClickableLabel
 
 def extract_time_and_lyric(line):
-    match = re.match(r'\[(\d{2}:\d{2}\.\d{2})\](.*)', line)
+    match = re.match(r'\[(\d{2}:\d{2}\.\d+)\](.*)', line)
     if match:
         time_str = match.group(1)
         lyric = match.group(2).strip()
@@ -399,6 +399,8 @@ class LRCSync:
                     if time_str and lyric:
                         time_in_seconds = convert_time_to_seconds(time_str)
                         lyrics_dict[time_in_seconds] = lyric
+                        
+            print(lyrics_dict, "this is dict")
             self.lyrics = lyrics_dict
             self.lyrics_keys = sorted(self.lyrics.keys())
             
