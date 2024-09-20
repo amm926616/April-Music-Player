@@ -106,7 +106,8 @@ class SongTableWidget(QTableWidget):
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.setItem(row, column, table_item)
                     
-        self.files_on_playlist.append(row_data["items"][7])                    
+            self.files_on_playlist.append(row_data["items"][7])                    
+            
         print("Finished loading table data.")
 
     def save_table_data(self):
@@ -230,14 +231,14 @@ class SongTableWidget(QTableWidget):
                 self.parent.play_random_song()
             else:
                 self.parent.stop_song()      
-                self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text("End Of Playlist"))            
+                self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))            
                     
         # Check if the item exists
         item = self.item(next_row, 0)
         
         if item is None:
             self.parent.stop_song()      
-            self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text("End Of Playlist"))                        
+            self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))                        
             return
                         
         if "Album Title:" in item.text():
