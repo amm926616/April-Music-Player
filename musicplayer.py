@@ -5,10 +5,12 @@ from PyQt6.QtCore import QUrl
 
 
 class MusicPlayer:
-    def __init__(self, play_pause_button, loop_playlist_button, repeat_button, shuffle_button, playNextSong=None, playRandomSong=None):
+    def __init__(self, parent, play_pause_button, loop_playlist_button, repeat_button, shuffle_button, playNextSong=None, playRandomSong=None):
+        self.parent = parent
         self.playNextSong = playNextSong
         self.playRandomSong = playRandomSong
         self.file_name = None
+        self.eop_text = "End Of Playlist"
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
@@ -108,6 +110,7 @@ class MusicPlayer:
             self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-shuffle.ico")))            
             self.shuffle_button.setToolTip("On Shuffle")       
             self.music_on_shuffle = True
+            self.parent.songTableWidget.playlist_changed = True
             
         self.disable_loop_playlist()
                 
