@@ -9,6 +9,7 @@ from easy_json import EasyJson
 from PIL import Image, ImageDraw, ImageFont
 from notetaking import NoteTaking
 from clickable_label import ClickableLabel
+from lrcdl import Track, Options
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d+)](.*)', line)
@@ -30,6 +31,7 @@ class LRCSync:
         self.ej = EasyJson(os.path.join(self.config_path, "config.json"))        
         self.lrc_display = None
         self.file = None
+        self.music_file = None
         self.player = player
         self.lyric_label = None
         self.lyrics = None
@@ -346,7 +348,6 @@ class LRCSync:
             previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
             if not previous_lyric_index < 0:
                 previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
-                print("previous time, ", previous_lyrics_key)        
                 self.player.player.setPosition(int(previous_lyrics_key * 1000))
                 
                 # fix the late to set current time due to slower sync time                                
@@ -388,22 +389,58 @@ class LRCSync:
         self.player.player.setPosition(int(self.current_lyrics_time * 1000))
 
     def parse_lrc(self):
+        parse_thread = threading.Thread(target=self.download_lrc_file)
+        parse_thread.start()  # Starts the thread to run the method
+
+    def parse_lrc_base(self):
         lyrics_dict = {}
 
         if self.file is None:
-            self.lyrics = None
+            print("lrc file not found, attempting to download")
+            self.download_lrc_file()
+
+            # Check if file is downloaded before trying to parse
+            if self.file is None:
+                print("Failed to download lrc file, cannot proceed with parsing.")
+                self.lyrics = None
+                return
         else:
-            with open(self.file, 'r', encoding='utf-8-sig') as file:
-                for line in file:
-                    time_str, lyric = extract_time_and_lyric(line)
-                    if time_str and lyric:
-                        time_in_seconds = convert_time_to_seconds(time_str)
-                        lyrics_dict[time_in_seconds] = lyric
-                        
-            print(lyrics_dict, "this is dict")
-            self.lyrics = lyrics_dict
-            self.lyrics_keys = sorted(self.lyrics.keys())
-            
+            try:
+                with open(self.file, 'r', encoding='utf-8-sig') as file:
+                    for line in file:
+                        time_str, lyric = extract_time_and_lyric(line)
+                        if time_str and lyric:
+                            time_in_seconds = convert_time_to_seconds(time_str)
+                            lyrics_dict[time_in_seconds] = lyric
+
+                if lyrics_dict:
+                    self.lyrics = lyrics_dict
+                    self.lyrics_keys = sorted(self.lyrics.keys())
+
+            except Exception as e:
+                print(f"Error occurred while parsing lrc file: {e}")
+                self.lyrics = None
+
+    def download_lrc_file(self):
+        print("in download lrc file method")
+        print("self.music_files", self.music_file)
+
+        try:
+            self.media_lyric.setText(self.media_font.get_formatted_text("Downloading Lyrics"))
+            song_track = Track(self.music_file)
+            options = Options()
+            song_track.download_lyrics(options)
+            print("Lyrics downloaded successfully.")
+
+            # Assume the file is saved successfully. You may need to set the file path here.
+            self.file = "path_to_downloaded_lrc_file.lrc"  # Update this based on actual path
+
+        except Exception as e:
+            self.media_lyric.setText(self.media_font.get_formatted_text("Lyrics Not Found on the LRCLIB"))
+            print(f"An error occurred while downloading lyrics: {e}")
+            self.file = None  # Set file to None if download fails
+
+
     def get_current_lyric(self):
         if self.file is not None and self.lyrics:
             self.current_time = self.player.get_current_time()

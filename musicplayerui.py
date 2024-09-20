@@ -28,6 +28,7 @@ from albumtreewidget import AlbumTreeWidget
 from random import choice
 from fontsettingdialog import FontSettingsWindow
 from tag_dialog import TagDialog
+import lrcdl
 
 def html_to_plain_text(html):
     doc = QTextDocument()
@@ -1353,6 +1354,7 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.lrc_file = None
             self.lrcPlayer.file = None
+            self.lrcPlayer.music_file = self.music_file
             
     def double_click_on_image(self):
         if self.music_file is None:
