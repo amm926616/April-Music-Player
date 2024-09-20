@@ -9,7 +9,7 @@ from easy_json import EasyJson
 from PIL import Image, ImageDraw, ImageFont
 from notetaking import NoteTaking
 from clickable_label import ClickableLabel
-from lrcdl import Track, Options
+import threading
 
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d+)](.*)', line)
@@ -389,7 +389,7 @@ class LRCSync:
         self.player.player.setPosition(int(self.current_lyrics_time * 1000))
 
     def parse_lrc(self):
-        parse_thread = threading.Thread(target=self.download_lrc_file)
+        parse_thread = threading.Thread(target=self.parse_lrc_base)
         parse_thread.start()  # Starts the thread to run the method
 
     def parse_lrc_base(self):
@@ -397,6 +397,8 @@ class LRCSync:
 
         if self.file is None:
             print("lrc file not found, attempting to download")
+            self.lyrics = None
+            return
             self.download_lrc_file()
 
             # Check if file is downloaded before trying to parse
