@@ -25,10 +25,9 @@ from clickable_label import ClickableLabel
 from easy_json import EasyJson
 from songtablewidget import SongTableWidget
 from albumtreewidget import AlbumTreeWidget
-from random import choice
+from random import shuffle
 from fontsettingdialog import FontSettingsWindow
 from tag_dialog import TagDialog
-import lrcdl
 
 def html_to_plain_text(html):
     doc = QTextDocument()
@@ -261,6 +260,7 @@ class MusicPlayerUI(QMainWindow):
         self.item = None
         self.media_files = []
         self.random_song_list = []
+        self.current_playing_random_song_index = None
         self.random_song = None
         
         if platform.system() == "Windows":
@@ -292,7 +292,7 @@ class MusicPlayerUI(QMainWindow):
 
         self.music_file = None
         self.lrc_file = None
-        self.player = MusicPlayer(self.play_pause_button, self.loop_playlist_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
+        self.player = MusicPlayer(self, self.play_pause_button, self.loop_playlist_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
@@ -1233,46 +1233,73 @@ class MusicPlayerUI(QMainWindow):
                     self.songTableWidget.selectRow(row)
                     return row
         else:
-            print("File path not found.")    
-            
-    def play_previous_song(self):
-        previous_song = self.songTableWidget.get_previous_song_object()
-        self.handleRowDoubleClick(previous_song)
-                
-    def play_next_song(self, fromStart=None):
-        next_song = self.songTableWidget.get_next_song_object(fromStart)
-        self.handleRowDoubleClick(next_song)    
+            print("File path not found.")       
+    
+    def song_initializing_stuff(self):
+        self.updateInformations()
+        self.get_lrc_file()
+        self.player.update_music_file(self.music_file)
+        self.player.default_pause_state()            
+        self.play_song()        
         
     def get_random_song_list(self):
         # Create a list excluding the current song (self.music_file)
 
         global random_song_list
         if self.songTableWidget.playlist_changed:
-            random_song_list = [song for song in self.songTableWidget.files_on_playlist if song != self.music_file]
+            random_song_list = self.songTableWidget.files_on_playlist.copy()
+            shuffle(random_song_list)
         else:
             pass
         
-        return random_song_list
+        return random_song_list        
         
-    def play_random_song(self):
+    def prepare_for_random(self):
+        self.random_song_list = self.get_random_song_list()
+        self.current_playing_random_song_index = 0             
+        
+    def play_previous_song(self):
+        if self.player.music_on_shuffle:
+            self.current_playing_random_song_index -= 1
+            if self.current_playing_random_song_index < 0:
+                self.current_playing_random_song_index = 3
+            self.play_random_song(user_clicking=True)
+        else:
+            previous_song = self.songTableWidget.get_previous_song_object()
+            self.handleRowDoubleClick(previous_song)
+                
+    def play_next_song(self, fromStart=None):
+        if self.player.music_on_shuffle:
+            self.current_playing_random_song_index += 1
+            if self.current_playing_random_song_index > len(self.random_song_list) - 1:
+                self.current_playing_random_song_index = 0
+            self.play_random_song(user_clicking=True)
+        else:        
+            next_song = self.songTableWidget.get_next_song_object(fromstart=False)
+            self.handleRowDoubleClick(next_song)         
+        
+    def play_random_song(self, user_clicking=False):
         if not self.songTableWidget.files_on_playlist:
             return 
         self.songTableWidget.clearSelection()
         
-        if self.songTableWidget.playlist_changed:
-            self.random_song_list = self.get_random_song_list()
+        print(self.current_playing_random_song_index, "current index")     
         
-        self.random_song = choice(self.random_song_list)
-        
-        self.music_file = self.random_song
-        self.updateInformations()
-        self.get_lrc_file()
-        self.player.update_music_file(self.music_file)
-        self.player.default_pause_state()
-        self.play_song()
-
+        if not user_clicking: # without user clicking next/previous
+            print("max len is ", len(self.random_song_list))
+            
+            self.current_playing_random_song_index += 1            
+            
+            if self.current_playing_random_song_index > len(self.random_song_list) - 1:
+                self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text(self.player.eop_text))                         
+                return
+            
+        self.music_file = self.random_song_list[self.current_playing_random_song_index]            
         random_song_row = self.find_row(self.music_file)
-        self.songTableWidget.song_playing_row = random_song_row
+        self.songTableWidget.song_playing_row = random_song_row        
+        
+        # Here is to start doing the normal stuff of preparation and playing song.        
+        self.song_initializing_stuff()           
 
     def handleRowDoubleClick(self, item):            
         if item:
@@ -1284,11 +1311,7 @@ class MusicPlayerUI(QMainWindow):
                 self.lrcPlayer.started_player = True
                 self.get_music_file_from_click(item)
                 if self.music_file:
-                    self.updateInformations()
-                    self.get_lrc_file()
-                    self.player.update_music_file(self.music_file)
-                    self.player.default_pause_state()            
-                    self.play_song()
+                    self.song_initializing_stuff()
                 else:
                     return
         else:
@@ -1312,6 +1335,7 @@ class MusicPlayerUI(QMainWindow):
             self.player.started_playing = False
 
     def play_song(self):
+        # current for checking lrc on/off state and then play song
         self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))                                 
         if self.lrcPlayer.show_lyrics:
             self.lrcPlayer.sync_lyrics(self.lrc_file)  
@@ -1330,10 +1354,15 @@ class MusicPlayerUI(QMainWindow):
         self.player.seek_forward()
 
     def play_pause(self): 
+        # for checking eop then calling button changing method for play/pause
         current_text = html_to_plain_text(self.lrcPlayer.media_lyric.text())
-        if current_text == "End Of Playlist":
-            self.play_next_song(True)                               
-            self.play_song()
+        if current_text == self.player.eop_text:
+            if self.player.music_on_shuffle:
+                self.random_song_list = self.get_random_song_list()
+                self.current_playing_random_song_index = 0
+                self.play_random_song(user_clicking=True)
+            else:
+                self.play_next_song(True)                               
         else:
             self.player.play_pause_music()
 
