@@ -8,18 +8,20 @@ import json
 import base64
 import zlib
 
-class NoteTaking():
+
+class NoteTaking:
     def __init__(self, lrcSync):
         # Database Initialization
-        self.lrcSync = lrcSync        
-        self.conn = None        
+        self.cursor = None
+        self.lrcSync = lrcSync
+        self.conn = None
         self.initialize_database()
-        
-        self.window = QDialog()   
-        self.window.closeEvent = self.noteWindowClose 
+
+        self.window = QDialog()
+        self.window.closeEvent = self.noteWindowClose
         self.window.keyPressEvent = self.keyPressEvent
         self.window.setWindowTitle("Current Lyric's Notebook")
-        
+
         self.lyric_label_font = GetFont(13)
 
         # Layout
@@ -27,21 +29,21 @@ class NoteTaking():
 
         # Text edit area
         self.textBox = QTextEdit()
-        
+
         # Create a QTextCharFormat object
-        format = QTextCharFormat()
+        format_char = QTextCharFormat()
 
         # Set the font size
         font = QFont()
         font.setPointSize(14)  # Set the desired font size
-        format.setFont(font)
+        format_char.setFont(font)
 
         # Apply the format to the text
         cursor = self.textBox.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)  # Use QTextCursor.SelectionType.Document
-        cursor.mergeCharFormat(format)
+        cursor.mergeCharFormat(format_char)
         self.textBox.setTextCursor(cursor)
-        
+
         self.current_lyric_label = QLabel()
         self.layout.addWidget(self.current_lyric_label)
         self.layout.addWidget(self.textBox)
@@ -51,8 +53,8 @@ class NoteTaking():
         saveButton.clicked.connect(self.saveToDatabase)
         self.layout.addWidget(saveButton)
 
-        self.window.setLayout(self.layout) 
-        
+        self.window.setLayout(self.layout)
+
     def initialize_database(self):
         if self.conn:
             self.conn.close()  # Close the previous connection if it exists
@@ -66,9 +68,9 @@ class NoteTaking():
                 json_notes TEXT
             );
         ''')
-        
-        self.conn.commit()         
-        
+
+        self.conn.commit()
+
     def saveToDatabase(self):
         # Retrieve the notes from the text box
         text = self.textBox.toHtml()
@@ -93,7 +95,7 @@ class NoteTaking():
                 cursor.execute('''
                     SELECT json_notes FROM notes WHERE lrc_filename = ?
                 ''', (self.lrcSync.player.file_name,))
-                
+
                 row = cursor.fetchone()
                 if row:
                     # Load existing JSON notes
@@ -115,7 +117,7 @@ class NoteTaking():
                     REPLACE INTO notes (lrc_filename, json_notes)
                     VALUES (?, ?)
                 ''', (self.lrcSync.player.file_name, json_notes))
-                
+
                 conn.commit()
 
         except sqlite3.Error as e:
@@ -123,56 +125,58 @@ class NoteTaking():
 
     def createUI(self):
         # update current lyric label
-        self.current_lyric_label.setText(self.lyric_label_font.get_formatted_text(f"Current Lyric: {self.lrcSync.current_lyric}"))
-        self.current_lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse) # make it selectable
-        
+        self.current_lyric_label.setText(
+            self.lyric_label_font.get_formatted_text(f"Current Lyric: {self.lrcSync.current_lyric}"))
+        self.current_lyric_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse)  # make it selectable
+
         # setting window's title as current index
-        self.window.setWindowTitle(f"Notebook for [Lyric Line {self.lrcSync.current_index}]")        
+        self.window.setWindowTitle(f"Notebook for [Lyric Line {self.lrcSync.current_index}]")
         self.window.setGeometry(500, 300, 800, 400)
-        
+
         # Load existing notes
         try:
             # Connect to the SQLite database
             with sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db")) as conn:
                 cursor = conn.cursor()
-                
+
                 # Query to fetch JSON notes based on file_path
                 cursor.execute('''
                     SELECT json_notes FROM notes
                     WHERE lrc_filename = ?
                 ''', (self.lrcSync.player.file_name,))
-                
+
                 row = cursor.fetchone()
-                
+
                 if row:
                     json_notes = row[0]
-                    
+
                     # Load existing notes from JSON
                     notes_data = json.loads(json_notes)
                     index = str(self.lrcSync.current_index)
-                    
+
                     # Extract notes for the current index
                     if index in notes_data:
                         # Retrieve the Base64-encoded compressed HTML string
                         compressed_html_base64 = notes_data[index]
-                        
+
                         # Decode Base64 to get compressed bytes
                         compressed_html = base64.b64decode(compressed_html_base64)
-                        
+
                         # Decompress the compressed HTML
                         decompressed_html = zlib.decompress(compressed_html).decode('utf-8')
-                        
+
                         # Ensure decompressed_html is a string (if not, handle appropriately)
                         if isinstance(decompressed_html, list):
                             decompressed_html = "<br>".join(decompressed_html)  # Convert list to HTML string
                     else:
                         decompressed_html = ""
-                                        
+
                     # Set the HTML content in the QTextEdit
                     self.textBox.setHtml(decompressed_html)
                 else:
                     print("No notes found for the specified file_path.")
-            
+
         except sqlite3.Error as e:
             print(f"Database error: {e}")
         except Exception as e:
@@ -180,15 +184,14 @@ class NoteTaking():
 
         # Show the dialog
         if not self.window.isVisible():
-            self.window.exec()                  
-            
-                  
-    def keyPressEvent(self, event: QKeyEvent):            
+            self.window.exec()
+
+    def keyPressEvent(self, event: QKeyEvent):
         # Handle Ctrl + S (save to database)
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
             print("Ctrl + S pressed")
             self.saveToDatabase()
-            self.window.close()            
+            self.window.close()
 
         elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_F:
             print("pressed ctrl + F")
@@ -198,9 +201,9 @@ class NoteTaking():
                 self.window.showFullScreen()  # Enter full-screen mode            
 
         elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_W:
-            print("pressed ctrl + w")     
+            print("pressed ctrl + w")
             self.window.close()  # You can use sys.exit() here if you want to exit the entire app
-            
+
         # Handle Exit key (example: Esc key)
         elif event.key() == Qt.Key.Key_Escape:
             print("Escape pressed, exiting application")
@@ -210,19 +213,18 @@ class NoteTaking():
         # Check if the dialog is in full-screen mode
 
         current_window_state = self.window.windowState()
-        
+
         # Define the full-screen flag
         full_screen_flag = Qt.WindowState.WindowFullScreen
-        
+
         # Check if the current window state includes the full-screen flag
         is_full_screen_mode = (current_window_state & full_screen_flag) == full_screen_flag
-        
+
         # Return the result
         return is_full_screen_mode
-            
+
     def noteWindowClose(self, event):
         self.lrcSync.player.play_pause_music()
         # Clear the text box
-        self.textBox.clear()        
+        self.textBox.clear()
         event.accept()
-

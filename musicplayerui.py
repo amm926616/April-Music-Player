@@ -87,14 +87,153 @@ def extract_track_number(track_number):
     return float('inf')  # For non-numeric track numbers, place them at the end
 
 
-class MusicPlayerUI(QMainWindow):   
+def simulate_keypress(widget, key):
+    """Simulate keypress for the given widget."""
+    key_event = QKeyEvent(QKeyEvent.Type.KeyPress, key, Qt.KeyboardModifier.ControlModifier)
+    QCoreApplication.postEvent(widget, key_event)
+
+
+def getRoundedCornerPixmap(scaled_pixmap, target_width, target_height):
+    # Create a transparent pixmap with the same size as the scaled image
+    rounded_pixmap = QPixmap(target_width, target_height)
+    rounded_pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
+
+    # Start painting the image with QPainter
+    painter = QPainter(rounded_pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    # Create a QPainterPath for the rounded rectangle
+    path = QPainterPath()
+    radius = 20  # Adjust this for more or less roundness
+    path.addRoundedRect(QRectF(0, 0, target_width, target_height), radius, radius)
+
+    # Clip the image to the rounded rectangle
+    painter.setClipPath(path)
+
+    # Draw the scaled pixmap into the rounded shape
+    painter.drawPixmap(0, 0, scaled_pixmap)
+    painter.end()
+
+    return rounded_pixmap
+
+
+def get_metadata(song_file):
+    if song_file is None:
+        return
+
+    file_extension = song_file.lower().split('.')[-1]
+
+    metadata = {
+        'title': 'Unknown Title',
+        'artist': 'Unknown Artist',
+        'album': 'Unknown Album',
+        'year': 'Unknown Year',
+        'genre': 'Unknown Genre',
+        'track_number': 'Unknown Track Number',
+        'comment': 'No Comment',
+        'duration': 0,  # Initialize duration as integer,
+        'file_type': 'Unknown File Type',
+    }
+
+    try:
+        if file_extension == "mp3":
+            audio = ID3(song_file)
+            metadata['title'] = audio.get('TIT2', 'Unknown Title').text[0] if audio.get('TIT2') else 'Unknown Title'
+            metadata['artist'] = audio.get('TPE1', 'Unknown Artist').text[0] if audio.get(
+                'TPE1') else 'Unknown Artist'
+            metadata['album'] = audio.get('TALB', 'Unknown Album').text[0] if audio.get('TALB') else 'Unknown Album'
+            metadata['year'] = audio.get('TDRC', 'Unknown Year').text[0] if audio.get('TDRC') else 'Unknown Year'
+            metadata['genre'] = audio.get('TCON', 'Unknown Genre').text[0] if audio.get('TCON') else 'Unknown Genre'
+            metadata['track_number'] = audio.get('TRCK', 'Unknown Track Number').text[0] if audio.get(
+                'TRCK') else 'Unknown Track Number'
+            metadata['comment'] = audio.get('COMM', 'No Comment').text[0] if audio.get('COMM') else 'No Comment'
+
+            # Extract duration
+            mp3_audio = MP3(song_file)
+            metadata['duration'] = int(mp3_audio.info.length)
+            metadata['file_type'] = str(file_extension)
+
+        elif file_extension == 'ogg':
+            audio = OggVorbis(song_file)
+            metadata['title'] = audio.get('title', ['Unknown Title'])[0]
+            metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
+            metadata['album'] = audio.get('album', ['Unknown Album'])[0]
+            metadata['year'] = audio.get('date', ['Unknown Year'])[0]
+            metadata['genre'] = audio.get('genre', ['Unknown Genre'])[0]
+            metadata['track_number'] = audio.get('tracknumber', ['Unknown Track Number'])[0]
+            metadata['comment'] = audio.get('comment', ['No Comment'])[0]
+
+            # Extract duration
+            metadata['duration'] = int(audio.info.length)
+            metadata['file_type'] = str(file_extension)
+            metadata['file_type'] = str(file_extension)
+
+        elif file_extension == 'flac':
+            audio = FLAC(song_file)
+            metadata['title'] = audio.get('title', ['Unknown Title'])[0]
+            metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
+            metadata['album'] = audio.get('album', ['Unknown Album'])[0]
+            metadata['year'] = audio.get('date', ['Unknown Year'])[0]
+            metadata['genre'] = audio.get('genre', ['Unknown Genre'])[0]
+            metadata['track_number'] = audio.get('tracknumber', ['Unknown Track Number'])[0]
+            metadata['comment'] = audio.get('description', ['No Comment'])[0]
+
+            # Extract duration
+            metadata['duration'] = int(audio.info.length)
+            # Extract file type
+            metadata['file_type'] = str(file_extension)
+
+        elif file_extension == 'wav':
+            audio = WAVE(song_file)
+            try:
+                metadata['title'] = audio.get('title', 'Unknown Title')
+                metadata['artist'] = audio.get('artist', 'Unknown Artist')
+                metadata['album'] = audio.get('album', 'Unknown Album')
+                metadata['year'] = audio.get('date', 'Unknown Year')
+                metadata['genre'] = audio.get('genre', 'Unknown Genre')
+                metadata['track_number'] = audio.get('tracknumber', 'Unknown Track Number')
+                metadata['comment'] = audio.get('comment', 'No Comment')
+            except KeyError:
+                pass  # WAV files may not contain these tags
+
+            # Extract duration
+            metadata['duration'] = int(audio.info.length)
+            # Extract file type
+            metadata['file_type'] = str(file_extension)
+
+        else:
+            raise ValueError("Unsupported file format")
+
+    except Exception as e:
+        print(f"Error reading metadata: {e}")
+
+    return metadata
+
+
+class MusicPlayerUI(QMainWindow):
     def __init__(self, app):
         super().__init__()
 
         # Define the config path
+        self.threshold_actions = None
+        self.search_bar_layout = None
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         QFontDatabase.addApplicationFont(os.path.join(self.script_path, "fonts/KOMIKAX_.ttf"))
-        
+
+        self.slider_layout = None
+        self.duration_label = None
+        self.passing_image = None
+        self.next_song_button = None
+        self.prev_song_button = None
+        self.playback_management_layout = None
+        self.albumTreeWidget = None
+        self.color_actions = None
+        self.font_settings_window = None
+        self.font_settings_action = None
+        self.show_lyrics_action = None
+        self.tray_menu = None
+        self.tray_icon = None
+        self.icon_path = None
         self.central_widget = None
         self.songTableWidget = None
         self.search_bar = None
@@ -174,14 +313,14 @@ class MusicPlayerUI(QMainWindow):
         if dir_path:
             self.directory = dir_path
             self.save_config("music_directory", self.directory)
-            self.albumtreewidget.loadSongsToCollection(self.directory, loadAgain)
+            self.albumTreeWidget.loadSongsToCollection(self.directory, loadAgain)
         else:
             # If the user cancels, show a message and close the app or ask again
             QMessageBox.warning(self, "No Directory Selected", "A music directory is required to proceed.")
             return
         
     def reload_directory(self):
-        self.albumtreewidget.loadSongsToCollection(self.directory, True)
+        self.albumTreeWidget.loadSongsToCollection(self.directory, True)
 
     def createUI(self):
         self.setWindowTitle("April Music Player - Digest Lyrics")        
@@ -269,13 +408,13 @@ class MusicPlayerUI(QMainWindow):
             self.search_bar.setCursorPosition(len(self.search_bar.text()))
             
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.albumtreewidget.search_bar.setFocus()
-            self.albumtreewidget.search_bar.setCursorPosition(len(self.search_bar.text()))                             
+            self.albumTreeWidget.search_bar.setFocus()
+            self.albumTreeWidget.search_bar.setCursorPosition(len(self.search_bar.text()))
             
         elif event.key() == Qt.Key.Key_R and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("playing random song")
             self.play_random_song()
-            self.simulate_keypress(self.songTableWidget, Qt.Key.Key_G)
+            simulate_keypress(self.songTableWidget, Qt.Key.Key_G)
             
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.restore_table() 
@@ -480,6 +619,7 @@ class MusicPlayerUI(QMainWindow):
         options_menu.addAction(set_default_background)
         
     def get_selected_color(self):
+        global color
         selected_color = self.ej.get_value("lyrics_color")
         for color, action in self.color_actions.items():
             if action.isChecked():
@@ -490,7 +630,8 @@ class MusicPlayerUI(QMainWindow):
         
     # Method to update sync threshold
     def set_sync_threshold(self):
-        selected_threshold = self.ej.get_value("sync_threshold") 
+        global threshold
+        selected_threshold = self.ej.get_value("sync_threshold")
         for threshold, action in self.threshold_actions.items():
             if action.isChecked():
                 selected_threshold = threshold 
@@ -590,7 +731,7 @@ class MusicPlayerUI(QMainWindow):
     def activate_file_tagger(self):
         currentRow = self.songTableWidget.currentRow()
         music_file = self.songTableWidget.item(currentRow, 7).text()
-        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumtreewidget, self.albumtreewidget.cursor)
+        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumTreeWidget, self.albumTreeWidget.cursor)
         tagger.exec()
         
     def createWidgetAndLayouts(self):
@@ -625,9 +766,9 @@ class MusicPlayerUI(QMainWindow):
         # Creating the 3 main layouts
     
         song_collection_layout = QVBoxLayout()
-        self.albumtreewidget = AlbumTreeWidget(self, self.songTableWidget)
-        self.albumtreewidget.loadSongsToCollection(self.directory)
-        song_collection_layout.addWidget(self.albumtreewidget)
+        self.albumTreeWidget = AlbumTreeWidget(self, self.songTableWidget)
+        self.albumTreeWidget.loadSongsToCollection(self.directory)
+        song_collection_layout.addWidget(self.albumTreeWidget)
 
         playlistLayout = QVBoxLayout()
         playlistLayout.addWidget(self.songTableWidget)
@@ -820,12 +961,12 @@ class MusicPlayerUI(QMainWindow):
         # self.connect_progressbar_signals()
 
     def updateDisplayData(self):
-        metadata = self.get_metadata(self.music_file)
+        metadata = get_metadata(self.music_file)
         updated_text = f'{metadata["artist"]} - {metadata["title"]}'
         self.track_display.setText(updated_text)
 
     def updateSongDetails(self, song_file):
-        metadata = self.get_metadata(song_file)
+        metadata = get_metadata(song_file)
         minutes = metadata["duration"] // 60
         seconds = metadata["duration"] % 60
         # Define the bold HTML tag
@@ -850,98 +991,6 @@ class MusicPlayerUI(QMainWindow):
         self.song_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         self.song_details.setWordWrap(True)
 
-    def get_metadata(self, song_file):
-        if song_file is None:
-            return
-        
-        file_extension = song_file.lower().split('.')[-1]
-
-        metadata = {
-            'title': 'Unknown Title',
-            'artist': 'Unknown Artist',
-            'album': 'Unknown Album',
-            'year': 'Unknown Year',
-            'genre': 'Unknown Genre',
-            'track_number': 'Unknown Track Number',
-            'comment': 'No Comment',
-            'duration': 0,  # Initialize duration as integer,
-            'file_type': 'Unknown File Type',
-        }
-
-        try:
-            if file_extension == "mp3":
-                audio = ID3(song_file)
-                metadata['title'] = audio.get('TIT2', 'Unknown Title').text[0] if audio.get('TIT2') else 'Unknown Title'
-                metadata['artist'] = audio.get('TPE1', 'Unknown Artist').text[0] if audio.get(
-                    'TPE1') else 'Unknown Artist'
-                metadata['album'] = audio.get('TALB', 'Unknown Album').text[0] if audio.get('TALB') else 'Unknown Album'
-                metadata['year'] = audio.get('TDRC', 'Unknown Year').text[0] if audio.get('TDRC') else 'Unknown Year'
-                metadata['genre'] = audio.get('TCON', 'Unknown Genre').text[0] if audio.get('TCON') else 'Unknown Genre'
-                metadata['track_number'] = audio.get('TRCK', 'Unknown Track Number').text[0] if audio.get(
-                    'TRCK') else 'Unknown Track Number'
-                metadata['comment'] = audio.get('COMM', 'No Comment').text[0] if audio.get('COMM') else 'No Comment'
-
-                # Extract duration
-                mp3_audio = MP3(song_file)
-                metadata['duration'] = int(mp3_audio.info.length)
-                metadata['file_type'] = str(file_extension)
-
-            elif file_extension == 'ogg':
-                audio = OggVorbis(song_file)
-                metadata['title'] = audio.get('title', ['Unknown Title'])[0]
-                metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
-                metadata['album'] = audio.get('album', ['Unknown Album'])[0]
-                metadata['year'] = audio.get('date', ['Unknown Year'])[0]
-                metadata['genre'] = audio.get('genre', ['Unknown Genre'])[0]
-                metadata['track_number'] = audio.get('tracknumber', ['Unknown Track Number'])[0]
-                metadata['comment'] = audio.get('comment', ['No Comment'])[0]
-
-                # Extract duration
-                metadata['duration'] = int(audio.info.length)
-                metadata['file_type'] = str(file_extension)
-                metadata['file_type'] = str(file_extension)
-                
-            elif file_extension == 'flac':
-                audio = FLAC(song_file)
-                metadata['title'] = audio.get('title', ['Unknown Title'])[0]
-                metadata['artist'] = audio.get('artist', ['Unknown Artist'])[0]
-                metadata['album'] = audio.get('album', ['Unknown Album'])[0]
-                metadata['year'] = audio.get('date', ['Unknown Year'])[0]
-                metadata['genre'] = audio.get('genre', ['Unknown Genre'])[0]
-                metadata['track_number'] = audio.get('tracknumber', ['Unknown Track Number'])[0]
-                metadata['comment'] = audio.get('description', ['No Comment'])[0]
-
-                # Extract duration
-                metadata['duration'] = int(audio.info.length)
-                # Extract file type
-                metadata['file_type'] = str(file_extension)
-                
-            elif file_extension == 'wav':
-                audio = WAVE(song_file)
-                try:
-                    metadata['title'] = audio.get('title', 'Unknown Title')
-                    metadata['artist'] = audio.get('artist', 'Unknown Artist')
-                    metadata['album'] = audio.get('album', 'Unknown Album')
-                    metadata['year'] = audio.get('date', 'Unknown Year')
-                    metadata['genre'] = audio.get('genre', 'Unknown Genre')
-                    metadata['track_number'] = audio.get('tracknumber', 'Unknown Track Number')
-                    metadata['comment'] = audio.get('comment', 'No Comment')
-                except KeyError:
-                    pass  # WAV files may not contain these tags
-
-                # Extract duration
-                metadata['duration'] = int(audio.info.length)
-                # Extract file type
-                metadata['file_type'] = str(file_extension)                           
-                                                                                     
-            else:
-                raise ValueError("Unsupported file format")
-
-        except Exception as e:
-            print(f"Error reading metadata: {e}")
-
-        return metadata
-    
     def restore_table(self):
         for row in range(self.songTableWidget.rowCount()):
             self.songTableWidget.setRowHidden(row, False)         
@@ -1031,8 +1080,8 @@ class MusicPlayerUI(QMainWindow):
         
         # Check if the database already has the songs stored
         for index, item_path in enumerate(self.media_files):
-            self.albumtreewidget.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
-            result = self.albumtreewidget.cursor.fetchone()
+            self.albumTreeWidget.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
+            result = self.albumTreeWidget.cursor.fetchone()
 
             if result:
                 # If the song is already in the database, use the stored metadata
@@ -1049,9 +1098,9 @@ class MusicPlayerUI(QMainWindow):
             else:
                 # Otherwise, extract the metadata and store it in the database
                 self.music_file = item_path
-                metadata = self.get_metadata(self.music_file)
+                metadata = get_metadata(self.music_file)
 
-                self.albumtreewidget.cursor.execute('''
+                self.albumTreeWidget.cursor.execute('''
                     INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
@@ -1142,7 +1191,7 @@ class MusicPlayerUI(QMainWindow):
                     file_type_item.setFlags(file_type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.songTableWidget.setItem(row_position, 8, file_type_item)
                     
-        self.albumtreewidget.conn.close()
+        self.albumTreeWidget.conn.close()
                             
     def updateInformations(self):
         if self.music_file:
@@ -1195,7 +1244,8 @@ class MusicPlayerUI(QMainWindow):
         
     def get_random_song_list(self):
         # Create a list excluding the current song (self.music_file)
-        
+
+        global random_song_list
         if self.songTableWidget.playlist_changed:
             random_song_list = [song for song in self.songTableWidget.files_on_playlist if song != self.music_file]
         else:
@@ -1248,7 +1298,7 @@ class MusicPlayerUI(QMainWindow):
             self.restore_table()      
             self.songTableWidget.setFocus()
             self.songTableWidget.scroll_to_current_row()
-            self.simulate_keypress(self.songTableWidget, Qt.Key.Key_G) # only imitation of key press work. Direct calling the method doesn't work. IDk why.                                                                                                
+            simulate_keypress(self.songTableWidget, Qt.Key.Key_G) # only imitation of key press work. Direct calling the method doesn't work. IDk why.
             self.hidden_rows = False      
                
     def stop_song(self):
@@ -1259,12 +1309,7 @@ class MusicPlayerUI(QMainWindow):
             self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))                                   
             self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("April Music Player"))
             self.player.started_playing = False
-            
-    def simulate_keypress(self, widget, key):
-        """Simulate keypress for the given widget."""
-        key_event = QKeyEvent(QKeyEvent.Type.KeyPress, key, Qt.KeyboardModifier.ControlModifier)
-        QCoreApplication.postEvent(widget, key_event)
-                                            
+
     def play_song(self):
         self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))                                 
         if self.lrcPlayer.show_lyrics:
@@ -1344,7 +1389,7 @@ class MusicPlayerUI(QMainWindow):
                                         aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
                                         transformMode=Qt.TransformationMode.SmoothTransformation)
             
-            rounded_pixmap = self.getRoundedCornerPixmap(scaled_pixmap, target_width, target_height)
+            rounded_pixmap = getRoundedCornerPixmap(scaled_pixmap, target_width, target_height)
 
             # Set the final rounded image to QLabel
             self.image_display.setPixmap(rounded_pixmap)
@@ -1352,25 +1397,3 @@ class MusicPlayerUI(QMainWindow):
         else:
             self.image_display.setText("No Album Art Found")
 
-    def getRoundedCornerPixmap(self, scaled_pixmap, target_width, target_height):
-        # Create a transparent pixmap with the same size as the scaled image
-        rounded_pixmap = QPixmap(target_width, target_height)
-        rounded_pixmap.fill(Qt.GlobalColor.transparent)  # Transparent background
-
-        # Start painting the image with QPainter
-        painter = QPainter(rounded_pixmap)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # Create a QPainterPath for the rounded rectangle
-        path = QPainterPath()
-        radius = 20  # Adjust this for more or less roundness
-        path.addRoundedRect(QRectF(0, 0, target_width, target_height), radius, radius)
-
-        # Clip the image to the rounded rectangle
-        painter.setClipPath(path)
-        
-        # Draw the scaled pixmap into the rounded shape
-        painter.drawPixmap(0, 0, scaled_pixmap)
-        painter.end()
-        
-        return rounded_pixmap

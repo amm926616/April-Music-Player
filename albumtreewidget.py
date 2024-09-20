@@ -196,7 +196,7 @@ class AlbumTreeWidget(QWidget):
 
         # Check if the database already has the songs stored
         for index, item_path in enumerate(self.parent.media_files):
-            loadingBar.update(index + 1)            
+            loadingBar.update_loadingbar(index + 1)
             self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
             result = self.cursor.fetchone()
             

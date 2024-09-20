@@ -10,6 +10,6 @@ class LoadingBar(QProgressDialog):
         self.setModal(True)
         self.setMinimumDuration(0)  # Ensure the dialog appears immediately
         
-    def update(self, value):
+    def update_loadingbar(self, value):
         self.setValue(value)
         QApplication.processEvents()  # Process events to update the UI

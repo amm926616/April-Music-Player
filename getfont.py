@@ -16,6 +16,7 @@ from PyQt6.QtGui import QFont, QFontDatabase, QTextCharFormat, QTextDocument, QT
 
 class GetFont:
     def __init__(self, font_size=14):
+        self.language_dict = None
         self.script_path = os.path.dirname(os.path.abspath(__file__))        
         self.ej = EasyJson()
         self.font_size = font_size
