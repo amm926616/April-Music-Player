@@ -1196,17 +1196,26 @@ class MusicPlayerUI(QMainWindow):
             return 
         self.songTableWidget.clearSelection()
 
-        random_song = choice(self.songTableWidget.files_on_playlist.remove(self.music_file))
+        # Create a list excluding the current song (self.music_file)
+        available_songs = [song for song in self.songTableWidget.files_on_playlist if song != self.music_file]
 
-        self.music_file = random_song
+        # Ensure there are still songs to choose from
+        if not available_songs:
+            return
+
+        # Select the next song from available songs (no random selection)
+        next_song = available_songs[0]  # Choose the first song from the remaining list
+
+        self.music_file = next_song
         self.updateInformations()
         self.get_lrc_file()
         self.player.update_music_file(self.music_file)
-        self.player.default_pause_state()            
+        self.player.default_pause_state()
         self.play_song()
+
         random_song_row = self.find_row(self.music_file)
         self.songTableWidget.song_playing_row = random_song_row
-    
+
     def handleRowDoubleClick(self, item):            
         if item:
             if "Album Title: " in item.text():
