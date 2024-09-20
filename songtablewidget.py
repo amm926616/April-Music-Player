@@ -15,6 +15,7 @@ class SongTableWidget(QTableWidget):
         self.files_on_playlist = []          
         self.config_path = config_path
         self.json_file = os.path.join(self.config_path, "table_data.json")                        
+        self.playlist_changed = False
         super().__init__(parent)
                         
         # Hide the vertical header (row numbers)

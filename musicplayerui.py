@@ -120,6 +120,8 @@ class MusicPlayerUI(QMainWindow):
         self.shuffle_button.setToolTip("Toggle Shuffle")       
         self.item = None
         self.media_files = []
+        self.random_song_list = []
+        self.random_song = None
         
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
@@ -1191,22 +1193,27 @@ class MusicPlayerUI(QMainWindow):
         next_song = self.songTableWidget.get_next_song_object(fromStart)
         self.handleRowDoubleClick(next_song)    
         
+    def get_random_song_list(self):
+        # Create a list excluding the current song (self.music_file)
+        
+        if self.songTableWidget.playlist_changed:
+            random_song_list = [song for song in self.songTableWidget.files_on_playlist if song != self.music_file]
+        else:
+            pass
+        
+        return random_song_list
+        
     def play_random_song(self):
         if not self.songTableWidget.files_on_playlist:
             return 
         self.songTableWidget.clearSelection()
-
-        # Create a list excluding the current song (self.music_file)
-        available_songs = [song for song in self.songTableWidget.files_on_playlist if song != self.music_file]
-
-        # Ensure there are still songs to choose from
-        if not available_songs:
-            return
-
-        # Select the next song from available songs (no random selection)
-        next_song = available_songs[0]  # Choose the first song from the remaining list
-
-        self.music_file = next_song
+        
+        if self.songTableWidget.playlist_changed:
+            self.random_song_list = self.get_random_song_list()
+        
+        self.random_song = choice(self.random_song_list)
+        
+        self.music_file = self.random_song
         self.updateInformations()
         self.get_lrc_file()
         self.player.update_music_file(self.music_file)
