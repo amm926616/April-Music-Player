@@ -220,7 +220,7 @@ class AlbumTreeWidget(QWidget):
             else:
                 # Otherwise, extract the metadata and store it in the database
                 self.parent.music_file = item_path
-                metadata = self.parent.get_metadata()
+                metadata = self.parent.get_metadata(item_path)
 
                 self.cursor.execute('''
                     INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
