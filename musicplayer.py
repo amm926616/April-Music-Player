@@ -111,6 +111,7 @@ class MusicPlayer:
             self.shuffle_button.setToolTip("On Shuffle")       
             self.music_on_shuffle = True
             self.parent.songTableWidget.playlist_changed = True
+            self.parent.prepare_for_random()
             
         self.disable_loop_playlist()
                 

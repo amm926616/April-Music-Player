@@ -398,7 +398,7 @@ class LRCSync:
         if self.file is None:
             print("lrc file not found, attempting to download")
             self.lyrics = None
-            return
+            return # ignore downloading lyrics for now
             self.download_lrc_file()
 
             # Check if file is downloaded before trying to parse
@@ -424,6 +424,7 @@ class LRCSync:
                 self.lyrics = None
 
     def download_lrc_file(self):
+        return
         print("in download lrc file method")
         print("self.music_files", self.music_file)
 

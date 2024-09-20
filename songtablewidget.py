@@ -170,11 +170,7 @@ class SongTableWidget(QTableWidget):
 
         return table_data        
         
-    def get_previous_song_object(self):
-        if self.parent.player.music_on_shuffle:
-            self.parent.play_random_song()
-            return 
-        
+    def get_previous_song_object(self):       
         if self.parent.player.music_on_repeat:
                 self.parent.player.player.setPosition(0)
                 self.parent.player.player.play() 
@@ -186,7 +182,7 @@ class SongTableWidget(QTableWidget):
         previous_row = self.song_playing_row - 1
         
         # Ensure next_row is within bounds
-        if previous_row <= 0:
+        if previous_row < 0:
             return None  # Or handle the case where no more rows are available
         
         # Check if the item exists
@@ -204,11 +200,7 @@ class SongTableWidget(QTableWidget):
         return item            
         
         
-    def get_next_song_object(self, fromstart=None):
-        if self.parent.player.music_on_shuffle:
-            self.parent.play_random_song()
-            return 
-        
+    def get_next_song_object(self, fromstart=False):        
         if self.parent.player.music_on_repeat:
                 self.parent.player.player.setPosition(0)
                 self.parent.player.player.play() 
@@ -311,6 +303,8 @@ class SongTableWidget(QTableWidget):
                 # Remove the file path from files_on_playlist
                 if file_path in self.files_on_playlist:
                     self.files_on_playlist.remove(file_path)
+                    if self.parent.random_song_list:
+                        self.parent.random_song_list.remove(file_path)
 
             # Add the row to the set of rows to remove
             rows_to_remove.add(row)
