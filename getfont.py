@@ -45,7 +45,8 @@ class GetFont:
         self.LANGUAGE_RANGES = {
             "english": (0x0041, 0x007A),  # A-Z, a-z
             "korean": (0xAC00, 0xD7A3),
-            "japanese": [(0x3040, 0x309F), (0x30A0, 0x30FF), (0x4E00, 0x9FFF)]
+            "japanese": [(0x3040, 0x309F), (0x30A0, 0x30FF), (0x4E00, 0x9FFF)],
+            "chinese" : (0x4e00, 0x9fff)
         }        
 
     def load_font_settings(self):
@@ -79,6 +80,8 @@ class GetFont:
             return "english"
         elif self.LANGUAGE_RANGES["korean"][0] <= code <= self.LANGUAGE_RANGES["korean"][1]:
             return "korean"
+        elif self.LANGUAGE_RANGES["chinese"][0] <= code <= self.LANGUAGE_RANGES["chinese"][1]:
+            return "chinese"
         for range_set in self.LANGUAGE_RANGES["japanese"]:
             if isinstance(range_set, tuple) and range_set[0] <= code <= range_set[1]:
                 return "japanese"
