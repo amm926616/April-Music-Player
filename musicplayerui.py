@@ -437,11 +437,6 @@ class MusicPlayerUI(QMainWindow):
             # For other keys, use the default behavior            
             super().keyPressEvent(event)           
             
-    def exit_app(self):
-        self.player.save_playback_control_state()
-        self.songTableWidget.save_table_data()
-        sys.exit()
-            
     def folder_load_again(self):
         self.ask_for_directory(True)
 
