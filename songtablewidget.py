@@ -318,6 +318,7 @@ class SongTableWidget(QTableWidget):
                 # Remove the file path from files_on_playlist
                 if file_path in self.files_on_playlist:
                     self.files_on_playlist.remove(file_path)
+                    # removing songs from random_song_list on the way
                     if self.parent.random_song_list:
                         self.parent.random_song_list.remove(file_path)
 

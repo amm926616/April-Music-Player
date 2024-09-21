@@ -2,11 +2,12 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtGui import QIcon
 import os
 from PyQt6.QtCore import QUrl
-
+from easy_json import EasyJson
 
 class MusicPlayer:
     def __init__(self, parent, play_pause_button, loop_playlist_button, repeat_button, shuffle_button, playNextSong=None, playRandomSong=None):
         self.parent = parent
+        self.ej = EasyJson()
         self.playNextSong = playNextSong
         self.playRandomSong = playRandomSong
         self.file_name = None
@@ -20,9 +21,9 @@ class MusicPlayer:
 
         self.started_playing = False
         self.in_pause_state = False
-        self.music_on_repeat = False
-        self.music_on_shuffle = False
-        self.playlist_on_loop = False
+        self.music_on_repeat = not self.ej.get_value("repeat")
+        self.music_on_shuffle = not self.ej.get_value("shuffle")
+        self.playlist_on_loop = not self.ej.get_value("loop")
         self.previous_shuffle_state = None
         self.previous_loop_state = None      
         self.paused_position = 0.0
@@ -33,7 +34,12 @@ class MusicPlayer:
         self.loop_playlist_button = loop_playlist_button
         self.repeat_button = repeat_button
         self.shuffle_button = shuffle_button
-        self.script_path = os.path.dirname(os.path.abspath(__file__))        
+        self.script_path = os.path.dirname(os.path.abspath(__file__))   
+
+    def setup_playback_control_state(self):
+        self.toggle_loop_playlist()
+        self.toggle_repeat()
+        self.toggle_shuffle()
         
     def default_pause_state(self):
         self.in_pause_state = False

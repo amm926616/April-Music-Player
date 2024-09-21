@@ -4,7 +4,6 @@ import os
 import sys
 import platform
 from collections import defaultdict
-import time
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor, QPainter, QPixmap, QPainterPath, QTextDocument
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction, 
@@ -296,6 +295,7 @@ class MusicPlayerUI(QMainWindow):
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
+        # self.player.setup_playback_control_state()        
         
     def load_config(self):
         """Load configuration from a JSON file."""
@@ -457,7 +457,10 @@ class MusicPlayerUI(QMainWindow):
             "lrc_font_size": int(self.height() * 0.14),
             "sync_threshold": 0.3,
             "lyrics_color": "white",
-            "show_lyrics": True
+            "show_lyrics": True, 
+            "shuffle": False,
+            "repeat": False, 
+            "loop": False, 
         }
 
         # Iterate over the default values and set them if not present
