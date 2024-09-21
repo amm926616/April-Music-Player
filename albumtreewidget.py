@@ -153,7 +153,7 @@ class AlbumTreeWidget(QWidget):
 
         self.conn.commit()
             
-    def loadSongsToCollection(self, directory, loadAgain=False):
+    def loadSongsToCollection(self, directories, loadAgain=False):
         self.initialize_database()
         
         if loadAgain:
@@ -166,17 +166,19 @@ class AlbumTreeWidget(QWidget):
                 ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
             )
             
-        if directory is None:
+        if directories is None:
             return
+        
+        self.parent.media_files.clear() # clean the remaining files first
 
         media_extensions = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a'}
-
-        # Recursively find all media files
-        self.parent.media_files.clear()
-        for root, _, files in os.walk(directory):
-            for file in files:
-                if os.path.splitext(file)[1].lower() in media_extensions:
-                    self.parent.media_files.append(os.path.join(root, file))
+        
+        for directory in directories:
+            # Recursively find all media files
+            for root, _, files in os.walk(directory):
+                for file in files:
+                    if os.path.splitext(file)[1].lower() in media_extensions:
+                        self.parent.media_files.append(os.path.join(root, file))
 
         songs_by_artist = defaultdict(list)
         

@@ -295,11 +295,14 @@ class MusicPlayerUI(QMainWindow):
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
+       
 
     def load_config(self):
         """Load configuration from a JSON file."""
+        self.directories = []
         if os.path.exists(self.config_file):
             self.directory = self.ej.get_value("music_directory")
+            self.directories.append(self.directory)
         else:
             self.directory = None
 
@@ -310,7 +313,7 @@ class MusicPlayerUI(QMainWindow):
         if dir_path:
             self.directory = dir_path
             self.ej.edit_value("music_directory", self.directory)
-            self.albumTreeWidget.loadSongsToCollection(self.directory, loadAgain)
+            self.albumTreeWidget.loadSongsToCollection(self.directories, loadAgain)
         else:
             # If the user cancels, show a message and close the app or ask again
             QMessageBox.warning(self, "No Directory Selected", "A music directory is required to proceed.")
@@ -411,7 +414,7 @@ class MusicPlayerUI(QMainWindow):
             print("playing random song")
             self.play_random_song(user_clicking=True, from_shortcut=True)
             simulate_keypress(self.songTableWidget, Qt.Key.Key_G)
-            
+                        
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.restore_table() 
             
@@ -773,7 +776,7 @@ class MusicPlayerUI(QMainWindow):
     
         song_collection_layout = QVBoxLayout()
         self.albumTreeWidget = AlbumTreeWidget(self, self.songTableWidget)
-        self.albumTreeWidget.loadSongsToCollection(self.directory)
+        self.albumTreeWidget.loadSongsToCollection(self.directories)
         song_collection_layout.addWidget(self.albumTreeWidget)
 
         playlistLayout = QVBoxLayout()
