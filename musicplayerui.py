@@ -301,10 +301,7 @@ class MusicPlayerUI(QMainWindow):
         if os.path.exists(self.config_file):
             self.directory = self.ej.get_value("music_directory")
         else:
-            self.directory = None        
-
-    def save_config(self, key, value):
-        self.ej.edit_value(key, value)
+            self.directory = None
 
     def ask_for_directory(self, loadAgain):
         """Prompt the user to select a music directory."""
@@ -312,7 +309,7 @@ class MusicPlayerUI(QMainWindow):
         print("dir ", dir_path)
         if dir_path:
             self.directory = dir_path
-            self.save_config("music_directory", self.directory)
+            self.ej.edit_value("music_directory", self.directory)
             self.albumTreeWidget.loadSongsToCollection(self.directory, loadAgain)
         else:
             # If the user cancels, show a message and close the app or ask again
@@ -1062,148 +1059,8 @@ class MusicPlayerUI(QMainWindow):
 
     def clearTable(self):
         self.songTableWidget.clear()
-
-    def loadSongs(self, load_again=False): # getting songs recursively
-        self.initialize_database()    
-
-        if load_again:
-            self.media_files.clear()
-            self.cleanDetails()
-            self.songTableWidget.clear()
-            self.songTableWidget.setRowCount(0)
-            self.songTableWidget.setHorizontalHeaderLabels(
-                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
-            )
-
-        if self.directory is None:
-            return
-
-        media_extensions = {'.mp3', '.ogg', '.wav', '.flac', '.aac', '.m4a'}
-
-        # Recursively find all media files
-        for root, _, files in os.walk(self.directory):
-            for file in files:
-                if os.path.splitext(file)[1].lower() in media_extensions:
-                    self.media_files.append(os.path.join(root, file))
-
-        songs_by_artist = defaultdict(list)
-        
-        # Check if the database already has the songs stored
-        for index, item_path in enumerate(self.media_files):
-            self.albumTreeWidget.cursor.execute('SELECT * FROM songs WHERE file_path=?', (item_path,))
-            result = self.albumTreeWidget.cursor.fetchone()
-
-            if result:
-                # If the song is already in the database, use the stored metadata
-                metadata = {
-                    'title': result[0],
-                    'artist': result[1],
-                    'album': result[2],
-                    'year': result[3],
-                    'genre': result[4],
-                    'track_number': result[5],
-                    'duration': result[6],
-                    'file_type': result[8]
-                }
-            else:
-                # Otherwise, extract the metadata and store it in the database
-                self.music_file = item_path
-                metadata = get_metadata(self.music_file)
-
-                self.albumTreeWidget.cursor.execute('''
-                    INSERT INTO songs (title, artist, album, year, genre, track_number, duration, file_path, file_type)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    metadata['title'],
-                    metadata['artist'],
-                    metadata['album'],
-                    str(metadata['year']),
-                    metadata['genre'],
-                    metadata['track_number'],
-                    metadata['duration'],
-                    item_path,
-                    metadata['file_type']
-                ))
-                self.conn.commit()
-
-            artist = metadata['artist'] if metadata['artist'] else 'Unknown Artist'
-            album = metadata['album'] if metadata['album'] else 'Unknown Album'
-            track_number = metadata['track_number']
-            songs_by_artist[artist].append((album, track_number, item_path, metadata))
-
-        # Sort artists alphabetically, then albums, and finally by track number
-        for artist in sorted(songs_by_artist.keys()):
-            songs_by_album = defaultdict(list)
-            for album, track_number, item_path, metadata in songs_by_artist[artist]:
-                songs_by_album[album].append((track_number, item_path, metadata))
-
-            for album in sorted(songs_by_album.keys()):
-                # Insert a row with the album name (same as your current implementation)
-                row_position = self.songTableWidget.rowCount()
-                self.songTableWidget.insertRow(row_position)
-                album_name_item = QTableWidgetItem(f"Album Title: [{album}]")
-
-                # funcky cool font for album title
-                font = QFont("Komika Axis", 10)
-
-                album_name_item.setFont(font)
-                album_name_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-
-                # Disable item interaction
-                album_name_item.setFlags(album_name_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
-
-                self.songTableWidget.setSpan(row_position, 0, 1, self.songTableWidget.columnCount())
-                self.songTableWidget.setItem(row_position, 0, album_name_item)
-
-                sorted_songs = sorted(songs_by_album[album], key=lambda x: extract_track_number(x[0]))
-
-                for track_number, item_path, metadata in sorted_songs:
-                    # Insert song data into the QTableWide (same as your current implementation)
-                    row_position = self.songTableWidget.rowCount()
-                    self.songTableWidget.insertRow(row_position)
-
-                    title_item = QTableWidgetItem(metadata['title'])
-                    title_item.setFlags(title_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 0, title_item)
-
-                    artist_item = QTableWidgetItem(metadata['artist'])
-                    artist_item.setFlags(artist_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 1, artist_item)
-
-                    album_item = QTableWidgetItem(metadata['album'])
-                    album_item.setFlags(album_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 2, album_item)
-
-                    year_item = QTableWidgetItem(str(metadata['year']))
-                    year_item.setFlags(year_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 3, year_item)
-
-                    genre_item = QTableWidgetItem(metadata['genre'])
-                    genre_item.setFlags(genre_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 4, genre_item)
-
-                    track_number_item = QTableWidgetItem(metadata['track_number'])
-                    track_number_item.setFlags(track_number_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 5, track_number_item)
-
-                    minutes, seconds = divmod(metadata['duration'], 60)
-                    duration_formatted = f"{minutes}:{seconds:02d}"
-                    duration_item = QTableWidgetItem(duration_formatted)
-                    duration_item.setFlags(duration_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 6, duration_item)
-
-                    # Add the file path to the hidden column
-                    file_path_item = QTableWidgetItem(item_path)
-                    file_path_item.setFlags(file_path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 7, file_path_item)
-                    
-                    file_type_item = QTableWidgetItem(metadata['file_type'])
-                    file_type_item.setFlags(file_type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                    self.songTableWidget.setItem(row_position, 8, file_type_item)
-                    
-        self.albumTreeWidget.conn.close()
                             
-    def updateInformations(self):
+    def update_information(self):
         if self.music_file:
             self.updateDisplayData()
             self.extract_and_set_album_art()
@@ -1245,7 +1102,7 @@ class MusicPlayerUI(QMainWindow):
             print("File path not found.")       
     
     def song_initializing_stuff(self):
-        self.updateInformations()
+        self.update_information()
         self.get_lrc_file()
         self.player.update_music_file(self.music_file)
         self.player.default_pause_state()            
