@@ -400,8 +400,7 @@ class MusicPlayerUI(QMainWindow):
             self.activate_lrc_display()            
             
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.songTableWidget.save_table_data()
-            sys.exit()                 
+            self.exit_app()            
             
         elif event.key() == Qt.Key.Key_F and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.search_bar.setFocus()
@@ -436,7 +435,12 @@ class MusicPlayerUI(QMainWindow):
                     
         else: 
             # For other keys, use the default behavior            
-            super().keyPressEvent(event)            
+            super().keyPressEvent(event)           
+            
+    def exit_app(self):
+        self.player.save_playback_control_state()
+        self.songTableWidget.save_table_data()
+        sys.exit()
             
     def folder_load_again(self):
         self.ask_for_directory(True)
@@ -460,6 +464,8 @@ class MusicPlayerUI(QMainWindow):
             "shuffle": False,
             "repeat": False, 
             "loop": False, 
+            "previous_loop": False,
+            "previous_shuffle": False          
         }
 
         # Iterate over the default values and set them if not present
@@ -509,7 +515,7 @@ class MusicPlayerUI(QMainWindow):
         load_folder.triggered.connect(self.folder_load_again)
 
         close_action = QAction("Exit", self)
-        close_action.triggered.connect(sys.exit)
+        close_action.triggered.connect(self.exit_app)
         
         show_shortcuts_action = QAction("Show Shortcuts", self)
         show_shortcuts_action.triggered.connect(self.show_shortcuts)
