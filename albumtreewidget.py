@@ -286,11 +286,9 @@ class AlbumTreeWidget(QWidget):
                 print("No file path found for the selected song.")
         else:
             print(f"Unknown item double-clicked: {item.text(0)}")
-
-        print("\nfiles_on_playlist:")
-        for i in self.songTableWidget.files_on_playlist:
-            print(i)
-
+            
+        self.parent.prepare_for_random()
+        
     def add_song_by_file_path(self, file_path):
         self.cursor.execute('SELECT * FROM songs WHERE file_path=?', (file_path,))
         song = self.cursor.fetchone()

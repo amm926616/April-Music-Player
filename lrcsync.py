@@ -398,14 +398,8 @@ class LRCSync:
         if self.file is None:
             print("lrc file not found, attempting to download")
             self.lyrics = None
-            return # ignore downloading lyrics for now
-            self.download_lrc_file()
-
-            # Check if file is downloaded before trying to parse
-            if self.file is None:
-                print("Failed to download lrc file, cannot proceed with parsing.")
-                self.lyrics = None
-                return
+            pass 
+        
         else:
             try:
                 with open(self.file, 'r', encoding='utf-8-sig') as file:

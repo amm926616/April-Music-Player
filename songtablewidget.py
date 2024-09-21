@@ -15,7 +15,6 @@ class SongTableWidget(QTableWidget):
         self.files_on_playlist = []          
         self.config_path = config_path
         self.json_file = os.path.join(self.config_path, "table_data.json")                        
-        self.playlist_changed = False
         super().__init__(parent)
                         
         # Hide the vertical header (row numbers)
@@ -106,7 +105,8 @@ class SongTableWidget(QTableWidget):
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.setItem(row, column, table_item)
                     
-            self.files_on_playlist.append(row_data["items"][7])                    
+            if row_data["row_type"] != "album_title":
+                self.files_on_playlist.append(row_data["items"][7])                    
             
         print("Finished loading table data.")
 
@@ -170,38 +170,53 @@ class SongTableWidget(QTableWidget):
 
         return table_data        
         
-    def get_previous_song_object(self):       
-        if self.parent.player.music_on_repeat:
+    def get_previous_song_object(self, clicking=False):       
+        if self.parent.player.music_on_repeat and not clicking:
                 self.parent.player.player.setPosition(0)
                 self.parent.player.player.play() 
                 return
             
         if self.song_playing_row is None:
-            return            
-                
-        previous_row = self.song_playing_row - 1
+            return
+        
+        current_row = self.song_playing_row
+        previous_row = current_row - 1
         
         # Ensure next_row is within bounds
         if previous_row < 0:
-            return None  # Or handle the case where no more rows are available
-        
+            print("The row count is", self.rowCount())
+            print("previous row is ", previous_row)
+            if self.parent.player.playlist_on_loop or self.parent.player.music_on_repeat:
+                print("The row count is ", self.rowCount())
+                previous_row = self.rowCount()
+            elif self.parent.player.music_on_shuffle:
+                self.parent.play_random_song()
+            else:
+                self.parent.stop_song()      
+                self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))            
+                    
         # Check if the item exists
-        item = self.item(previous_row, 7)  
-                
+        item = self.item(previous_row, 0)
+        
         if item is None:
+            print("In previous song, the item is none")
+            self.parent.stop_song()      
+            self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))                        
+            return
+                        
+        if "Album Title:" in item.text():
             previous_row -= 1
-            if previous_row <= 0:
+            if previous_row < 0:
                 return None  # Or handle the case where no more rows are available
             item = self.item(previous_row, 7)
         
         # Set the new current row
         self.setCurrentCell(previous_row, 7)
         
-        return item            
+        return item         
         
-        
-    def get_next_song_object(self, fromstart=False):        
-        if self.parent.player.music_on_repeat:
+    def get_next_song_object(self, fromstart=False, clicking=None):        
+        if self.parent.player.music_on_repeat and not clicking:
                 self.parent.player.player.setPosition(0)
                 self.parent.player.player.play() 
                 return

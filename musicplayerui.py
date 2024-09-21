@@ -25,7 +25,7 @@ from clickable_label import ClickableLabel
 from easy_json import EasyJson
 from songtablewidget import SongTableWidget
 from albumtreewidget import AlbumTreeWidget
-from random import shuffle
+from random import choice, shuffle
 from fontsettingdialog import FontSettingsWindow
 from tag_dialog import TagDialog
 
@@ -414,7 +414,7 @@ class MusicPlayerUI(QMainWindow):
             
         elif event.key() == Qt.Key.Key_R and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("playing random song")
-            self.play_random_song()
+            self.play_random_song(user_clicking=True, from_shortcut=True)
             simulate_keypress(self.songTableWidget, Qt.Key.Key_G)
             
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -1245,16 +1245,13 @@ class MusicPlayerUI(QMainWindow):
     def get_random_song_list(self):
         # Create a list excluding the current song (self.music_file)
 
-        global random_song_list
-        if self.songTableWidget.playlist_changed:
-            random_song_list = self.songTableWidget.files_on_playlist.copy()
-            shuffle(random_song_list)
-        else:
-            pass
-        
+        random_song_list = self.songTableWidget.files_on_playlist.copy()
+        shuffle(random_song_list)
+
         return random_song_list        
         
     def prepare_for_random(self):
+        self.random_song_list.clear()
         self.random_song_list = self.get_random_song_list()
         self.current_playing_random_song_index = 0             
         
@@ -1269,6 +1266,11 @@ class MusicPlayerUI(QMainWindow):
             self.handleRowDoubleClick(previous_song)
                 
     def play_next_song(self, fromStart=None):
+        if fromStart:
+            next_song = self.songTableWidget.get_next_song_object(fromstart=True)
+            self.handleRowDoubleClick(next_song)
+            return
+        
         if self.player.music_on_shuffle:
             self.current_playing_random_song_index += 1
             if self.current_playing_random_song_index > len(self.random_song_list) - 1:
@@ -1278,12 +1280,12 @@ class MusicPlayerUI(QMainWindow):
             next_song = self.songTableWidget.get_next_song_object(fromstart=False)
             self.handleRowDoubleClick(next_song)         
         
-    def play_random_song(self, user_clicking=False):
+    def play_random_song(self, user_clicking=False, from_shortcut=False):
         if not self.songTableWidget.files_on_playlist:
             return 
         self.songTableWidget.clearSelection()
         
-        print(self.current_playing_random_song_index, "current index")     
+        print(self.current_playing_random_song_index, "current index")                 
         
         if not user_clicking: # without user clicking next/previous
             print("max len is ", len(self.random_song_list))
@@ -1294,7 +1296,11 @@ class MusicPlayerUI(QMainWindow):
                 self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text(self.player.eop_text))                         
                 return
             
-        self.music_file = self.random_song_list[self.current_playing_random_song_index]            
+        if from_shortcut:
+            self.music_file = choice(self.songTableWidget.files_on_playlist)
+        else:            
+            self.music_file = self.random_song_list[self.current_playing_random_song_index]            
+            
         random_song_row = self.find_row(self.music_file)
         self.songTableWidget.song_playing_row = random_song_row        
         
