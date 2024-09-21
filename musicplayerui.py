@@ -284,7 +284,7 @@ class MusicPlayerUI(QMainWindow):
                 json.dump(default_config, file, indent=4)
 
         self.config_file = config_file
-        self.ej = EasyJson(self.config_file) # give config path to ej after setting up            
+        self.ej = EasyJson()
 
         self.directory = None
         self.load_config()
@@ -295,8 +295,7 @@ class MusicPlayerUI(QMainWindow):
         
         self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
-        # self.player.setup_playback_control_state()        
-        
+
     def load_config(self):
         """Load configuration from a JSON file."""
         if os.path.exists(self.config_file):

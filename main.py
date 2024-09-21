@@ -6,23 +6,46 @@ import signal
 import sys
 import os
 
-APP_KEY = 'aprilmusicplayer'
+APP_KEY = 'AprilMusicPlayer'
 SERVER_NAME = 'MusicPlayerServer'
+
+
+def cleanup_stale_server():
+    """Remove any existing server with the same name to avoid conflicts."""
+    QLocalServer.removeServer(SERVER_NAME)
+
+def setup_signal_handlers():
+    """Setup signal handlers to ensure cleanup on crash or termination."""
+    signal.signal(signal.SIGINT, cleanup_stale_server)
+    signal.signal(signal.SIGTERM, cleanup_stale_server)
+
+
+def load_stylesheet():
+    """Load the QSS file from the specified path."""
+    script_path = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_path, "style.qss")
+    with open(file_path, "r") as f:
+        return f.read()
+
+
+def bring_up_main_window():
+    # Connect to the local server and send a message to bring up the window
+    socket = QLocalSocket()
+    socket.connectToServer(SERVER_NAME)
+    if socket.waitForConnected(1000):
+        socket.write(b'activate_window')
+        socket.flush()
+        socket.waitForBytesWritten(1000)
+        socket.disconnectFromServer()
+    else:
+        print("Failed to connect to server:", socket.errorString())
+    socket.close()
 
 
 class SingleInstanceApp:
     def __init__(self):
         self.shared_memory = QSharedMemory(APP_KEY)
         self.server = None
-
-    def setup_signal_handlers(self):
-        """Setup signal handlers to ensure cleanup on crash or termination."""
-        signal.signal(signal.SIGINT, self.cleanup_stale_server)
-        signal.signal(signal.SIGTERM, self.cleanup_stale_server)
-
-    def cleanup_stale_server(self):
-        """Remove any existing server with the same name to avoid conflicts."""
-        QLocalServer.removeServer(SERVER_NAME)
 
     def is_another_instance_running(self):
         if self.shared_memory.attach():
@@ -32,26 +55,6 @@ class SingleInstanceApp:
         else:
             print("Error creating shared memory:", self.shared_memory.errorString())
             return True
-
-    def load_stylesheet(self):
-        """Load the QSS file from the specified path."""
-        script_path = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(script_path, "style.qss")
-        with open(file_path, "r") as f:
-            return f.read()
-
-    def bring_up_main_window(self):
-        # Connect to the local server and send a message to bring up the window
-        socket = QLocalSocket()
-        socket.connectToServer(SERVER_NAME)
-        if socket.waitForConnected(1000):
-            socket.write(b'activate_window')
-            socket.flush()
-            socket.waitForBytesWritten(1000)
-            socket.disconnectFromServer()
-        else:
-            print("Failed to connect to server:", socket.errorString())
-        socket.close()
 
     def create_local_server(self, ui):
         self.server = QLocalServer()
@@ -75,14 +78,14 @@ class SingleInstanceApp:
         app = QApplication(sys.argv)
 
         # Load QSS stylesheet
-        stylesheet = self.load_stylesheet()
+        stylesheet = load_stylesheet()
         app.setStyleSheet(stylesheet)
 
         # Set up signal handlers for cleanup
-        self.setup_signal_handlers()
+        setup_signal_handlers()
 
         # Clean up stale server from previous crash
-        self.cleanup_stale_server()
+        cleanup_stale_server()
 
         # If no other instance is running, create the UI and the local server
         ui = MusicPlayerUI(app)
@@ -103,7 +106,7 @@ if __name__ == "__main__":
     instance_app = SingleInstanceApp()
 
     if instance_app.is_another_instance_running():
-        instance_app.bring_up_main_window()
+        bring_up_main_window()
         sys.exit(1)  # Exit the new instance
     else:
         instance_app.run()

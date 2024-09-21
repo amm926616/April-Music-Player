@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, QStandardPaths
 import os
 
 class AlbumImageWindow(QDialog):
-    def __init__(self, parent=None, image=None, icon=None, imagename=None):        
+    def __init__(self, parent=None, image=None, icon=None, imageName=None):
         super().__init__(parent)
         # Resize the image while maintaining aspect ratio
         screen_size = self.parent().screen().availableGeometry()        
@@ -28,7 +28,7 @@ class AlbumImageWindow(QDialog):
             
         self.image = image.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
-        self.image_name = imagename
+        self.image_name = imageName
                 
         title = self.image_name.split('/')[-1]
 

@@ -4,7 +4,7 @@ import platform
 import inspect
 
 class EasyJson:
-    def __init__(self, config_file=None):
+    def __init__(self):
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:

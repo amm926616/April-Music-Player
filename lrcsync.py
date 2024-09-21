@@ -28,7 +28,7 @@ class LRCSync:
         self.on_off_lyrics = on_off_lyrics
         self.app = app
         self.config_path = config_path
-        self.ej = EasyJson(os.path.join(self.config_path, "config.json"))        
+        self.ej = EasyJson()
         self.lrc_display = None
         self.file = None
         self.music_file = None
@@ -71,7 +71,7 @@ class LRCSync:
             self.player.player.positionChanged.disconnect(self.update_media_lyric)        
             self.media_sync_connected = False
 
-    def updateFileandParse(self, file):
+    def update_file_and_parse(self, file):
         if file is None:
             pass
         else:
@@ -119,7 +119,7 @@ class LRCSync:
         # Define the text
         text = "April Music Player"
         
-        # Get text size using textbbox
+        # Get text size using text-box
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
@@ -193,11 +193,11 @@ class LRCSync:
         global_position = parent.mapToGlobal(parent.rect().topLeft())
 
         # Add the relative position to the global position to get the final coordinates
-        positionx = global_position.x() + relative_x
-        positiony = global_position.y() + relative_y
+        position_x = global_position.x() + relative_x
+        position_y = global_position.y() + relative_y
 
         # Set the geometry of the dialog
-        self.lrc_display.setGeometry(positionx, positiony, dialog_width, dialog_height)
+        self.lrc_display.setGeometry(position_x, position_y, dialog_width, dialog_height)
         
         main_layout = QVBoxLayout(self.lrc_display)
         self.setup_button_layout(main_layout)              
@@ -417,27 +417,6 @@ class LRCSync:
                 print(f"Error occurred while parsing lrc file: {e}")
                 self.lyrics = None
 
-    def download_lrc_file(self):
-        return
-        print("in download lrc file method")
-        print("self.music_files", self.music_file)
-
-        try:
-            self.media_lyric.setText(self.media_font.get_formatted_text("Downloading Lyrics"))
-            song_track = Track(self.music_file)
-            options = Options()
-            song_track.download_lyrics(options)
-            print("Lyrics downloaded successfully.")
-
-            # Assume the file is saved successfully. You may need to set the file path here.
-            self.file = "path_to_downloaded_lrc_file.lrc"  # Update this based on actual path
-
-        except Exception as e:
-            self.media_lyric.setText(self.media_font.get_formatted_text("Lyrics Not Found on the LRCLIB"))
-            print(f"An error occurred while downloading lyrics: {e}")
-            self.file = None  # Set file to None if download fails
-
-
     def get_current_lyric(self):
         if self.file is not None and self.lyrics:
             self.current_time = self.player.get_current_time()
@@ -451,7 +430,7 @@ class LRCSync:
 
             # Use binary search to find the correct lyrics time
             index = bisect.bisect_right(self.lyrics_keys, self.current_time)
-            self.current_index = index # pass it for lyric index in note taking            
+            self.current_index = index # pass it for lyric index in note-taking            
 
             if index == 0:
                 if self.current_time < self.lyrics_keys[0]: # for instrument section before first lyric
@@ -485,7 +464,7 @@ class LRCSync:
             self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
             
     def sync_lyrics(self, file):
-        self.updateFileandParse(file)       
+        self.update_file_and_parse(file)
         if self.media_sync_connected:
             self.player.player.positionChanged.disconnect(self.update_media_lyric)  
             self.media_sync_connected = False

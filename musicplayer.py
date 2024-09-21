@@ -4,6 +4,11 @@ import os
 from PyQt6.QtCore import QUrl
 from easy_json import EasyJson
 
+
+def handle_buffer_status(percent_filled):
+    print(f"Buffer status: {percent_filled}%")
+
+
 class MusicPlayer:
     def __init__(self, parent, play_pause_button, loop_playlist_button, repeat_button, shuffle_button, playNextSong=None, playRandomSong=None):
         self.parent = parent
@@ -17,13 +22,13 @@ class MusicPlayer:
         self.player.setAudioOutput(self.audio_output)
                 
         # Connect the buffer status signal to a custom method
-        self.player.bufferProgressChanged.connect(self.handle_buffer_status)
+        self.player.bufferProgressChanged.connect(handle_buffer_status)
 
         self.started_playing = False
         self.in_pause_state = False
-        self.music_on_repeat = not self.ej.get_value("repeat")
-        self.music_on_shuffle = not self.ej.get_value("shuffle")
-        self.playlist_on_loop = not self.ej.get_value("loop")
+        self.music_on_repeat = self.ej.get_value("repeat")
+        self.music_on_shuffle = self.ej.get_value("shuffle")
+        self.playlist_on_loop = self.ej.get_value("loop")
         self.previous_shuffle_state = None
         self.previous_loop_state = None      
         self.paused_position = 0.0
@@ -44,10 +49,7 @@ class MusicPlayer:
     def default_pause_state(self):
         self.in_pause_state = False
         self.paused_position = 0.0
-                
-    def handle_buffer_status(self, percent_filled):
-        print(f"Buffer status: {percent_filled}%")
-            
+
     def update_music_file(self, file):
         self.file_name = file
         self.player.setSource(QUrl.fromLocalFile(self.file_name))

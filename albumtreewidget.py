@@ -53,7 +53,7 @@ class AlbumTreeWidget(QWidget):
         else:
             super().keyPressEvent(event)
             
-    def treeitemmouseDoubleClickEvent(self, event):
+    def tree_item_mouse_double_click_event(self, event):
         # Override the mouse double click event
         item = self.tree_widget.itemAt(event.pos())
         if item:
@@ -120,7 +120,7 @@ class AlbumTreeWidget(QWidget):
         self.search_bar.setPlaceholderText("Search...")
 
         self.tree_widget = QTreeWidget()
-        self.tree_widget.mouseDoubleClickEvent = self.treeitemmouseDoubleClickEvent
+        self.tree_widget.mouseDoubleClickEvent = self.tree_item_mouse_double_click_event
         self.tree_widget.setHeaderHidden(True)  # Hide the header
 
         layout = QVBoxLayout(self)
