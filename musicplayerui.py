@@ -1253,6 +1253,14 @@ class MusicPlayerUI(QMainWindow):
     def prepare_for_random(self):
         self.random_song_list.clear()
         self.random_song_list = self.get_random_song_list()
+
+        # Remove the current music file if it's in the list
+        if self.music_file in self.random_song_list:
+            self.random_song_list.remove(self.music_file)
+
+        # Insert the music file at the beginning of the list
+        self.random_song_list.insert(0, self.music_file)
+        
         self.current_playing_random_song_index = 0             
         
     def play_previous_song(self):

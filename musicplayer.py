@@ -110,7 +110,6 @@ class MusicPlayer:
             self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-shuffle.ico")))            
             self.shuffle_button.setToolTip("On Shuffle")       
             self.music_on_shuffle = True
-            self.parent.songTableWidget.playlist_changed = True
             self.parent.prepare_for_random()
             
         self.disable_loop_playlist()
