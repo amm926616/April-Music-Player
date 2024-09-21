@@ -814,55 +814,56 @@ class MusicPlayerUI(QMainWindow):
         left_layout.addLayout(self.search_bar_layout)
         if self.ej.get_value("music_directory") is None:
             self.ask_for_directory(False)
-        # self.loadSongs()
+
+        self.player.setup_playback_control_state()
 
     def setupMediaPlayerWidget(self, right_layout):
-        # Create a widget to hold the media player components
-        media_widget = QWidget()
-        
-        # Create and configure the layout for the media widget
-        mediaLayout = QVBoxLayout(media_widget)
+            # Create a widget to hold the media player components
+            media_widget = QWidget()
 
-        # Create and configure the track display label
-        self.track_display = QLabel("No Track Playing")
-        self.track_display.setFont(QFont("Komika Axis"))
-        self.track_display.setWordWrap(True)
-        self.track_display.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.track_display.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        self.track_display.setStyleSheet("font-size: 20px")
+            # Create and configure the layout for the media widget
+            mediaLayout = QVBoxLayout(media_widget)
 
-        # Create and configure the image display label
-        self.image_display = ClickableLabel()
-        self.image_display.doubleClicked.connect(self.double_click_on_image)
-        
-        # Create and configure the song details label
-        self.song_details = QLabel()
-        self.song_details.setWordWrap(True)  # Ensure the text wraps within the label
+            # Create and configure the track display label
+            self.track_display = QLabel("No Track Playing")
+            self.track_display.setFont(QFont("Komika Axis"))
+            self.track_display.setWordWrap(True)
+            self.track_display.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.track_display.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+            self.track_display.setStyleSheet("font-size: 20px")
 
-        # Create a QWidget to hold the layout
-        container_widget = QWidget()
+            # Create and configure the image display label
+            self.image_display = ClickableLabel()
+            self.image_display.doubleClicked.connect(self.double_click_on_image)
 
-        # Create a QVBoxLayout and add self.song_details to it
-        layout = QVBoxLayout(container_widget)
-        layout.addWidget(self.song_details)
-        layout.addStretch()  # This will push self.song_details to the top
+            # Create and configure the song details label
+            self.song_details = QLabel()
+            self.song_details.setWordWrap(True)  # Ensure the text wraps within the label
 
-        # Set the layout as the widget of the scroll area
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(container_widget)
-        
-        # Add widgets to the vertical layout
-        mediaLayout.addWidget(self.track_display)
-        mediaLayout.addWidget(self.image_display)
-        mediaLayout.addWidget(scroll_area)  # Add the scroll area instead of the label directly
-        mediaLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        
-        # Add the media_widget to the right_layout
-        right_layout.addWidget(media_widget)
-        
-        # Set up the media player controls panel
-        self.setupMediaPlayerControlsPanel(right_layout)        
+            # Create a QWidget to hold the layout
+            container_widget = QWidget()
+
+            # Create a QVBoxLayout and add self.song_details to it
+            layout = QVBoxLayout(container_widget)
+            layout.addWidget(self.song_details)
+            layout.addStretch()  # This will push self.song_details to the top
+
+            # Set the layout as the widget of the scroll area
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setWidget(container_widget)
+
+            # Add widgets to the vertical layout
+            mediaLayout.addWidget(self.track_display)
+            mediaLayout.addWidget(self.image_display)
+            mediaLayout.addWidget(scroll_area)  # Add the scroll area instead of the label directly
+            mediaLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+            # Add the media_widget to the right_layout
+            right_layout.addWidget(media_widget)
+
+            # Set up the media player controls panel
+            self.setupMediaPlayerControlsPanel(right_layout)
         
     def slider_key_event(self, event):
         # to catch key event on slider.

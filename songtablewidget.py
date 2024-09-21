@@ -38,8 +38,7 @@ class SongTableWidget(QTableWidget):
         """)
         
         # load the previous tabledata from init method. 
-        self.load_table_data()  
-        
+        self.load_table_data()
         self.setSortingEnabled(False)  # Disable default sorting to use custom sorting
                      
     def load_table_data(self):
