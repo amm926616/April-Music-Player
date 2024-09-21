@@ -41,20 +41,38 @@ class MusicPlayer:
         self.shuffle_button = shuffle_button
         self.script_path = os.path.dirname(os.path.abspath(__file__))   
 
+    def save_playback_control_state(self):
+        self.ej.edit_value("previous_loop", self.previous_loop_state)
+        self.ej.edit_value("previous_shuffle", self.previous_shuffle_state)
+        self.ej.edit_value("shuffle", self.music_on_shuffle)
+        self.ej.edit_value("loop", self.playlist_on_loop)
+        self.ej.edit_value("repeat", self.music_on_repeat)
+        
     def setup_playback_control_state(self):
+        self.previous_loop_state = self.ej.get_value("previous_loop")
+        self.previous_shuffle_state = self.ej.get_value("previous__shuffle")
         self.music_on_repeat = self.ej.get_value("repeat")
         self.music_on_shuffle = self.ej.get_value("shuffle")
         self.playlist_on_loop = self.ej.get_value("loop")
-        self.toggle_loop_playlist()
-        self.toggle_repeat()
-        self.toggle_shuffle()
-
-    def toggle_loop_playlist(self, setup=False):
-        if setup:
-            state = not self.playlist_on_loop
-        else:
-            state = self.playlist_on_loop
-        if state:
+        
+        if self.music_on_repeat:
+            self.repeat_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-repeat.ico")))
+            self.repeat_button.setToolTip("On Repeat")            
+            self.disable_shuffle(no_setup=False)
+            self.disable_loop_playlist(no_setup=False)  
+            
+        elif self.music_on_shuffle:
+            self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-shuffle.ico")))
+            self.shuffle_button.setToolTip("On Shuffle")
+            self.parent.prepare_for_random()                      
+            self.disable_loop_playlist(no_setup=False)                                                                                                          
+        
+        elif self.playlist_on_loop:
+            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-loop-playlist.ico")))
+            self.loop_playlist_button.setToolTip("On Playlist Looping")
+            
+    def toggle_loop_playlist(self):
+        if self.playlist_on_loop:
             self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))
             self.loop_playlist_button.setToolTip("Toggle Playlist Looping")
             self.playlist_on_loop = False
@@ -63,15 +81,8 @@ class MusicPlayer:
             self.loop_playlist_button.setToolTip("On Playlist Looping")
             self.playlist_on_loop = True
 
-        if not setup:
-            self.ej.edit_value("loop", self.playlist_on_loop)
-
-    def toggle_repeat(self, setup=False):
-        if setup:
-            state = not self.music_on_repeat
-        else:
-            state = self.music_on_repeat
-        if state:
+    def toggle_repeat(self):
+        if self.music_on_repeat:
             self.repeat_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "repeat.ico")))
             self.repeat_button.setToolTip("Toggle Repeat")
             self.music_on_repeat = False
@@ -79,19 +90,12 @@ class MusicPlayer:
             self.repeat_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-repeat.ico")))
             self.repeat_button.setToolTip("On Repeat")
             self.music_on_repeat = True
-
+            
         self.disable_shuffle()
         self.disable_loop_playlist()
 
-        if not setup:
-            self.ej.edit_value("repeat", self.music_on_repeat)
-
-    def toggle_shuffle(self, setup=False):
-        if setup:
-            state = not self.music_on_shuffle
-        else:
-            state = self.music_on_shuffle
-        if state:
+    def toggle_shuffle(self):
+        if self.music_on_shuffle:
             self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle.ico")))
             self.shuffle_button.setToolTip("Toggle Shuffle")
             self.music_on_shuffle = False
@@ -100,10 +104,38 @@ class MusicPlayer:
             self.shuffle_button.setToolTip("On Shuffle")
             self.music_on_shuffle = True
             self.parent.prepare_for_random()
-        if not setup:
-            self.ej.edit_value("shuffle", self.music_on_shuffle)
 
         self.disable_loop_playlist()
+        
+    def disable_loop_playlist(self, no_setup=True):
+        if self.music_on_repeat or self.music_on_shuffle:
+            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist-off.ico")))            
+            self.loop_playlist_button.setDisabled(True)  
+            self.previous_loop_state = self.playlist_on_loop
+            self.playlist_on_loop = False     
+        else:
+            if no_setup:
+                self.loop_playlist_button.setDisabled(False)          
+                self.playlist_on_loop = self.previous_loop_state    
+                if self.playlist_on_loop:
+                    self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-loop-playlist.ico")))              
+                else:
+                    self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))                                                                 
+
+    def disable_shuffle(self, no_setup=True):
+        if self.music_on_repeat:
+            self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle-off.ico")))
+            self.shuffle_button.setDisabled(True)
+            self.previous_shuffle_state = self.music_on_shuffle
+            self.music_on_shuffle = False
+        else:
+            if no_setup:
+                self.shuffle_button.setDisabled(False)
+                self.music_on_shuffle = self.previous_shuffle_state
+                if self.music_on_shuffle:
+                    self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-shuffle.ico")))
+                else:
+                    self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle.ico")))        
 
     def default_pause_state(self):
         self.in_pause_state = False
@@ -116,34 +148,6 @@ class MusicPlayer:
     def play(self):
         self.started_playing = True
         self.player.play()
-
-    def disable_loop_playlist(self):
-        if self.music_on_repeat or self.music_on_shuffle:
-            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist-off.ico")))            
-            self.loop_playlist_button.setDisabled(True)  
-            self.previous_loop_state = self.playlist_on_loop
-            self.playlist_on_loop = False     
-        else:
-            self.loop_playlist_button.setDisabled(False)          
-            self.playlist_on_loop = self.previous_loop_state    
-            if self.playlist_on_loop:
-                self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-loop-playlist.ico")))              
-            else:
-                self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))                                                                 
-
-    def disable_shuffle(self):
-        if self.music_on_repeat:
-            self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle-off.ico")))
-            self.shuffle_button.setDisabled(True)
-            self.previous_shuffle_state = self.music_on_shuffle
-            self.music_on_shuffle = False
-        else:
-            self.shuffle_button.setDisabled(False)
-            self.music_on_shuffle = self.previous_shuffle_state
-            if self.music_on_shuffle:
-                self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-shuffle.ico")))
-            else:
-                self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle.ico")))
 
     def play_pause_music(self):  
         if self.started_playing:  # pause state activating
