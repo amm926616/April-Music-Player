@@ -353,6 +353,10 @@ class SongTableWidget(QTableWidget):
             
         elif event.key() == Qt.Key.Key_Delete:
             self.delete_selected_rows()
+            
+        elif event.key() == Qt.Key.Key_R:
+            print("keyboard r pressing")
+            self.parent.player.player.setPosition(0) # set position to start            
                     
         elif event.key() == Qt.Key.Key_Down:
             super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
