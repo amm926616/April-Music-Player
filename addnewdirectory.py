@@ -27,7 +27,7 @@ class AddNewDirectory(QDialog):
         # Widgets
         self.info_label = QLabel("Choose directories to load music from:")
         self.add_button = QPushButton("Add New Directory")
-        self.load_all_button = QPushButton("Load Directories")
+        self.load_all_button = QPushButton("Load Selected Directories")
 
         # "Select All" checkbox
         self.select_all_checkbox = QCheckBox("Select All")
@@ -63,7 +63,11 @@ class AddNewDirectory(QDialog):
     def are_all_checkboxes_checked(self):
         # Find all QCheckBox children in the scroll area widget
         checkboxes = self.scroll_area_widget.findChildren(QCheckBox)
-        all_is_checked = True  # Start with the assumption that all checkboxes are checked
+        all_is_checked = False  # Start with the assumption that all checkboxes are checked
+        if not self.directories:
+            return
+        else:
+            all_is_checked = True
 
         # Iterate through all checkboxes to check if any is unchecked
         for checkbox in checkboxes:
@@ -94,6 +98,7 @@ class AddNewDirectory(QDialog):
                 checkbox = QCheckBox(directory)
                 checkbox.setChecked(True)
                 checkbox.checkStateChanged.connect(self.update_folder_status)
+                self.are_all_checkboxes_checked()
                 self.scroll_area_layout.addWidget(checkbox)
             else:
                 QMessageBox.information(self, "Directory Exists", "This directory is already added.")
