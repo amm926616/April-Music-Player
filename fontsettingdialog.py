@@ -157,24 +157,19 @@ class FontSettingsWindow(QDialog):
             self, "Open Font File", "", "Font Files (*.ttf *.otf)"
         )
         if font_file:
-            font_id = QFontDatabase.addApplicationFont(font_file)
-            if font_id != -1:
-                font_families = QFontDatabase.applicationFontFamilies(font_id)
-                if font_families:
-                    # Set the font for the selected language
-                    self.fonts[language] = font_families[0]
-                    self.update_font_display(language)
+            self.fonts[language] = get_font_name_from_file(font_file)
+            self.update_font_display(language)
 
-                    # Update the example label with the selected font
-                    example_font = QFontDatabase.font(self.fonts[language], '', 12)
-                    self.example_labels[language].setFont(example_font)  # Ensure the example label font is updated
+            # Update the example label with the selected font
+            example_font = QFontDatabase.font(self.fonts[language], '', 12)
+            self.example_labels[language].setFont(example_font)  # Ensure the example label font is updated
 
-                    # Update the stored font file
-                    self.ej.edit_value(f"{language.lower()}_font", font_file)
-                    
-                    # Reload the fonts in the parent if necessary
-                    self.parent.lrcPlayer.media_font.reloadFont()
-                    self.parent.lrcPlayer.lrc_font.reloadFont()
+            # Update the stored font file
+            self.ej.edit_value(f"{language.lower()}_font", font_file)
+            
+            # Reload the fonts in the parent if necessary
+            self.parent.lrcPlayer.media_font.reloadFont()
+            self.parent.lrcPlayer.lrc_font.reloadFont()
 
     def update_font_display(self, language):
         """ Update the QLabel for the selected language with the chosen font """
