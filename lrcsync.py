@@ -11,6 +11,7 @@ from notetaking import NoteTaking
 from clickable_label import ClickableLabel
 import threading
 
+
 def extract_time_and_lyric(line):
     match = re.match(r'\[(\d{2}:\d{2}\.\d+)](.*)', line)
     if match:
@@ -19,9 +20,11 @@ def extract_time_and_lyric(line):
         return time_str, lyric
     return None, None
 
+
 def convert_time_to_seconds(time_str):
     minutes, seconds = map(float, time_str.split(":"))
     return minutes * 60 + seconds
+
 
 class LRCSync:
     def __init__(self, app, player, config_path, on_off_lyrics=None):
@@ -39,36 +42,36 @@ class LRCSync:
         self.current_time = 0.0
         self.media_font = GetFont(13)
         self.media_lyric = ClickableLabel()
-        self.media_lyric.setWordWrap(True)        
+        self.media_lyric.setWordWrap(True)
         self.lrc_font = GetFont(int(self.ej.get_value("lrc_font_size")))
-        self.show_lyrics = self.ej.get_value("show_lyrics") 
-        
-        if self.show_lyrics:    
+        self.show_lyrics = self.ej.get_value("show_lyrics")
+
+        if self.show_lyrics:
             self.current_lyric = "April Music Player"
         else:
             self.current_lyric = "Lyrics Disabled"
-            
+
         self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
-                    
-        self.lyric_sync_connected = None    
+
+        self.lyric_sync_connected = None
         self.media_sync_connected = None
         self.current_lyrics_time = 0.0
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.current_index = 0
-        
+
         # Construct the full path to the icon file
         self.icon_path = os.path.join(self.script_path, 'icons', 'april-icon.png')
         self.notetaking = NoteTaking(self)
         self.started_player = False
-        
+
     def disconnect_syncing(self):
         if self.lyric_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_display_lyric)        
+            self.player.player.positionChanged.disconnect(self.update_display_lyric)
             self.lyric_sync_connected = False
         if self.media_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_media_lyric)        
+            self.player.player.positionChanged.disconnect(self.update_media_lyric)
             self.media_sync_connected = False
 
     def update_file_and_parse(self, file):
@@ -78,11 +81,11 @@ class LRCSync:
             self.file = file
 
         self.parse_lrc()
-        
+
     def resizeBackgroundImage(self, image_path):
         print("In resize Image method")
         image = Image.open(image_path)
-        
+
         # Get the screen geometry
         app = QApplication.instance() or QApplication([])
         screen_geometry = app.primaryScreen().geometry()
@@ -93,7 +96,7 @@ class LRCSync:
         # Calculate the new dimensions to maintain the aspect ratio
         aspect_ratio = image.width / image.height
         new_width = int(screen_height * aspect_ratio)
-        
+
         # Resize the image
         resized_image = image.resize((new_width, screen_height), Image.LANCZOS)
 
@@ -110,23 +113,24 @@ class LRCSync:
 
         # Add copyright text to the final image
         draw = ImageDraw.Draw(final_image)
-        
+
         # Load a custom font with a specific size
-        font_size = int(self.app.height() * 0.06) # Set your desired font size here
-        font_path = os.path.join(self.script_path, "fonts", "Sexy Beauty.ttf")  # Replace with the path to your .ttf font file
+        font_size = int(self.app.height() * 0.06)  # Set your desired font size here
+        font_path = os.path.join(self.script_path, "fonts",
+                                 "Sexy Beauty.ttf")  # Replace with the path to your .ttf font file
         font = ImageFont.truetype(font_path, font_size)  # Load the font with the specified size
 
         # Define the text
         text = "April Music Player"
-        
+
         # Get text size using text-box
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
-        
+
         # Define the position for the text (bottom-right corner with padding)
         text_position = (screen_width - text_width - 10, screen_height - text_height - 10)
-        
+
         # Define the stroke width and stroke color
         stroke_width = 2  # Adjust the stroke width as needed
         stroke_color = "black"  # Stroke color (outline)
@@ -147,28 +151,28 @@ class LRCSync:
         final_image.save(final_image_path)
 
         return final_image_path
-        
+
     def startUI(self, parent, file):
         self.lrc_display = QDialog(parent)
         self.lrc_display.setWindowTitle(file)
         if file is None:
-            self.lrc_display.setWindowTitle("LRC Display")        
-        
+            self.lrc_display.setWindowTitle("LRC Display")
+
         image_path = self.ej.get_value("background_image")
 
         # Check if the image path is not set or the file does not exist
         if not image_path or not os.path.exists(image_path):
             self.ej.setupBackgroundImage()
             image_path = self.ej.get_value("background_image")
-            
+
         resized_image_path = os.path.join(self.config_path, "resized_image.png")
         if not os.path.exists(resized_image_path):
             resized_image_path = self.resizeBackgroundImage(image_path)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            resized_image_path = resized_image_path.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window   
-            
+            resized_image_path = resized_image_path.replace("\\", "/")  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
+
         self.lrc_display.setStyleSheet(f"""
             QDialog {{
                 background-color: black;  /* Black background color */
@@ -178,9 +182,9 @@ class LRCSync:
                 background-size: 100% auto;  /* Fix the image height to the dialog's height */                
             }}
         """)
-            
+
         self.lrc_display.setWindowIcon(QIcon(self.icon_path))
-        
+
         # Calculate the width and height of the dialog
         dialog_width = int(parent.width() * 0.9)
         dialog_height = int(parent.height() * 0.8)
@@ -198,16 +202,16 @@ class LRCSync:
 
         # Set the geometry of the dialog
         self.lrc_display.setGeometry(position_x, position_y, dialog_width, dialog_height)
-        
+
         main_layout = QVBoxLayout(self.lrc_display)
-        self.setup_button_layout(main_layout)              
+        self.setup_button_layout(main_layout)
 
         if self.show_lyrics:
-            if self.started_player:                
+            if self.started_player:
                 self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
             else:
                 self.lyric_label.setText(self.lrc_font.get_formatted_text("April Music Player"))
-                
+
             self.player.player.positionChanged.connect(self.update_display_lyric)
             self.lyric_sync_connected = True
         else:
@@ -218,78 +222,78 @@ class LRCSync:
         self.lrc_display.keyPressEvent = self.keyPressEvent
 
         self.lrc_display.exec()
-        
+
     def closeEvent(self, event):
         print("QDialog closed")
         self.lyric_label = None
         self.lrc_display = None
-        
+
         if self.lyric_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_display_lyric)        
+            self.player.player.positionChanged.disconnect(self.update_display_lyric)
             self.lyric_sync_connected = False
-            
+
         event.accept()  # To accept the close event
-        
+
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
             self.player.seek_backward()
-            
+
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
             self.player.seek_forward()
-            
+
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
             self.player.play_pause_music()
-            
+
         elif event.key() == Qt.Key.Key_Up:
             print("UP key pressed")
             self.go_to_previous_lyric()
-            
+
         elif event.key() == Qt.Key.Key_Down:
             print("down key pressed")
             self.go_to_next_lyric()
-            
+
         elif event.key() == Qt.Key.Key_D:
             if self.player.in_pause_state:
                 self.player.play_pause_music()
-                self.player.in_pause_state = False                        
-            self.go_to_the_start_of_current_lyric()    
-                               
+                self.player.in_pause_state = False
+            self.go_to_the_start_of_current_lyric()
+
         elif event.key() == Qt.Key.Key_E:
             print("pressing e")
-            self.player.pause()            
+            self.player.pause()
             self.createNoteTakingWindow()
-            
+
         elif event.key() == Qt.Key.Key_Escape:
             self.lrc_display.close()
-            
+
         elif event.key() == Qt.Key.Key_R:
             if self.player.in_pause_state:
-                self.player.play_pause_music()    
-                self.player.in_pause_state = False        
+                self.player.play_pause_music()
+                self.player.in_pause_state = False
             self.player.player.setPosition(0)
-            
+
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
             if self.is_full_screen():
                 self.lrc_display.showNormal()  # Restore to normal mode
             else:
                 self.lrc_display.showFullScreen()  # Enter full-screen mode
-                
+
         elif event.key() == Qt.Key.Key_I and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
             if self.show_lyrics:
                 self.on_off_lyrics(False)
-                self.player.player.positionChanged.disconnect(self.update_display_lyric)                
-                self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))                
-                self.lyric_sync_connected = False                
+                self.player.player.positionChanged.disconnect(self.update_display_lyric)
+                self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
+                self.lyric_sync_connected = False
             else:
-                self.on_off_lyrics(True) 
+                self.on_off_lyrics(True)
                 self.player.player.positionChanged.connect(self.update_display_lyric)
                 self.lyric_sync_connected = True
-        
+
     def createNoteTakingWindow(self):
         self.notetaking.createUI()
 
@@ -297,31 +301,30 @@ class LRCSync:
         # Check if the dialog is in full-screen mode
 
         current_window_state = self.lrc_display.windowState()
-        
+
         # Define the full-screen flag
         full_screen_flag = Qt.WindowState.WindowFullScreen
-        
+
         # Check if the current window state includes the full-screen flag
         is_full_screen_mode = (current_window_state & full_screen_flag) == full_screen_flag
-        
+
         # Return the result
         return is_full_screen_mode
 
-
-    def setup_button_layout(self, main_layout):       
+    def setup_button_layout(self, main_layout):
         # Initialize lyric label as a class attribute for potential updates
         self.lyric_label = QLabel()
         self.lyric_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         self.lyric_label.setWordWrap(True)
-        
+
         lyrics_color = self.ej.get_value("lyrics_color")
 
         # Check if the image path is not set or the file does not exist
         if not lyrics_color:
             self.ej.setupLyricsColor()
-            lyrics_color = self.ej.get_value("lyrics_color")        
-            
+            lyrics_color = self.ej.get_value("lyrics_color")
+
         self.lyric_label.setStyleSheet(f"color: {lyrics_color};")
         self.lyric_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -342,26 +345,26 @@ class LRCSync:
         # Add widgets to the main layout
         main_layout.addWidget(self.lyric_label)
         # main_layout.addLayout(button_layout)
-        
+
     def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
             previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
             if not previous_lyric_index < 0:
                 previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
                 self.player.player.setPosition(int(previous_lyrics_key * 1000))
-                
+
                 # fix the late to set current time due to slower sync time                                
-                self.current_lyrics_time = self.lyrics_keys[previous_lyric_index]                          
-                self.current_lyric = self.lyrics[self.current_lyrics_time]                                   
-                
+                self.current_lyrics_time = self.lyrics_keys[previous_lyric_index]
+                self.current_lyric = self.lyrics[self.current_lyrics_time]
+
             else:
                 self.current_lyrics_time = self.lyrics_keys[-1]
                 previous_lyrics_key = self.lyrics_keys[-1]
                 self.player.player.setPosition(int(previous_lyrics_key * 1000))
-                
+
             if self.player.in_pause_state:
                 self.player.paused_position = int(previous_lyrics_key * 1000)
-                
+
     def go_to_next_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
             if self.current_lyric == "(Instrumental Intro)":
@@ -371,20 +374,20 @@ class LRCSync:
 
             if not len(self.lyrics_keys) < (next_lyric_index + 1):
                 next_lyric_key = self.lyrics_keys[next_lyric_index]
-                print("next line, ", next_lyric_key)        
+                print("next line, ", next_lyric_key)
                 self.player.player.setPosition(int(next_lyric_key * 1000))
-                
+
                 # fix the late to set current time due to slower sync time                                                
                 self.current_lyrics_time = self.lyrics_keys[next_lyric_index]
-                self.current_lyric = self.lyrics[self.current_lyrics_time]                               
+                self.current_lyric = self.lyrics[self.current_lyrics_time]
             else:
-                self.current_lyrics_time = self.lyrics_keys[0]      
+                self.current_lyrics_time = self.lyrics_keys[0]
                 next_lyric_key = self.lyrics_keys[0]
                 self.player.player.setPosition(int(next_lyric_key * 1000))
-                
+
             if self.player.in_pause_state:
-                self.player.paused_position = int(next_lyric_key * 1000)                                   
-            
+                self.player.paused_position = int(next_lyric_key * 1000)
+
     def go_to_the_start_of_current_lyric(self):
         self.player.player.setPosition(int(self.current_lyrics_time * 1000))
 
@@ -398,8 +401,8 @@ class LRCSync:
         if self.file is None:
             print("lrc file not found, attempting to download")
             self.lyrics = None
-            pass 
-        
+            pass
+
         else:
             try:
                 with open(self.file, 'r', encoding='utf-8-sig') as file:
@@ -430,44 +433,43 @@ class LRCSync:
 
             # Use binary search to find the correct lyrics time
             index = bisect.bisect_right(self.lyrics_keys, self.current_time)
-            self.current_index = index # pass it for lyric index in note-taking            
+            self.current_index = index  # pass it for lyric index in note-taking
 
             if index == 0:
-                if self.current_time < self.lyrics_keys[0]: # for instrument section before first lyric
-                    self.current_lyrics_time = self.lyrics_keys[0]                                        
+                if self.current_time < self.lyrics_keys[0]:  # for instrument section before first lyric
+                    self.current_lyrics_time = self.lyrics_keys[0]
                     self.current_lyric = "(Instrumental Intro)"
                 else:
                     # If the current time is before the first lyric
-                    self.current_lyrics_time = self.lyrics_keys[0]                    
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]                       
-                    
+                    self.current_lyrics_time = self.lyrics_keys[0]
+                    self.current_lyric = self.lyrics[self.current_lyrics_time]
+
             else:
                 if index >= len(self.lyrics_keys):
                     # If the current time is after the last lyric
-                    self.current_lyrics_time = self.lyrics_keys[-1]                
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]                       
+                    self.current_lyrics_time = self.lyrics_keys[-1]
+                    self.current_lyric = self.lyrics[self.current_lyrics_time]
                 else:
                     # Otherwise, the correct lyric is at the previous index
                     self.current_lyrics_time = self.lyrics_keys[index - 1]
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]        
+                    self.current_lyric = self.lyrics[self.current_lyrics_time]
 
         else:
-            self.current_lyric = "No Lyrics Found on the Disk"             
-                                        
-                                                           
+            self.current_lyric = "No Lyrics Found on the Disk"
+
     def update_media_lyric(self):
         self.get_current_lyric()
         self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
-                        
+
     def update_display_lyric(self):
         if self.lyric_label is not None:
             self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
-            
+
     def sync_lyrics(self, file):
         self.update_file_and_parse(file)
         if self.media_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_media_lyric)  
+            self.player.player.positionChanged.disconnect(self.update_media_lyric)
             self.media_sync_connected = False
 
-        self.player.player.positionChanged.connect(self.update_media_lyric)  
-        self.media_sync_connected = True          
+        self.player.player.positionChanged.connect(self.update_media_lyric)
+        self.media_sync_connected = True

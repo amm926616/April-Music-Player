@@ -14,6 +14,7 @@ def cleanup_stale_server():
     """Remove any existing server with the same name to avoid conflicts."""
     QLocalServer.removeServer(SERVER_NAME)
 
+
 def setup_signal_handlers():
     """Setup signal handlers to ensure cleanup on crash or termination."""
     signal.signal(signal.SIGINT, cleanup_stale_server)

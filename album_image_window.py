@@ -3,15 +3,16 @@ from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import Qt, QStandardPaths
 import os
 
+
 class AlbumImageWindow(QDialog):
     def __init__(self, parent=None, image=None, icon=None, imageName=None):
         super().__init__(parent)
         # Resize the image while maintaining aspect ratio
-        screen_size = self.parent().screen().availableGeometry()        
-        
+        screen_size = self.parent().screen().availableGeometry()
+
         # Default value for size
-        size = 640  
-        
+        size = 640
+
         if screen_size.height() > 1200:
             size = 1200
         elif 1080 <= screen_size.height() < 1200:
@@ -21,15 +22,16 @@ class AlbumImageWindow(QDialog):
 
         new_width = size
         new_height = size
-        
+
         if image.width() > new_height:
             new_width = image.width()
             new_height = image.width()
-            
-        self.image = image.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+
+        self.image = image.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio,
+                                  Qt.TransformationMode.SmoothTransformation)
 
         self.image_name = imageName
-                
+
         title = self.image_name.split('/')[-1]
 
         # Set up the dialog window
@@ -40,7 +42,7 @@ class AlbumImageWindow(QDialog):
         # Create a label to display the image
         image_label = QLabel(self)
         save_button = QPushButton("Save Image to Disk")
-        
+
         if self.image:
             image_label.setPixmap(self.image)
 
@@ -55,7 +57,7 @@ class AlbumImageWindow(QDialog):
 
         # Optional: Set the size of the window to fit the image
         self.adjustSize()
-        
+
         save_button.clicked.connect(self.save_image)
 
     def save_image(self):
@@ -66,15 +68,15 @@ class AlbumImageWindow(QDialog):
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            file_name = self.image_name.split("\\")[-1] # တော်တော်သောက်လုပ်ရှပ်တဲ့ window  
-        
+            file_name = self.image_name.split("\\")[-1]  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
+
         for ext in ['.mp3', '.ogg', '.asc']:
             if file_name.endswith(ext):
                 file_name = file_name.removesuffix(ext)
-                
+
         save_path = os.path.join(default_image_folder, file_name) + ".png"
         print(save_path)
-        
+
         # Save the pixmap to the specified path in PNG format
         success = self.image.save(save_path, format='PNG')
 
@@ -88,5 +90,5 @@ class AlbumImageWindow(QDialog):
             msg_box.setIcon(QMessageBox.Icon.Critical)
             msg_box.setText("Failed to save the image.")
             msg_box.setWindowTitle("Error")
-        
+
         msg_box.exec()

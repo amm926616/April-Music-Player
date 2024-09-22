@@ -4,46 +4,48 @@ from PyQt6.QtCore import Qt
 import os
 import json
 
+
 class SongTableWidget(QTableWidget):
-    def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None, config_path=None):
+    def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None,
+                 config_path=None):
         self.parent = parent
         self.rowDoubleClick = rowDoubleClick
         self.seekRight = seekRight
         self.seekLeft = seekLeft
         self.play_pause = play_pause
-        self.song_playing_row = None  
-        self.files_on_playlist = []          
+        self.song_playing_row = None
+        self.files_on_playlist = []
         self.config_path = config_path
-        self.json_file = os.path.join(self.config_path, "table_data.json")                        
+        self.json_file = os.path.join(self.config_path, "table_data.json")
         super().__init__(parent)
-                        
+
         # Hide the vertical header (row numbers)
-        self.verticalHeader().setVisible(False)  
-        
+        self.verticalHeader().setVisible(False)
+
         # Always show the vertical scrollbar
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        
+
         # Set the background image on the viewport (the visible area of the table)        
         svg_file = os.path.join(self.parent.script_path, "icons", "resized.png")
-        
+
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            svg_file = svg_file.replace("\\", "/") # တော်တော်သောက်လုပ်ရှပ်တဲ့ window  
-            
+            svg_file = svg_file.replace("\\", "/")  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
+
         self.viewport().setStyleSheet(f"""
             background-image: url({svg_file});
             background-repeat: no-repeat;
             background-position: center;
             background-size: fill;  /* Ensures the SVG fits within the viewport */
         """)
-        
+
         # load the previous tabledata from init method. 
         self.load_table_data()
         self.setSortingEnabled(False)  # Disable default sorting to use custom sorting
-                     
+
     def load_table_data(self):
         print("Started loading table data")
-        
+
         # Check if the JSON file exists
         if not os.path.exists(self.json_file):
             print(f"File {self.json_file} does not exist.")
@@ -64,7 +66,7 @@ class SongTableWidget(QTableWidget):
         # Clear existing table content
         self.clearContents()
         self.setRowCount(0)
-        
+
         # Set up the row and column counts based on the loaded data
         row_count = len(data)
         if row_count == 0:
@@ -77,7 +79,7 @@ class SongTableWidget(QTableWidget):
         # Populate the table widget with the loaded data
         for row, row_data in enumerate(data):
             self.insertRow(row)
-            
+
             for column, item_text in enumerate(row_data["items"]):
                 table_item = QTableWidgetItem(item_text)
 
@@ -85,7 +87,7 @@ class SongTableWidget(QTableWidget):
                     # Album Title row: Set font, colspan, and disable selection
                     table_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
-                    
+
                     # Restore the font
                     if row_data.get("font"):
                         font = QFont()
@@ -103,16 +105,16 @@ class SongTableWidget(QTableWidget):
                     # Normal rows: Add items and disable editing
                     table_item.setFlags(table_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     self.setItem(row, column, table_item)
-                    
+
             if row_data["row_type"] != "album_title":
-                self.files_on_playlist.append(row_data["items"][7])                    
-            
+                self.files_on_playlist.append(row_data["items"][7])
+
         print("Finished loading table data.")
 
     def save_table_data(self):
         # Get the current data from the table widget
         data = []
-        
+
         row_count = self.rowCount()
         column_count = self.columnCount()
 
@@ -124,12 +126,12 @@ class SongTableWidget(QTableWidget):
                 "font": None,  # Default is no special font
                 "colspan": None  # Default is no colspan
             }
-            
+
             for column in range(column_count):
                 item = self.item(row, column)
                 if item:
                     row_data["items"].append(item.text())
-                    
+
                     # If this is an "Album Title" row, capture its metadata
                     if item.text().startswith("Album Title:"):
                         row_data["row_type"] = "album_title"
@@ -137,7 +139,7 @@ class SongTableWidget(QTableWidget):
                         row_data["colspan"] = self.columnSpan(row, column)
                 else:
                     row_data["items"].append("")  # Handle empty cells
-                    
+
             data.append(row_data)
 
         # Save the data and metadata to a file
@@ -148,7 +150,8 @@ class SongTableWidget(QTableWidget):
         except IOError as e:
             print(f"Failed to save data to {self.json_file}: {e}")
 
-    def get_table_data(self, table_widget):
+    @staticmethod
+    def get_table_data(table_widget):
         # Get the number of rows and columns
         row_count = table_widget.rowCount()
         column_count = table_widget.columnCount()
@@ -167,20 +170,20 @@ class SongTableWidget(QTableWidget):
                     row_data.append('')  # Handle empty cells
             table_data.append(row_data)
 
-        return table_data        
-        
-    def get_previous_song_object(self, clicking=False):       
+        return table_data
+
+    def get_previous_song_object(self, clicking=False):
         if self.parent.player.music_on_repeat and not clicking:
-                self.parent.player.player.setPosition(0)
-                self.parent.player.player.play() 
-                return
-            
+            self.parent.player.player.setPosition(0)
+            self.parent.player.player.play()
+            return
+
         if self.song_playing_row is None:
             return
-        
+
         current_row = self.song_playing_row
         previous_row = current_row - 1
-        
+
         # Ensure next_row is within bounds
         if previous_row < 0:
             print("The row count is", self.rowCount())
@@ -191,44 +194,46 @@ class SongTableWidget(QTableWidget):
             elif self.parent.player.music_on_shuffle:
                 self.parent.play_random_song()
             else:
-                self.parent.stop_song()      
-                self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))            
-                    
-        # Check if the item exists
+                self.parent.stop_song()
+                self.parent.lrcPlayer.media_lyric.setText(
+                    self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
+
+                # Check if the item exists
         item = self.item(previous_row, 0)
-        
+
         if item is None:
             print("In previous song, the item is none")
-            self.parent.stop_song()      
-            self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))                        
+            self.parent.stop_song()
+            self.parent.lrcPlayer.media_lyric.setText(
+                self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
             return
-                        
+
         if "Album Title:" in item.text():
             previous_row -= 1
             if previous_row < 0:
                 return None  # Or handle the case where no more rows are available
             item = self.item(previous_row, 7)
-        
+
         # Set the new current row
         self.setCurrentCell(previous_row, 7)
-        
-        return item         
-        
-    def get_next_song_object(self, fromstart=False, clicking=None):        
+
+        return item
+
+    def get_next_song_object(self, fromstart=False, clicking=None):
         if self.parent.player.music_on_repeat and not clicking:
-                self.parent.player.player.setPosition(0)
-                self.parent.player.player.play() 
-                return
-            
+            self.parent.player.player.setPosition(0)
+            self.parent.player.player.play()
+            return
+
         if self.song_playing_row is None:
             return
-        
+
         current_row = self.song_playing_row
         next_row = current_row + 1
-        
+
         if fromstart:
             next_row = 0
-        
+
         # Ensure next_row is within bounds
         if next_row >= self.rowCount():
             if self.parent.player.playlist_on_loop or self.parent.player.music_on_repeat:
@@ -236,50 +241,51 @@ class SongTableWidget(QTableWidget):
             elif self.parent.player.music_on_shuffle:
                 self.parent.play_random_song()
             else:
-                self.parent.stop_song()      
-                self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))            
-                    
-        # Check if the item exists
+                self.parent.stop_song()
+                self.parent.lrcPlayer.media_lyric.setText(
+                    self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
+
+                # Check if the item exists
         item = self.item(next_row, 0)
-        
+
         if item is None:
-            self.parent.stop_song()      
-            self.parent.lrcPlayer.media_lyric.setText(self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))                        
+            self.parent.stop_song()
+            self.parent.lrcPlayer.media_lyric.setText(
+                self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
             return
-                        
+
         if "Album Title:" in item.text():
             next_row += 1
             if next_row >= self.rowCount():
                 return None  # Or handle the case where no more rows are available
             item = self.item(next_row, 7)
-        
+
         # Set the new current row
         self.setCurrentCell(next_row, 7)
-        
+
         return item
-    
-    def setNextRow(self, currentItem):       
+
+    def setNextRow(self, currentItem):
         if currentItem:
-            if "Album Title:" in currentItem.text():    
+            if "Album Title:" in currentItem.text():
                 next_row = self.currentRow() - 1  # Get the previous row index
-                self.setCurrentCell(next_row, 7)   # Set the current cell in the next row and column 7
-                
+                self.setCurrentCell(next_row, 7)  # Set the current cell in the next row and column 7
+
                 # Return the item at next_row and column 7
                 return self.item(next_row, 7)
         else:
             return None
 
-            
     def setPreviousRow(self, currentItem):
-        if currentItem:        
-            if "Album Title:" in currentItem.text():    
-                previous_row  = self.currentRow() + 1                
+        if currentItem:
+            if "Album Title:" in currentItem.text():
+                previous_row = self.currentRow() + 1
                 self.setCurrentCell(previous_row, 7)
-                
+
                 return self.item(previous_row, 7)
         else:
             return None
-            
+
     def scroll_to_current_row(self):
         """Scroll to and highlight the current row."""
         if self.song_playing_row is not None:
@@ -287,10 +293,10 @@ class SongTableWidget(QTableWidget):
             if current_item:
                 # Scroll to the item
                 self.scrollToItem(current_item, self.ScrollHint.PositionAtCenter)
-                self.setCurrentCell(self.song_playing_row, 7)    
+                self.setCurrentCell(self.song_playing_row, 7)
         else:
-            return 
-        
+            return
+
     def delete_selected_rows(self):
         # Get a list of selected rows
         selected_rows = set(index.row() for index in self.selectedIndexes())
@@ -344,50 +350,52 @@ class SongTableWidget(QTableWidget):
                 matched_album_title_row = self.findItems(album_title_row_text, Qt.MatchFlag.MatchExactly)
                 for item in matched_album_title_row:
                     self.removeRow(item.row())
-                            
+
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Up:
-            super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
+            super().keyPressEvent(
+                event)  # activate the normal behaviour of qtablewidget first where it moves the focus on item
             print("UP key pressed")
             self.setNextRow(self.currentItem())
-            
+
         elif event.key() == Qt.Key.Key_Delete:
             self.delete_selected_rows()
-            
-        elif event.key() == Qt.Key.Key_R:
+
+        elif event.key() == Qt.Key.Key_0 or event.key() == Qt.Key.Key_Home:
             print("keyboard r pressing")
-            self.parent.player.player.setPosition(0) # set position to start            
-                    
+            self.parent.player.player.setPosition(0)  # set position to start
+
         elif event.key() == Qt.Key.Key_Down:
-            super().keyPressEvent(event) # activate the normal behaviour of qtablewidget first where it moves the focus on item
-            print("DOWN key pressed")    
-            self.setPreviousRow(self.currentItem())        
-            
+            super().keyPressEvent(
+                event)  # activate the normal behaviour of qtablewidget first where it moves the focus on item
+            print("DOWN key pressed")
+            self.setPreviousRow(self.currentItem())
+
         elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             if self.hasFocus():
                 self.rowDoubleClick(self.item(self.currentRow(), 7))
             else:
                 pass
-            
+
         elif event.key() == Qt.Key.Key_Right:
             self.seekRight()
-        
+
         elif event.key() == Qt.Key.Key_Left:
-            self.seekLeft()    
-            
+            self.seekLeft()
+
         elif event.key() == Qt.Key.Key_Space:
-            self.parent.play_pause()    
-            
+            self.parent.play_pause()
+
         elif event.key() == Qt.Key.Key_Enter:
             self.rowDoubleClick()
-                                
+
         elif event.key() == Qt.Key.Key_G and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.clearSelection()               
-            self.scroll_to_current_row()       
-            
+            self.clearSelection()
+            self.scroll_to_current_row()
+
         elif event.key() == Qt.Key.Key_F2:
-            self.parent.activate_file_tagger()                  
-                                
+            self.parent.activate_file_tagger()
+
         else:
             # For other keys, use the default behavior
             super().keyPressEvent(event)

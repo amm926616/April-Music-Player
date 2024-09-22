@@ -14,6 +14,7 @@ setup fonts with language, setup QDatabase, QFont
 apply format, return html text
 """
 
+
 def create_text_format(font_name, font_size):
     font = QFont(font_name, font_size)
     text_format = QTextCharFormat()
@@ -24,19 +25,19 @@ def create_text_format(font_name, font_size):
 class GetFont:
     def __init__(self, font_size=14):
         self.language_dict = None
-        self.script_path = os.path.dirname(os.path.abspath(__file__))        
+        self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.ej = EasyJson()
         self.font_size = font_size
         self.load_font_settings()  # Initialize the font settings
         self.fonts_loaded = False
         self.formats = {}
-        
+
         self.LANGUAGE_RANGES = {
             "english": (0x0041, 0x007A),  # A-Z, a-z
             "korean": (0xAC00, 0xD7A3),
             "japanese": [(0x3040, 0x309F), (0x30A0, 0x30FF), (0x4E00, 0x9FFF)],
-            "chinese" : (0x4e00, 0x9fff)
-        }        
+            "chinese": (0x4e00, 0x9fff)
+        }
 
     def load_font_settings(self):
         english_font = self.ej.get_value("english_font")
@@ -46,9 +47,12 @@ class GetFont:
 
         self.language_dict = {
             "korean": {"font_name": self.get_font_name(korean_font), "file_path": korean_font, "size": self.font_size},
-            "english": {"font_name": self.get_font_name(english_font), "file_path": english_font, "size": self.font_size},
-            "japanese": {"font_name": self.get_font_name(japanese_font), "file_path": japanese_font, "size": self.font_size},
-            "chinese": {"font_name": self.get_font_name(chinese_font), "file_path": chinese_font, "size": self.font_size}
+            "english": {"font_name": self.get_font_name(english_font), "file_path": english_font,
+                        "size": self.font_size},
+            "japanese": {"font_name": self.get_font_name(japanese_font), "file_path": japanese_font,
+                         "size": self.font_size},
+            "chinese": {"font_name": self.get_font_name(chinese_font), "file_path": chinese_font,
+                        "size": self.font_size}
         }
 
     def loadFonts(self):
@@ -116,7 +120,8 @@ class GetFont:
         self.fonts_loaded = False  # Mark fonts as not loaded
         self.loadFonts()  # Reload the fonts with the new settings
 
-    def get_font_name(self, font_path):
+    @staticmethod
+    def get_font_name(font_path):
         font = TTFont(font_path)
         name_records = font['name'].names
         for record in name_records:

@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtCore import pyqtSignal, Qt
 
+
 class ClickableLabel(QLabel):
     doubleClicked = pyqtSignal()  # Signal to emit on double click
 
