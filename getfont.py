@@ -3,6 +3,7 @@ from fontTools.ttLib import TTFont
 from easy_json import EasyJson
 import os
 import string
+from PyQt6.QtGui import QFont, QFontDatabase, QTextCharFormat, QTextDocument, QTextCursor
 
 """
 preformatted fonts for different languages
@@ -12,19 +13,6 @@ in GetFont class
 setup fonts with language, setup QDatabase, QFont
 apply format, return html text
 """
-
-from PyQt6.QtGui import QFont, QFontDatabase, QTextCharFormat, QTextDocument, QTextCursor
-
-
-def get_font_name(font_path):
-    font = TTFont(font_path)
-    name_records = font['name'].names
-    for record in name_records:
-        if record.nameID == 4:  # Full font name
-            font_name = record.toStr()
-            return font_name
-    return None
-
 
 def create_text_format(font_name, font_size):
     font = QFont(font_name, font_size)
@@ -57,10 +45,10 @@ class GetFont:
         chinese_font = self.ej.get_value("chinese_font")
 
         self.language_dict = {
-            "korean": {"font_name": get_font_name(korean_font), "file_path": korean_font, "size": self.font_size},
-            "english": {"font_name": get_font_name(english_font), "file_path": english_font, "size": self.font_size},
-            "japanese": {"font_name": get_font_name(japanese_font), "file_path": japanese_font, "size": self.font_size},
-            "chinese": {"font_name": get_font_name(chinese_font), "file_path": chinese_font, "size": self.font_size}
+            "korean": {"font_name": self.get_font_name(korean_font), "file_path": korean_font, "size": self.font_size},
+            "english": {"font_name": self.get_font_name(english_font), "file_path": english_font, "size": self.font_size},
+            "japanese": {"font_name": self.get_font_name(japanese_font), "file_path": japanese_font, "size": self.font_size},
+            "chinese": {"font_name": self.get_font_name(chinese_font), "file_path": chinese_font, "size": self.font_size}
         }
 
     def loadFonts(self):
@@ -127,3 +115,12 @@ class GetFont:
         self.load_font_settings()  # Re-fetch font settings from EasyJson
         self.fonts_loaded = False  # Mark fonts as not loaded
         self.loadFonts()  # Reload the fonts with the new settings
+
+    def get_font_name(self, font_path):
+        font = TTFont(font_path)
+        name_records = font['name'].names
+        for record in name_records:
+            if record.nameID == 4:  # Full font name
+                font_name = record.toStr()
+                return font_name
+        return None

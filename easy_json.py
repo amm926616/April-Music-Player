@@ -51,7 +51,7 @@ class EasyJson:
     def edit_value(self, key, value):
         if not os.path.exists(self.config_file):
             print(f"Error: The file {self.config_file} does not exist.")
-            return
+            open(self.config_file, "w")
         
         try:
             with open(self.config_file, "r") as f:

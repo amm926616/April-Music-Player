@@ -11,6 +11,11 @@ class AddNewDirectory(QDialog):
         self.ej = EasyJson()
         self.parent = parent
         self.directories = self.ej.get_value("music_directories")  # List to store added directories
+        if self.directories:
+            for directory in self.directories:
+                checkbox = QCheckBox(directory)
+                checkbox.setChecked(True)
+                self.scroll_area_layout.addWidget(checkbox)
 
         """Sets up the UI components and layout."""
         self.setWindowTitle("Manage Music Directories")
@@ -33,10 +38,6 @@ class AddNewDirectory(QDialog):
         self.scroll_area = QScrollArea()
         self.scroll_area_widget = QWidget()
         self.scroll_area_layout = QVBoxLayout(self.scroll_area_widget)
-        for directory in self.directories:
-                checkbox = QCheckBox(directory)
-                checkbox.setChecked(True)
-                self.scroll_area_layout.addWidget(checkbox)
         self.scroll_area_layout.setAlignment(Qt.AlignmentFlag.AlignTop)  # Align items to the top
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.scroll_area_widget)

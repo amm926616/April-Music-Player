@@ -180,28 +180,16 @@ class MusicPlayerUI(QMainWindow):
         # Ensure the directory exists
         os.makedirs(os.path.dirname(config_file), exist_ok=True)
 
-        # Check if the file exists
-        if not os.path.isfile(config_file):
-            # Create an empty configuration
-            default_config = {
-                "directory": None
-            }
-
-            # Write the default configuration to the file
-            with open(config_file, 'w') as file:
-                json.dump(default_config, file, indent=4)
-
         self.config_file = config_file
         self.ej = EasyJson()
+        self.default_menubar_content() # setup menubar json if doesn't exist
 
-        self.directory = None
-        self.load_config()
+        self.directories = self.ej.get_value("music_directories")
 
         self.music_file = None
         self.lrc_file = None
         self.player = MusicPlayer(self, self.play_pause_button, self.loop_playlist_button, self.repeat_button, self.shuffle_button, self.play_next_song, self.play_random_song)
         
-        self.default_menubar_content() # setup menubar json if doesn't exist
         self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
        
     def get_metadata(self, song_file):
@@ -294,16 +282,7 @@ class MusicPlayerUI(QMainWindow):
         except Exception as e:
             print(f"Error reading metadata: {e}")
 
-        return metadata        
-
-    def load_config(self):
-        """Load configuration from a JSON file."""
-        self.directories = []
-        if os.path.exists(self.config_file):
-            self.directory = self.ej.get_value("music_directory")
-            self.directories.append(self.directory)
-        else:
-            self.directory = None
+        return metadata
 
     def ask_for_directory(self, loadAgain):
         """Activate add new directory dialog."""
