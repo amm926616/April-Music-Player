@@ -153,7 +153,7 @@ class AlbumTreeWidget(QWidget):
 
         self.conn.commit()
             
-    def loadSongsToCollection(self, directories, loadAgain=False):
+    def loadSongsToCollection(self, directories=None, loadAgain=False):
         self.initialize_database()
         
         if loadAgain:
@@ -165,6 +165,7 @@ class AlbumTreeWidget(QWidget):
             self.songTableWidget.setHorizontalHeaderLabels(
                 ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
             )
+            directories = self.parent.ej.get_value("music_directories")
             
         if directories is None:
             return
