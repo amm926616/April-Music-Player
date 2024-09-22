@@ -10,7 +10,8 @@ def handle_buffer_status(percent_filled):
 
 
 class MusicPlayer:
-    def __init__(self, parent, play_pause_button, loop_playlist_button, repeat_button, shuffle_button, playNextSong=None, playRandomSong=None):
+    def __init__(self, parent, play_pause_button, loop_playlist_button, repeat_button, shuffle_button,
+                 playNextSong=None, playRandomSong=None):
         self.parent = parent
         self.ej = EasyJson()
         self.playNextSong = playNextSong
@@ -68,16 +69,19 @@ class MusicPlayer:
             self.disable_loop_playlist(no_setup=False)                                                                                                          
         
         elif self.playlist_on_loop:
-            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-loop-playlist.ico")))
+            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons",
+                                                                 "on-loop-playlist.ico")))
             self.loop_playlist_button.setToolTip("On Playlist Looping")
             
     def toggle_loop_playlist(self):
         if self.playlist_on_loop:
-            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))
+            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons",
+                                                                 "loop-playlist.ico")))
             self.loop_playlist_button.setToolTip("Toggle Playlist Looping")
             self.playlist_on_loop = False
         else:
-            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-loop-playlist.ico")))
+            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons",
+                                                                 "on-loop-playlist.ico")))
             self.loop_playlist_button.setToolTip("On Playlist Looping")
             self.playlist_on_loop = True
 
@@ -109,7 +113,8 @@ class MusicPlayer:
         
     def disable_loop_playlist(self, no_setup=True):
         if self.music_on_repeat or self.music_on_shuffle:
-            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist-off.ico")))            
+            self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons",
+                                                                 "loop-playlist-off.ico")))
             self.loop_playlist_button.setDisabled(True)  
             self.previous_loop_state = self.playlist_on_loop
             self.playlist_on_loop = False     
@@ -118,9 +123,11 @@ class MusicPlayer:
                 self.loop_playlist_button.setDisabled(False)          
                 self.playlist_on_loop = self.previous_loop_state    
                 if self.playlist_on_loop:
-                    self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "on-loop-playlist.ico")))              
+                    self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons",
+                                                                         "on-loop-playlist.ico")))
                 else:
-                    self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))                                                                 
+                    self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons",
+                                                                         "loop-playlist.ico")))
 
     def disable_shuffle(self, no_setup=True):
         if self.music_on_repeat:
@@ -153,7 +160,8 @@ class MusicPlayer:
         if self.started_playing:  # pause state activating
             if not self.in_pause_state:
                 # Record the current position before pausing
-                self.paused_position = self.player.position()  # Assuming get_position() returns the current position in seconds or milliseconds
+                self.paused_position = self.player.position()  # Assuming get_position() returns
+                # the current position in seconds or milliseconds
                 
                 self.player.pause()
                 self.in_pause_state = True
@@ -168,7 +176,8 @@ class MusicPlayer:
                 self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
 
     def pause(self):
-        self.paused_position = self.player.position()  # Assuming get_position() returns the current position in seconds or milliseconds        
+        self.paused_position = self.player.position()  # Assuming get_position()
+        # returns the current position in seconds or milliseconds
         self.in_pause_state = True
         self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))        
         self.player.pause()

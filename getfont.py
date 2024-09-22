@@ -80,7 +80,7 @@ class GetFont:
                 return "japanese"
         return None
 
-    def apply_fonts_to_text(self, text):
+    def apply_fonts_to_text(self, text):  # new method, still needs fixes
         if not self.fonts_loaded:
             self.loadFonts()
 
@@ -110,6 +110,22 @@ class GetFont:
             cursor.insertText(word)
 
         return doc.toHtml()
+
+    """The old method
+        def apply_fonts_to_text(self, text):
+        if not self.fonts_loaded:
+            self.loadFonts()
+
+        doc = QTextDocument()
+        cursor = QTextCursor(doc)
+
+        for char in text:
+            language = self.detect_language(char) or "english"
+            cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
+            cursor.insertText(char)
+
+        return doc.toHtml()
+    """
 
     def get_formatted_text(self, text):
         return self.apply_fonts_to_text(text)

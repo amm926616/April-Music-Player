@@ -184,7 +184,7 @@ class MusicPlayerUI(QMainWindow):
         self.config_file = os.path.join(self.config_path, "config.json")
 
         self.ej = EasyJson()
-        lrc_font_size = int(self.height() * 0.14)
+        lrc_font_size = int(self.height() * 0.11)
         if not os.path.exists(self.config_file):
             self.ej.setup_default_values(lrc_font_size=lrc_font_size, fresh_config=True)  # fresh setup default config
         else:
@@ -582,27 +582,25 @@ class MusicPlayerUI(QMainWindow):
         options_menu.addAction(set_default_background)
 
     def get_selected_color(self):
-        global color
         selected_color = self.ej.get_value("lyrics_color")
         for color, action in self.color_actions.items():
             if action.isChecked():
                 selected_color = color
                 break
         print(f"Selected color: {selected_color}")
-        self.ej.edit_value("lyrics_color", color.lower())
+        self.ej.edit_value("lyrics_color", selected_color.lower())
 
         # Method to update sync threshold
 
     def set_sync_threshold(self):
-        global threshold
         selected_threshold = self.ej.get_value("sync_threshold")
         for threshold, action in self.threshold_actions.items():
             if action.isChecked():
                 selected_threshold = threshold
                 break
         print(f"Selected Threshold: {selected_threshold}")
-        self.ej.edit_value("sync_threshold", threshold)
-        self.lrcPlayer.update_interval = threshold
+        self.ej.edit_value("sync_threshold", selected_threshold)
+        self.lrcPlayer.update_interval = selected_threshold
 
     def show_fromMe(self):
         text = """
