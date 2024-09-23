@@ -194,11 +194,6 @@ class AlbumTreeWidget(QWidget):
             self.tree_widget.clear()
             self.parent.media_files.clear()
             self.parent.cleanDetails()
-            self.songTableWidget.clear()
-            self.songTableWidget.setRowCount(0)
-            self.songTableWidget.setHorizontalHeaderLabels(
-                ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
-            )
             directories = self.parent.ej.get_value("music_directories")
 
         if not directories:
