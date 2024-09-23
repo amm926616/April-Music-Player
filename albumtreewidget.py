@@ -47,10 +47,43 @@ class AlbumTreeWidget(QWidget):
                     return
                 self.search_bar.clear()
                 self.search_bar.setPlaceholderText("Search...")
+
             elif self.tree_widget.hasFocus():  # Check if the tree widget has focus
                 selected_items = self.tree_widget.selectedItems()
                 if selected_items:  # Make sure an item is selected
                     self.on_item_double_clicked(selected_items[0])  # Call the method for the selected item
+
+        elif event.key() == Qt.Key.Key_Up:
+            current_item = self.tree_widget.currentItem()
+
+            # Find the first visible item
+            first_visible_item = None
+            for i in range(self.tree_widget.topLevelItemCount()):
+                item = self.tree_widget.topLevelItem(i)
+                if not item.isHidden():  # Check if the item is visible
+                    first_visible_item = item
+                    break
+
+            if current_item == first_visible_item:
+                self.search_bar.setFocus()  # Set focus on the QTextEdit widget
+            else:
+                # Allow normal behavior for moving between items
+                self.tree_widget.setFocus()
+
+        elif event.key() == Qt.Key.Key_Down:
+            self.tree_widget.setFocus()
+
+            # Find the first visible item
+            first_visible_item = None
+            for i in range(self.tree_widget.topLevelItemCount()):
+                item = self.tree_widget.topLevelItem(i)
+                if not item.isHidden():  # Check if the item is visible
+                    first_visible_item = item
+                    break
+
+            if first_visible_item:
+                self.tree_widget.setCurrentItem(first_visible_item)
+
         else:
             super().keyPressEvent(event)
 

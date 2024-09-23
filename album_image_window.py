@@ -23,9 +23,9 @@ class AlbumImageWindow(QDialog):
         new_width = size
         new_height = size
 
-        if image.width() > new_height:
-            new_width = image.width()
-            new_height = image.width()
+        # if image.width() > new_height: # just disable it for now. I have to show the image in screen resolution
+        #     new_width = image.width()
+        #     new_height = image.width()
 
         self.image = image.scaled(new_width, new_height, Qt.AspectRatioMode.KeepAspectRatio,
                                   Qt.TransformationMode.SmoothTransformation)
