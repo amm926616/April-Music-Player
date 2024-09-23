@@ -9,10 +9,7 @@ from loadingbar import LoadingBar
 
 
 def extract_track_number(track_number):
-    if type(track_number) is str:
-        print("This is the fucking track number.")
-        print(track_number)
-        track_number = str(track_number)
+    track_number = str(track_number)
     """
     Extracts the track number from a string, handling cases like "1/6" or "02/12".
     Returns the integer part before the slash, or the whole number if there's no slash.
