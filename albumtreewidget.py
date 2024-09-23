@@ -376,6 +376,7 @@ class AlbumTreeWidget(QWidget):
                 self.songTableWidget.scroll_to_and_highlight_multiple_rows(existing_song_rows)
                 return
 
+            self.add_album_title_row(album)
             for song in sorted_songs_data:
                 self.add_song_row(song)
 
@@ -394,10 +395,6 @@ class AlbumTreeWidget(QWidget):
         file_path = song[7]  # Assuming file_path is at index 7
         if file_path not in self.songTableWidget.files_on_playlist:
             self.songTableWidget.files_on_playlist.append(file_path)
-        else:
-            print("in else block")
-            exist_song_row = self.find_row_by_exact_match(file_path)
-            self.songTableWidget.scroll_to_and_highlight_row(exist_song_row)
 
     def find_row_by_exact_match(self, search_text: str):  # just to search in col 7 exact file path
         """
