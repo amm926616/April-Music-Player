@@ -102,5 +102,6 @@ class EasyJson:
             # Write the updated data back to the config file
             with open(self.config_file, "w") as f:
                 json.dump(data, f, indent=4)
+                f.close()
         except IOError as e:
             print(f"Error: Failed to write to file {self.config_file}. {e}")
