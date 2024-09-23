@@ -5,3 +5,4 @@ Pillow==10.4.0
 PyQt6==6.7.1
 PyQt6_sip==13.8.0
 lrcdl~=0.2.9
+requests~=2.32.3

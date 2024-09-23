@@ -18,6 +18,7 @@ from mutagen.id3 import APIC
 from mutagen.id3 import ID3
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
 from mutagen.wave import WAVE
 from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
@@ -237,6 +238,21 @@ class MusicPlayerUI(QMainWindow):
                 metadata['duration'] = int(mp3_audio.info.length)
                 metadata['file_type'] = str(file_extension)
 
+            elif file_extension == 'm4a':
+                audio = MP4(song_file)
+
+                metadata['title'] = audio.tags.get('\xa9nam', ['Unknown Title'])[0]
+                metadata['artist'] = audio.tags.get('\xa9ART', ['Unknown Artist'])[0]
+                metadata['album'] = audio.tags.get('\xa9alb', ['Unknown Album'])[0]
+                metadata['year'] = audio.tags.get('\xa9day', ['Unknown Year'])[0]
+                metadata['genre'] = audio.tags.get('\xa9gen', ['Unknown Genre'])[0]
+                metadata['track_number'] = audio.tags.get('trkn', [('Unknown Track Number',)])[0][0]
+                metadata['comment'] = audio.tags.get('\xa9cmt', ['No Comment'])[0]
+
+                # Extract duration
+                metadata['duration'] = int(audio.info.length)
+                metadata['file_type'] = str(file_extension)
+
             elif file_extension == 'ogg':
                 audio = OggVorbis(song_file)
                 metadata['title'] = audio.get('title', ['Unknown Title'])[0]
@@ -249,7 +265,6 @@ class MusicPlayerUI(QMainWindow):
 
                 # Extract duration
                 metadata['duration'] = int(audio.info.length)
-                metadata['file_type'] = str(file_extension)
                 metadata['file_type'] = str(file_extension)
 
             elif file_extension == 'flac':
@@ -264,7 +279,6 @@ class MusicPlayerUI(QMainWindow):
 
                 # Extract duration
                 metadata['duration'] = int(audio.info.length)
-                # Extract file type
                 metadata['file_type'] = str(file_extension)
 
             elif file_extension == 'wav':
@@ -282,7 +296,6 @@ class MusicPlayerUI(QMainWindow):
 
                 # Extract duration
                 metadata['duration'] = int(audio.info.length)
-                # Extract file type
                 metadata['file_type'] = str(file_extension)
 
             else:
@@ -291,6 +304,7 @@ class MusicPlayerUI(QMainWindow):
         except Exception as e:
             print(f"Error reading metadata: {e}")
 
+        print("This is the metadata for the file ", metadata)
         return metadata
 
     def toggle_reload_directories(self):
@@ -694,7 +708,7 @@ class MusicPlayerUI(QMainWindow):
     def activate_file_tagger(self):
         currentRow = self.songTableWidget.currentRow()
         music_file = self.songTableWidget.item(currentRow, 7).text()
-        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumTreeWidget, self.albumTreeWidget.cursor)
+        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumTreeWidget, self.albumTreeWidget.cursor, self.albumTreeWidget.conn)
         tagger.exec()
 
     def createWidgetAndLayouts(self):

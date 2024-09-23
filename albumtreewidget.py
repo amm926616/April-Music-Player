@@ -9,6 +9,10 @@ from loadingbar import LoadingBar
 
 
 def extract_track_number(track_number):
+    if type(track_number) is str:
+        print("This is the fucking track number.")
+        print(track_number)
+        track_number = str(track_number)
     """
     Extracts the track number from a string, handling cases like "1/6" or "02/12".
     Returns the integer part before the slash, or the whole number if there's no slash.
@@ -166,6 +170,9 @@ class AlbumTreeWidget(QWidget):
                 ['Title', 'Artist', 'Album', 'Year', 'Genre', 'Track Number', 'Duration', 'File Path', 'Media Type']
             )
             directories = self.parent.ej.get_value("music_directories")
+
+        if not directories:
+            return
 
         self.parent.media_files.clear()  # clean the remaining files first
 
@@ -326,9 +333,7 @@ class AlbumTreeWidget(QWidget):
         self.songTableWidget.setItem(row_position, 0, album_name_item)
 
     def add_songs_by_album(self, album):
-        print("in add songs by album")
         if not self.cursor:
-            print("Database cursor is not initialized.")
             return
 
         self.cursor.execute('SELECT * FROM songs WHERE album=?', (album,))
@@ -349,9 +354,7 @@ class AlbumTreeWidget(QWidget):
                 self.add_song_row(song)
 
     def add_songs_by_artist(self, artist):
-        print("In add song by artist")
         if not self.cursor:
-            print("Database cursor is not initialized.")
             return
 
         self.cursor.execute('SELECT * FROM songs WHERE artist=?', (artist,))
@@ -377,7 +380,7 @@ class AlbumTreeWidget(QWidget):
                 for song in sorted_songs_data:
                     self.add_song_row(song)
 
-    def add_song_row(self, song):
+    def add_song_row(self, song, by_click=None):
         # Insert song data into the QTableWidget
         row_position = self.songTableWidget.rowCount()
         self.songTableWidget.insertRow(row_position)
@@ -408,11 +411,11 @@ class AlbumTreeWidget(QWidget):
         return -1  # Return -1 if no match is found
 
     def updateSongMetadata(self, file_path, new_metadata):
-        self.updateMetadataInDatabase(file_path, new_metadata)
+        self.update_metadata_to_database(file_path, new_metadata)
         self.updateMetadataInTableWidget(new_metadata)
         self.updateSongInTree(file_path, new_metadata)
 
-    def updateMetadataInDatabase(self, file_path, new_metadata):
+    def update_metadata_to_database(self, file_path, new_metadata):
         self.cursor.execute('''
             UPDATE songs 
             SET title=?, artist=?, album=?, year=?, genre=?, track_number=?
@@ -435,9 +438,9 @@ class AlbumTreeWidget(QWidget):
         self.songTableWidget.item(row, 0).setText(new_metadata['title'])
         self.songTableWidget.item(row, 1).setText(new_metadata['artist'])
         self.songTableWidget.item(row, 2).setText(new_metadata['album'])
-        self.songTableWidget.item(row, 3).setText(new_metadata['year'])
+        self.songTableWidget.item(row, 3).setText(str(new_metadata['year']))
         self.songTableWidget.item(row, 4).setText(new_metadata['genre'])
-        self.songTableWidget.item(row, 5).setText(new_metadata['track_number'])
+        self.songTableWidget.item(row, 5).setText(str(new_metadata['track_number']))
 
     def updateSongInTree(self, file_path, new_metadata):
         # Traverse through the top-level (artist) items in the tree widget
@@ -470,7 +473,6 @@ class AlbumTreeWidget(QWidget):
                         return  # Exit after updating the item
 
     def updateAlbumItem(self, album_item, album_name):
-        print(album_name, "album name")
         # Update the album title with the new album name
         # track_count = album_item.childCount()  # Number of songs in this album
         # album_item.setText(0, f"{album_name} ({track_count} tracks)")
@@ -481,7 +483,6 @@ class AlbumTreeWidget(QWidget):
         album_item.setData(0, self.ALBUM_ROLE, album_name)
 
     def updateArtistItem(self, artist_item, artist_name):
-        print(artist_name, "artist_item")
         # Update the artist title with the new artist name
         # album_count = artist_item.childCount()  # Number of albums under this artist
         # artist_item.setText(0, f"{artist_name} ({album_count} albums)")
