@@ -363,6 +363,7 @@ class AlbumTreeWidget(QWidget):
 
         files_on_playlist_set = set(self.songTableWidget.files_on_playlist)
 
+        self.songTableWidget.clearSelection()
         for album, album_songs in sorted(sorted_albums.items()):
             sorted_songs_data = sorted(album_songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
 
