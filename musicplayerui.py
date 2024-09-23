@@ -15,7 +15,7 @@ from PyQt6.QtCore import Qt, QCoreApplication, QRectF
 from mutagen import File
 from mutagen.flac import FLAC, Picture
 from mutagen.id3 import APIC
-from mutagen.id3 import ID3
+from mutagen.id3 import ID3, ID3NoHeaderError
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
@@ -222,6 +222,11 @@ class MusicPlayerUI(QMainWindow):
 
         try:
             if file_extension == "mp3":
+                # Extract duration and file_type before crash
+                mp3_audio = MP3(song_file)
+                metadata['duration'] = int(mp3_audio.info.length)
+                metadata['file_type'] = str(file_extension)
+
                 audio = ID3(song_file)
                 metadata['title'] = audio.get('TIT2', 'Unknown Title').text[0] if audio.get('TIT2') else 'Unknown Title'
                 metadata['artist'] = audio.get('TPE1', 'Unknown Artist').text[0] if audio.get(
@@ -232,11 +237,6 @@ class MusicPlayerUI(QMainWindow):
                 metadata['track_number'] = audio.get('TRCK', 'Unknown Track Number').text[0] if audio.get(
                     'TRCK') else 'Unknown Track Number'
                 metadata['comment'] = audio.get('COMM', 'No Comment').text[0] if audio.get('COMM') else 'No Comment'
-
-                # Extract duration
-                mp3_audio = MP3(song_file)
-                metadata['duration'] = int(mp3_audio.info.length)
-                metadata['file_type'] = str(file_extension)
 
             elif file_extension == 'm4a':
                 audio = MP4(song_file)
@@ -1243,34 +1243,45 @@ class MusicPlayerUI(QMainWindow):
 
     def extract_and_set_album_art(self):
         audio_file = File(self.music_file)
+
         if isinstance(audio_file, MP3):
             album_image_data = extract_mp3_album_art(audio_file)
         elif isinstance(audio_file, OggVorbis):
             album_image_data = extract_ogg_album_art(audio_file)
         elif isinstance(audio_file, FLAC):
             album_image_data = extract_flac_album_art(audio_file)
-        elif audio_file.mime[0] == 'video/mp4':
+        elif isinstance(audio_file, MP4) or audio_file.mime[0] == 'video/mp4':  # Handle both MP4 and M4A
             album_image_data = extract_mp4_album_art(audio_file)
+        elif audio_file.mime[0] == 'audio/x-wav':
+            try:
+                id3_tags = ID3(self.music_file)
+                apic = id3_tags.getall('APIC')  # APIC frames contain album art in ID3
+                album_image_data = apic[0].data if apic else None
+            except ID3NoHeaderError:
+                album_image_data = None  # Handle cases where there's no ID3 tag or image
         else:
             album_image_data = None
 
         if album_image_data:
             pixmap = QPixmap()
             pixmap.loadFromData(album_image_data)
-            self.passing_image = pixmap
-
-            image_size = int(self.width() / 5)  # extract image size from main window
-
-            target_width = image_size
-            target_height = image_size
-            scaled_pixmap = pixmap.scaled(target_width, target_height,
-                                          aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
-                                          transformMode=Qt.TransformationMode.SmoothTransformation)
-
-            rounded_pixmap = getRoundedCornerPixmap(scaled_pixmap, target_width, target_height)
-
-            # Set the final rounded image to QLabel
-            self.image_display.setPixmap(rounded_pixmap)
-            self.image_display.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter)
         else:
-            self.image_display.setText("No Album Art Found")
+            # Load a default image if no album art is found
+            pixmap = QPixmap(os.path.join(self.script_path, "icons/april-logo.png"))
+
+        self.passing_image = pixmap  # for album art double clicking
+
+        # Continue with the process of resizing, rounding, and setting the pixmap
+        image_size = int(self.width() / 5)  # extract image size from main window
+
+        target_width = image_size
+        target_height = image_size
+        scaled_pixmap = pixmap.scaled(target_width, target_height,
+                                      aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
+                                      transformMode=Qt.TransformationMode.SmoothTransformation)
+
+        rounded_pixmap = getRoundedCornerPixmap(scaled_pixmap, target_width, target_height)
+
+        # Set the final rounded image to QLabel
+        self.image_display.setPixmap(rounded_pixmap)
+        self.image_display.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter)
