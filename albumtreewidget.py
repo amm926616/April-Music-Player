@@ -87,7 +87,7 @@ class AlbumTreeWidget(QWidget):
                 # Check if album matches the search
                 if matches_search(album_item.text(0)):
                     matched_albums.append(album_item)
-                    album_visible = True
+                    album_visible = True  # Album should remain visible regardless of songs
 
                 for k in range(album_item.childCount()):
                     song_item = album_item.child(k)
@@ -97,13 +97,13 @@ class AlbumTreeWidget(QWidget):
                     # If a song is visible, album and artist should be visible too
                     if song_visible:
                         matched_songs.append(song_item)
-                        album_visible = True
-                        artist_visible = True
+                        album_visible = True  # Keep album visible if any song matches
+                        artist_visible = True  # Keep artist visible if any song matches
 
-                # Set album visibility
+                # Set album visibility (keep it visible if it matched, or any song matched)
                 album_item.setHidden(not album_visible)
 
-            # Set artist visibility
+            # Set artist visibility (keep it visible if it matched, or any album or song matched)
             artist_item.setHidden(not artist_visible)
 
         # Assign the first matched item in priority: song > album > artist
@@ -326,6 +326,7 @@ class AlbumTreeWidget(QWidget):
         self.songTableWidget.setItem(row_position, 0, album_name_item)
 
     def add_songs_by_album(self, album):
+        print("in add songs by album")
         if not self.cursor:
             print("Database cursor is not initialized.")
             return
@@ -339,6 +340,9 @@ class AlbumTreeWidget(QWidget):
         files_on_playlist_set = set(self.songTableWidget.files_on_playlist)  # Convert to set once
 
         if set(sorted_songs).issubset(files_on_playlist_set):
+            for song in sorted_songs:
+                existing_song_rows = [self.find_row_by_exact_match(song) for song in sorted_songs]
+                self.songTableWidget.scroll_to_and_highlight_multiple_rows(existing_song_rows)
             return
 
         self.add_album_title_row(album)
@@ -346,6 +350,7 @@ class AlbumTreeWidget(QWidget):
             self.add_song_row(song)
 
     def add_songs_by_artist(self, artist):
+        print("In add song by artist")
         if not self.cursor:
             print("Database cursor is not initialized.")
             return
@@ -364,9 +369,13 @@ class AlbumTreeWidget(QWidget):
             sorted_songs = [song[7] for song in sorted_songs_data]  # Use sorted_songs_data
 
             if set(sorted_songs).issubset(files_on_playlist_set):
+                print("The sorted songs are Here:")
+                for i in sorted_songs:
+                    print(i, "\n")
+                existing_song_rows = [self.find_row_by_exact_match(song) for song in sorted_songs]
+                self.songTableWidget.scroll_to_and_highlight_multiple_rows(existing_song_rows)
                 return
 
-            self.add_album_title_row(album)
             for song in sorted_songs_data:
                 self.add_song_row(song)
 
@@ -385,6 +394,24 @@ class AlbumTreeWidget(QWidget):
         file_path = song[7]  # Assuming file_path is at index 7
         if file_path not in self.songTableWidget.files_on_playlist:
             self.songTableWidget.files_on_playlist.append(file_path)
+        else:
+            print("in else block")
+            exist_song_row = self.find_row_by_exact_match(file_path)
+            self.songTableWidget.scroll_to_and_highlight_row(exist_song_row)
+
+    def find_row_by_exact_match(self, search_text: str):  # just to search in col 7 exact file path
+        """
+        search_text should is the string of the file path, this method return the exact row found on the songTableWidget
+        """
+        # Use findItems to search for the exact match in the entire table
+        matching_items = self.songTableWidget.findItems(search_text, Qt.MatchFlag.MatchExactly)
+
+        # Filter the matching items by checking if they are in the desired column
+        for item in matching_items:
+            if item.column() == 7:
+                return item.row()  # Return the row index if a match is found in the specified column
+
+        return -1  # Return -1 if no match is found
 
     def updateSongMetadata(self, file_path, new_metadata):
         self.updateMetadataInDatabase(file_path, new_metadata)
