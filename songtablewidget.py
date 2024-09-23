@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView
 from PyQt6.QtGui import QKeyEvent, QFont
 from PyQt6.QtCore import Qt
 import os
@@ -296,6 +296,40 @@ class SongTableWidget(QTableWidget):
                 self.setCurrentCell(self.song_playing_row, 7)
         else:
             return
+
+    def scroll_to_and_highlight_row(self, row: int):
+        """
+        Scrolls to the specified row and highlights it in the QTableWidget.
+
+        :param row: The row number to scroll to and highlight
+        """
+
+        self.setFocus()
+        self.selectRow(row)
+
+    def scroll_to_and_highlight_multiple_rows(self, rows: list[int]):
+        """
+        Scrolls to and highlights multiple rows in the QTableWidget.
+
+        :param rows: A list of row indices to scroll to and highlight
+        """
+        self.setFocus()
+
+        # Set to MultiSelection mode
+        self.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+
+        # Clear any existing selection before selecting new rows
+        self.clearSelection()
+
+        for row in rows:
+            # Scroll to the row and position it at the center
+            self.scrollToItem(self.item(row, 7), self.ScrollHint.PositionAtCenter)
+
+            # Select the row
+            self.selectRow(row)
+
+        # Restore the original selection mode
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
     def delete_selected_rows(self):
         # Get a list of selected rows
