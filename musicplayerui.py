@@ -217,7 +217,7 @@ class MusicPlayerUI(QMainWindow):
             'track_number': 'Unknown Track Number',
             'comment': 'No Comment',
             'duration': 0,  # Initialize duration as integer,
-            'file_type': 'Unknown File Type',
+            'file_type': file_extension,
         }
 
         try:
@@ -304,7 +304,8 @@ class MusicPlayerUI(QMainWindow):
         except Exception as e:
             print(f"Error reading metadata: {e}")
 
-        print("This is the metadata for the file ", metadata)
+        print("This is the metadata of mp3 file. ")
+        print(metadata)
         return metadata
 
     def toggle_reload_directories(self):
