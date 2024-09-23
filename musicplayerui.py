@@ -370,9 +370,6 @@ class MusicPlayerUI(QMainWindow):
         elif event.key() == Qt.Key.Key_P and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.stop_song()
 
-        elif event.key() == Qt.Key.Key_W and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.clearTable()
-
         elif event.key() == Qt.Key.Key_Left:
             print("left key pressed")
             self.seekBack()
@@ -1021,9 +1018,6 @@ class MusicPlayerUI(QMainWindow):
         self.track_display.setText("No Track Playing")
         self.image_display.clear()
         self.song_details.clear()
-
-    def clearTable(self):
-        self.songTableWidget.clear()
 
     def update_information(self):
         if self.music_file:

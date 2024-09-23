@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QFileDialog, QLabel, QPushButton,
-    QVBoxLayout, QDialog, QSpinBox, QHBoxLayout, QGroupBox, QMessageBox
+    QVBoxLayout, QDialog, QSpinBox, QHBoxLayout, QGroupBox
 )
 from PyQt6.QtGui import QFontDatabase, QIcon, QKeyEvent
 from easy_json import EasyJson
@@ -35,6 +35,21 @@ class FontSettingsWindow(QDialog):
     def __init__(self, parent):
         self.parent = parent
         super().__init__(parent)  # Initialize the parent QDialog
+
+        self.round_line_style = f"""
+            QGroupBox {{
+                border: 1px solid palette(light); /* Use system palette color for border */
+                border-radius: 5px; /* Rounded corners */
+                margin-top: 10px; /* Space between the title and the group box */
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px; /* Space for the title */
+                padding: 5px; /* Space around the title text */
+                font-weight: bold; /* Make title bold */
+            }}
+        """
+        
         self.ej = EasyJson()
         self.setGeometry(200, 200, 500, 300)
         self.setWindowTitle("Font Settings")
@@ -70,19 +85,7 @@ class FontSettingsWindow(QDialog):
 
         # Create font group box for each language
         font_group_box = QGroupBox("Language Fonts", self)
-        font_group_box.setStyleSheet("""
-            QGroupBox {
-                border: 1px solid #C0C0C0; /* Light gray border */
-                border-radius: 5px; /* Rounded corners */
-                margin-top: 10px; /* Space between the title and the group box */
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px; /* Space for the title */
-                padding: 5px; /* Space around the title text */
-                font-weight: bold; /* Make title bold */
-            }
-        """)
+        font_group_box.setStyleSheet(self.round_line_style)
 
         font_layout = QVBoxLayout()
 
@@ -117,7 +120,8 @@ class FontSettingsWindow(QDialog):
         main_layout.addWidget(font_group_box)
 
         # LRC Font size configuration
-        size_group_box = QGroupBox("LRC Font Size", self)
+        size_group_box = QGroupBox("LRC Lyrics Display", self)
+        size_group_box.setStyleSheet(self.round_line_style)
         size_layout = QHBoxLayout()
 
         self.lrc_font_size_label = QLabel("LRC Font Size:", self)
