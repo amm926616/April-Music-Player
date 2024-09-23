@@ -61,19 +61,15 @@ class AddNewDirectory(QDialog):
                 self.scroll_area_layout.addWidget(checkbox)
 
     def are_all_checkboxes_checked(self):
-        # Find all QCheckBox children in the scroll area widget
-        checkboxes = self.scroll_area_widget.findChildren(QCheckBox)
-        all_is_checked = False  # Start with the assumption that all checkboxes are checked
+        # If there are no directories, exit early
         if not self.directories:
             return
-        else:
-            all_is_checked = True
 
-        # Iterate through all checkboxes to check if any is unchecked
-        for checkbox in checkboxes:
-            if not checkbox.isChecked():
-                all_is_checked = False  # Set to False if any checkbox is unchecked
-                break  # Exit the loop early if we find an unchecked box
+        # Find all QCheckBox children in the scroll area widget
+        checkboxes = self.scroll_area_widget.findChildren(QCheckBox)
+
+        # Check if all checkboxes are checked using the all() function
+        all_is_checked = all(checkbox.isChecked() for checkbox in checkboxes)
 
         # Block signals for the 'Select All' checkbox to prevent triggering select_all_directories
         self.select_all_checkbox.blockSignals(True)
