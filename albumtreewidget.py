@@ -340,14 +340,13 @@ class AlbumTreeWidget(QWidget):
         files_on_playlist_set = set(self.songTableWidget.files_on_playlist)  # Convert to set once
 
         if set(sorted_songs).issubset(files_on_playlist_set):
-            for song in sorted_songs:
-                existing_song_rows = [self.find_row_by_exact_match(song) for song in sorted_songs]
-                self.songTableWidget.scroll_to_and_highlight_multiple_rows(existing_song_rows)
-            return
+            existing_song_rows = [self.find_row_by_exact_match(song) for song in sorted_songs]
+            self.songTableWidget.scroll_to_and_highlight_multiple_rows(existing_song_rows)
 
-        self.add_album_title_row(album)
-        for song in sorted_songs_data:
-            self.add_song_row(song)
+        else:
+            self.add_album_title_row(album)
+            for song in sorted_songs_data:
+                self.add_song_row(song)
 
     def add_songs_by_artist(self, artist):
         print("In add song by artist")
@@ -366,19 +365,17 @@ class AlbumTreeWidget(QWidget):
 
         for album, album_songs in sorted(sorted_albums.items()):
             sorted_songs_data = sorted(album_songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
+
             sorted_songs = [song[7] for song in sorted_songs_data]  # Use sorted_songs_data
 
             if set(sorted_songs).issubset(files_on_playlist_set):
-                print("The sorted songs are Here:")
-                for i in sorted_songs:
-                    print(i, "\n")
                 existing_song_rows = [self.find_row_by_exact_match(song) for song in sorted_songs]
                 self.songTableWidget.scroll_to_and_highlight_multiple_rows(existing_song_rows)
-                return
 
-            self.add_album_title_row(album)
-            for song in sorted_songs_data:
-                self.add_song_row(song)
+            else:
+                self.add_album_title_row(album)
+                for song in sorted_songs_data:
+                    self.add_song_row(song)
 
     def add_song_row(self, song):
         # Insert song data into the QTableWidget

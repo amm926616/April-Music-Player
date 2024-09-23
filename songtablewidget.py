@@ -297,16 +297,6 @@ class SongTableWidget(QTableWidget):
         else:
             return
 
-    def scroll_to_and_highlight_row(self, row: int):
-        """
-        Scrolls to the specified row and highlights it in the QTableWidget.
-
-        :param row: The row number to scroll to and highlight
-        """
-
-        self.setFocus()
-        self.selectRow(row)
-
     def scroll_to_and_highlight_multiple_rows(self, rows: list[int]):
         """
         Scrolls to and highlights multiple rows in the QTableWidget.
@@ -317,9 +307,6 @@ class SongTableWidget(QTableWidget):
 
         # Set to MultiSelection mode
         self.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-
-        # Clear any existing selection before selecting new rows
-        self.clearSelection()
 
         for row in rows:
             # Scroll to the row and position it at the center
