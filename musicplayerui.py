@@ -8,7 +8,8 @@ from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, 
     QPainter, QPixmap, QPainterPath, QTextDocument
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
-    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea, QSizePolicy
+    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea, QSizePolicy,
+    QAbstractItemView
 )
 from PyQt6.QtCore import Qt, QCoreApplication, QRectF
 from mutagen import File
@@ -458,7 +459,7 @@ class MusicPlayerUI(QMainWindow):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
 
-        reload_directories_action = QAction("Reload Playlist", self)
+        reload_directories_action = QAction("Reload Music Files", self)
         reload_directories_action.triggered.connect(self.toggle_reload_directories)
 
         # Actions that will become buttons for each menu
