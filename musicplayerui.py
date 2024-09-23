@@ -303,9 +303,9 @@ class MusicPlayerUI(QMainWindow):
 
         except Exception as e:
             print(f"Error reading metadata: {e}")
+            print("There might not be metadata tagged in the music file")
 
-        print("This is the metadata of mp3 file. ")
-        print(metadata)
+        print(f"This is the metadata of {file_extension} file")
         return metadata
 
     def toggle_reload_directories(self):
@@ -619,9 +619,10 @@ class MusicPlayerUI(QMainWindow):
         self.lrcPlayer.update_interval = selected_threshold
 
     def show_fromMe(self):
-        text = """
-        <b>This project was developed to "the version 1 released" solely by me. I wish I could get collaborations that I could code together. I would greatly appreciate any contributions to this project. If you found April useful, I'd appreciate it if you could give the project a star on GitHub!</b> 
-        <a href="https://github.com/amm926616/April-Music-Player">Project's GitHub link</a><br><br>
+        text = """<b>This project was developed to "the version 1 released" solely by me. I wish I could get 
+        collaborations that I could code together. I would greatly appreciate any contributions to this project. If 
+        you found April useful, I'd appreciate it if you could give the project a star on GitHub!</b> <a 
+        href="https://github.com/amm926616/April-Music-Player">Project's GitHub link</a><br><br>
 
         <b>Created with love by AD178.</b><br>
         <b>Contact me on Telegram: </b><a href="https://t.me/Adamd178">Go to Adam's Telegram</a><br>
@@ -629,42 +630,32 @@ class MusicPlayerUI(QMainWindow):
         QMessageBox.information(self, "Thank you for using April", text)
 
     def show_preparation(self):
-        text = """
-        <b>Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify to download songs from Spotify, and for LRC lyrics files, I recommend using LRCGET, Syrics on your laptop, or SongSync on Android. There are also various websites where you can download music with embedded metadata and lyrics.</b><br>
-        - <a href="https://github.com/zotify-dev/zotify">Zotify</a><br>
-        - <a href="https://github.com/tranxuanthang/lrcget">LRCGET</a><br>
-        - <a href="https://github.com/akashrchandran/syrics">Syrics</a><br>
-        - <a href="https://github.com/Lambada10/SongSync">SongSync</a><br><br>
-        <b>For the program to easily match and grab files, ensure that the music file and the LRC file have the same name, plus in the same directory. I will figure out for better file management in the future.</b>
-        """
+        text = """<b>Before using the player, you'll need to download your songs and lyrics in advance. I use Zotify 
+        to download songs from Spotify, and for LRC lyrics files, I recommend using LRCGET, Syrics on your laptop, 
+        or SongSync on Android. There are also various websites where you can download music with embedded metadata 
+        and lyrics.</b><br> - <a href="https://github.com/zotify-dev/zotify">Zotify</a><br> - <a 
+        href="https://github.com/tranxuanthang/lrcget">LRCGET</a><br> - <a 
+        href="https://github.com/akashrchandran/syrics">Syrics</a><br> - <a 
+        href="https://github.com/Lambada10/SongSync">SongSync</a><br><br> <b>For the program to easily match and grab 
+        files, ensure that the music file and the LRC file have the same name, plus in the same directory. I will 
+        figure out for better file management in the future.</b>"""
         QMessageBox.information(self, "Preparation of files", text)
 
     def show_shortcuts(self):
         shortcuts_text = """         
         <b>Keyboard Shortcuts</b><br><br>
         
-        <b>General:</b>
-            <ul>
-                <li><strong>Left Arrow, Right Arrow, Spacebar</strong>: Seek backward, seek forward, and play/pause, respectively.</li>
-                <li><strong>Ctrl + L</strong>: Activate LRC display, or double-click the progress bar.</li>
-                <li><strong>Ctrl + S</strong>: Focus and place cursor on search bar. Empty Search reloads default table.</li>
-                <li><strong>Ctrl + Q</strong>: This shortcut quits the program. The program runs in the background even if you close the main window.</li>
-                <li><strong>Ctrl + I</strong>: Activate/Disable Lyrics.</li>
-                <li><strong>Ctrl + G</strong>: Go to current playing music.</li>
-            </ul>
-        <b>In LRC view</b>:
-            <ul>
-                <li><strong>F</strong>: Toggle full-screen mode.</li>
-                <li><strong>D</strong>: Go to the start of current lyric.</li>
-                <li><strong>Up Arrow, Down Arrow</strong>: Seek to the previous or next lyric line.</li>
-                <li><strong>E</strong>: To activate Note Book</li>
-            </ul>
-        <b>In Lyrics Notebook</b>:
-            <ul>
-                <li><strong>Ctrl + S</strong>: To save written text.</li>
-                <li><strong>Esc</strong>, <strong>Ctrl + W</strong>, <strong>Alt + F4</strong>: To exit without saving.</li>
-            </ul>
-        """
+        <b>General:</b> <ul> <li><strong>Left Arrow, Right Arrow, Spacebar</strong>: Seek backward, seek forward, 
+        and play/pause, respectively.</li> <li><strong>Ctrl + L</strong>: Activate LRC display, or double-click the 
+        progress bar.</li> <li><strong>Ctrl + S</strong>: Focus and place cursor on search bar. Empty Search reloads 
+        default table.</li> <li><strong>Ctrl + Q</strong>: This shortcut quits the program. The program runs in the 
+        background even if you close the main window.</li> <li><strong>Ctrl + I</strong>: Activate/Disable 
+        Lyrics.</li> <li><strong>Ctrl + G</strong>: Go to current playing music.</li> </ul> <b>In LRC view</b>: <ul> 
+        <li><strong>F</strong>: Toggle full-screen mode.</li> <li><strong>D</strong>: Go to the start of current 
+        lyric.</li> <li><strong>Up Arrow, Down Arrow</strong>: Seek to the previous or next lyric line.</li> 
+        <li><strong>E</strong>: To activate Note Book</li> </ul> <b>In Lyrics Notebook</b>: <ul> <li><strong>Ctrl + 
+        S</strong>: To save written text.</li> <li><strong>Esc</strong>, <strong>Ctrl + W</strong>, <strong>Alt + 
+        F4</strong>: To exit without saving.</li> </ul>"""
         QMessageBox.information(self, "Shortcuts", shortcuts_text)
 
     def ask_for_background_image(self):
@@ -683,7 +674,7 @@ class MusicPlayerUI(QMainWindow):
         # Get the item at the clicked position
         item = self.songTableWidget.itemAt(pos)
 
-        if item and not "Album Title:" in item.text():
+        if item and "Album Title:" not in item.text():
             # Create the context menu
             context_menu = QMenu(self)
 
@@ -709,7 +700,8 @@ class MusicPlayerUI(QMainWindow):
     def activate_file_tagger(self):
         currentRow = self.songTableWidget.currentRow()
         music_file = self.songTableWidget.item(currentRow, 7).text()
-        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumTreeWidget, self.albumTreeWidget.cursor, self.albumTreeWidget.conn)
+        tagger = TagDialog(self, music_file, self.songTableWidget, self.albumTreeWidget, self.albumTreeWidget.cursor,
+                           self.albumTreeWidget.conn)
         tagger.exec()
 
     def createWidgetAndLayouts(self):

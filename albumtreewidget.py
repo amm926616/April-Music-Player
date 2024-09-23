@@ -339,6 +339,7 @@ class AlbumTreeWidget(QWidget):
         sorted_songs_data = sorted(songs, key=lambda x: extract_track_number(x[5]))  # Sort by track_number
         sorted_songs = [song[7] for song in sorted_songs_data]
 
+        self.songTableWidget.clearSelection()
         files_on_playlist_set = set(self.songTableWidget.files_on_playlist)  # Convert to set once
 
         if set(sorted_songs).issubset(files_on_playlist_set):
