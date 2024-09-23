@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QLabel, QPushButton, QGroupBox, QHBoxLayout, QFormLayout
 from PyQt6.QtGui import QKeyEvent, QIcon
 from PyQt6.QtCore import Qt
-from mutagen.id3 import ID3, TIT2, TPE1, TALB, TCON, TDRC, TRCK, COMM
+from mutagen.id3 import ID3, ID3NoHeaderError, TIT2, TPE1, TALB, TCON, TDRC, TRCK, COMM
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
 from mutagen.mp4 import MP4
@@ -10,7 +10,12 @@ from mutagen.wave import WAVE
 
 def save_tag_to_file(file_path, metadata):
     if file_path.lower().endswith('.mp3'):
-        audio = ID3(file_path)
+        try:
+            audio = ID3(file_path)  # the crash is due to mp3 file not having metadata.
+        except ID3NoHeaderError:
+            # Create an empty ID3 tag if none exists
+            audio = ID3()
+
         # Update metadata using ID3 frames
         audio['TIT2'] = TIT2(encoding=3, text=metadata.get('title', ''))
         audio['TPE1'] = TPE1(encoding=3, text=metadata.get('artist', ''))
@@ -18,12 +23,10 @@ def save_tag_to_file(file_path, metadata):
         audio['TCON'] = TCON(encoding=3, text=metadata.get('genre', ''))
         audio['TDRC'] = TDRC(encoding=3, text=metadata.get('year', ''))
         audio['TRCK'] = TRCK(encoding=3, text=metadata.get('track_number', ''))
-
-        # Add comment metadata (COMM frame) with required 'lang' and 'desc' fields
         audio['COMM'] = COMM(encoding=3, lang='eng', desc='', text=metadata.get('comment', ''))
 
         # Save changes
-        audio.save()
+        audio.save(file_path)
 
     elif file_path.lower().endswith('.flac'):
         audio = FLAC(file_path)
