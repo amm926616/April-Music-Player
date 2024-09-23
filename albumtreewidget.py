@@ -412,7 +412,7 @@ class AlbumTreeWidget(QWidget):
                 for song in sorted_songs_data:
                     self.add_song_row(song)
 
-    def add_song_row(self, song, by_click=None):
+    def add_song_row(self, song):
         # Insert song data into the QTableWidget
         row_position = self.songTableWidget.rowCount()
         self.songTableWidget.insertRow(row_position)

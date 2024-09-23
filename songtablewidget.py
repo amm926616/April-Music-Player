@@ -107,7 +107,9 @@ class SongTableWidget(QTableWidget):
                     self.setItem(row, column, table_item)
 
             if row_data["row_type"] != "album_title":
-                self.files_on_playlist.append(row_data["items"][7])
+                file = row_data["items"][7]  # making sure None is not passed
+                if file is not None:
+                    self.files_on_playlist.append(file)
 
         print("Finished loading table data.")
 
@@ -147,6 +149,7 @@ class SongTableWidget(QTableWidget):
             with open(self.json_file, 'w') as file:
                 json.dump(data, file, indent=4)
             print(f"Data successfully saved to {self.json_file}")
+            file.close()
         except IOError as e:
             print(f"Failed to save data to {self.json_file}: {e}")
 
