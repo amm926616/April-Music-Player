@@ -1076,29 +1076,33 @@ class MusicPlayerUI(QMainWindow):
     def get_random_song_list(self):
         # Create a list excluding the current song (self.music_file)
 
+        print("inside get random song list method")
+
         random_song_list = self.songTableWidget.files_on_playlist.copy()
         shuffle(random_song_list)
+
+        print("After shuffling, the random song list items")
+        print(random_song_list)
 
         return random_song_list
 
     def prepare_for_random(self):
         self.random_song_list.clear()
         self.random_song_list = self.get_random_song_list()
-
-        # Remove the current music file if it's in the list
+        # Remove the current music file if it's in the list, Making current playing file as first index
         if self.music_file in self.random_song_list:
             self.random_song_list.remove(self.music_file)
 
-        # Insert the music file at the beginning of the list
-        self.random_song_list.insert(0, self.music_file)
+            # Insert the music file at the beginning of the list
+            self.random_song_list.insert(0, self.music_file)
 
         self.current_playing_random_song_index = 0
 
     def play_previous_song(self):
         if self.player.music_on_shuffle:
             self.current_playing_random_song_index -= 1
-            if self.current_playing_random_song_index < 0:
-                self.current_playing_random_song_index = 3
+            if self.current_playing_random_song_index < 1:
+                self.current_playing_random_song_index = len(self.random_song_list) - 1
             self.play_random_song(user_clicking=True)
         else:
             previous_song = self.songTableWidget.get_previous_song_object()
