@@ -45,10 +45,12 @@ class SongTableWidget(QTableWidget):
 
     def save_currently_playing_song(self):
         currently_playing_song = self.parent.music_file
+        current_position_in_second = self.parent.player.get_current_time()
+        data = {currently_playing_song: current_position_in_second}
         if currently_playing_song is None:
             return
         else:
-            self.parent.ej.edit_value("last_played_song", currently_playing_song)
+            self.parent.ej.edit_value("last_played_song", data)
             print(f"saved {currently_playing_song} to config file")
 
     def load_table_data(self):

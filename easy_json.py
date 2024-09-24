@@ -67,7 +67,7 @@ class EasyJson:
             "previous_loop": False,
             "previous_shuffle": False,
             "music_directories": {},
-            "last_played_song": ""
+            "last_played_song": {}
         }
 
         if fresh_config:

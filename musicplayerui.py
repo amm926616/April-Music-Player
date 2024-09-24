@@ -174,6 +174,7 @@ class MusicPlayerUI(QMainWindow):
         self.random_song_list = []
         self.current_playing_random_song_index = None
         self.random_song = None
+        self.saved_position = None
 
         # Getting image size from primary screen geometry
         self.image_size = int(self.app.primaryScreen().geometry().width() / 5)  # extract image size from main window
@@ -312,15 +313,23 @@ class MusicPlayerUI(QMainWindow):
         return metadata
 
     def play_last_played_song(self):
-        self.music_file = self.ej.get_value("last_played_song")
-        last_played_items = self.songTableWidget.findItems(self.music_file, Qt.MatchFlag.MatchExactly)
-        item = None
-        if last_played_items:
-            for i in last_played_items:
-                item = i
+        last_play_file_data = self.ej.get_value("last_played_song")
+        if last_play_file_data:
+            for file, position in last_play_file_data.items():
+                self.music_file = file
+                self.saved_position = position
 
-        print("This is the song from item loaded")
-        self.handleRowDoubleClick(item)
+            last_played_items = self.songTableWidget.findItems(self.music_file, Qt.MatchFlag.MatchExactly)
+            item = None
+            if last_played_items:
+                for i in last_played_items:
+                    item = i
+
+            print("This is the song from item loaded")
+            self.handleRowDoubleClick(item)
+
+        else:
+            return
 
     def toggle_reload_directories(self):
         self.albumTreeWidget.loadSongsToCollection(loadAgain=True)
@@ -1212,6 +1221,11 @@ class MusicPlayerUI(QMainWindow):
         self.player.started_playing = True
         self.player.play()
 
+        if self.saved_position:
+            self.player.player.setPosition(int(self.saved_position))
+        else:
+            self.player.player.setPosition(int(0))
+
     def seekBack(self):
         self.player.seek_backward()
 
@@ -1287,7 +1301,7 @@ class MusicPlayerUI(QMainWindow):
             # Load a default image if no album art is found
             pixmap = QPixmap(os.path.join(self.script_path, "icons/april-logo.png"))
 
-        self.passing_image = pixmap  # for album art double clicking
+        self.passing_image = pixmap  # for album art double-clicking
 
         # Continue with the process of resizing, rounding, and setting the pixmap
         scaled_pixmap = pixmap.scaled(self.image_size, self.image_size,

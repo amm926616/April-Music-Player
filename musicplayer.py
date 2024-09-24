@@ -186,9 +186,11 @@ class MusicPlayer:
         position = self.player.position() / 1000.0
         return position
 
-    def seek_forward(self):
-        if self.player.isPlaying:
+    def seek_forward(self, saved_position=None):
+        if self.player.isPlaying and not saved_position:
             self.player.setPosition(self.player.position() + 1000)
+        else:
+            self.player.setPosition(saved_position)
 
     def seek_backward(self):
         if self.player.isPlaying:        
