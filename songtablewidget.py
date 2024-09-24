@@ -43,6 +43,14 @@ class SongTableWidget(QTableWidget):
         self.load_table_data()
         self.setSortingEnabled(False)  # Disable default sorting to use custom sorting
 
+    def save_currently_playing_song(self):
+        currently_playing_song = self.parent.music_file
+        if currently_playing_song is None:
+            return
+        else:
+            self.parent.ej.edit_value("last_played_song", currently_playing_song)
+            print(f"saved {currently_playing_song} to config file")
+
     def load_table_data(self):
         print("Started loading table data")
 
@@ -112,6 +120,7 @@ class SongTableWidget(QTableWidget):
                     self.files_on_playlist.append(file)
 
         print("Finished loading table data.")
+        print("Trying to load last played song.")
 
     def save_table_data(self):
         # Get the current data from the table widget
@@ -152,6 +161,8 @@ class SongTableWidget(QTableWidget):
             file.close()
         except IOError as e:
             print(f"Failed to save data to {self.json_file}: {e}")
+
+        self.save_currently_playing_song()
 
     @staticmethod
     def get_table_data(table_widget):
