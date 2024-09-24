@@ -532,15 +532,15 @@ class MusicPlayerUI(QMainWindow):
 
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
-        options_menu = menubar.addMenu("Options")
+        settings_menu = menubar.addMenu("Settings")
         help_menu = menubar.addMenu("Help")
 
-        options_menu.addAction(self.show_lyrics_action)
-        options_menu.addAction(self.font_settings_action)
+        settings_menu.addAction(self.show_lyrics_action)
+        settings_menu.addAction(self.font_settings_action)
 
         # Add a sub-menu for text color selection with radio buttons
         text_color_menu = QMenu("Choose Lyrics Color", self)
-        options_menu.addMenu(text_color_menu)
+        settings_menu.addMenu(text_color_menu)
 
         # Create an action group to enforce a single selection (radio button behavior)
         color_group = QActionGroup(self)
@@ -579,7 +579,7 @@ class MusicPlayerUI(QMainWindow):
 
         # Add a sub-menu for sync threshold selection with radio buttons
         sync_threshold_menu = QMenu("Choose Syncing Interval", self)
-        options_menu.addMenu(sync_threshold_menu)
+        settings_menu.addMenu(sync_threshold_menu)
 
         # Add a QLabel at the top of the menu with your message
         label = QLabel(
@@ -614,8 +614,8 @@ class MusicPlayerUI(QMainWindow):
         help_menu.addAction(fromMe)
         help_menu.addAction(preparation_tips)
         help_menu.addAction(show_shortcuts_action)
-        options_menu.addAction(add_lrc_background)
-        options_menu.addAction(set_default_background)
+        settings_menu.addAction(add_lrc_background)
+        settings_menu.addAction(set_default_background)
 
     def get_selected_color(self):
         selected_color = self.ej.get_value("lyrics_color")
@@ -1174,12 +1174,12 @@ class MusicPlayerUI(QMainWindow):
         except AttributeError:
             return
 
-        if item and row:
+        if item:
             if "Album Title: " in item.text():
                 return
             else:
                 self.item = item
-                self.songTableWidget.song_playing_row = self.item.row()
+                self.songTableWidget.song_playing_row = row
                 self.lrcPlayer.started_player = True
                 self.get_music_file_from_click(item)
                 if self.music_file:
@@ -1194,8 +1194,7 @@ class MusicPlayerUI(QMainWindow):
             self.restore_table()
             self.songTableWidget.setFocus()
             self.songTableWidget.scroll_to_current_row()
-            simulate_keypress(self.songTableWidget,
-                              Qt.Key.Key_G)  # only imitation of key press work. Direct calling the method doesn't
+            simulate_keypress(self.songTableWidget, Qt.Key.Key_G)  # only imitation of key press work. Direct calling the method doesn't
             # work. IDk why.
             self.hidden_rows = False
 
