@@ -175,6 +175,9 @@ class MusicPlayerUI(QMainWindow):
         self.current_playing_random_song_index = None
         self.random_song = None
 
+        # Getting image size from primary screen geometry
+        self.image_size = int(self.app.primaryScreen().geometry().width() / 5)  # extract image size from main window
+
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
         else:
@@ -307,6 +310,17 @@ class MusicPlayerUI(QMainWindow):
 
         print(f"This is the metadata of {file_extension} file")
         return metadata
+
+    def play_last_played_song(self):
+        self.music_file = self.ej.get_value("last_played_song")
+        last_played_items = self.songTableWidget.findItems(self.music_file, Qt.MatchFlag.MatchExactly)
+        item = None
+        if last_played_items:
+            for i in last_played_items:
+                item = i
+
+        print("This is the song from item loaded")
+        self.handleRowDoubleClick(item)
 
     def toggle_reload_directories(self):
         self.albumTreeWidget.loadSongsToCollection(loadAgain=True)
@@ -909,7 +923,7 @@ class MusicPlayerUI(QMainWindow):
         self.next_song_button.setSizePolicy(size_policy)
 
         self.prev_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-backward.ico")))
-        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "pause.ico")))
+        self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))
         self.forward_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "seek-forward.ico")))
         self.prev_song_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "previous-song.ico")))
         self.next_song_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "next-song.ico")))
@@ -927,7 +941,7 @@ class MusicPlayerUI(QMainWindow):
         controls_layout.addWidget(self.next_song_button)
 
         right_layout.addLayout(controls_layout)
-        # self.connect_progressbar_signals()
+        self.play_last_played_song()
 
     def updateDisplayData(self):
         metadata = self.get_metadata(self.music_file)
@@ -1145,7 +1159,13 @@ class MusicPlayerUI(QMainWindow):
         self.song_initializing_stuff()
 
     def handleRowDoubleClick(self, item):
-        if item:
+        row = None
+        try:
+            row = item.row()
+        except AttributeError:
+            return
+
+        if item and row:
             if "Album Title: " in item.text():
                 return
             else:
@@ -1270,15 +1290,11 @@ class MusicPlayerUI(QMainWindow):
         self.passing_image = pixmap  # for album art double clicking
 
         # Continue with the process of resizing, rounding, and setting the pixmap
-        image_size = int(self.width() / 5)  # extract image size from main window
-
-        target_width = image_size
-        target_height = image_size
-        scaled_pixmap = pixmap.scaled(target_width, target_height,
+        scaled_pixmap = pixmap.scaled(self.image_size, self.image_size,
                                       aspectRatioMode=Qt.AspectRatioMode.KeepAspectRatio,
                                       transformMode=Qt.TransformationMode.SmoothTransformation)
 
-        rounded_pixmap = getRoundedCornerPixmap(scaled_pixmap, target_width, target_height)
+        rounded_pixmap = getRoundedCornerPixmap(scaled_pixmap, self.image_size, self.image_size)
 
         # Set the final rounded image to QLabel
         self.image_display.setPixmap(rounded_pixmap)
