@@ -66,17 +66,18 @@ class EasyJson:
             "loop": False,
             "previous_loop": False,
             "previous_shuffle": False,
-            "music_directories": {}
+            "music_directories": {},
+            "last_played_song": ""
         }
-
-        for i in default_values.items():
-            print(i)
 
         if fresh_config:
             with open(self.config_file, "w") as f:
                 json.dump(default_values, f, indent=4)
             f.close()
             print(f"{START}default values added to config file{END}")
+            print("This is from default value setup method")
+            for i in default_values.items():
+                print(i)
         else:
             # Iterate over the default values and set them if not present
             for key, default_value in default_values.items():

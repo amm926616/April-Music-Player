@@ -501,7 +501,7 @@ class AlbumTreeWidget(QWidget):
 
     def updateAlbumItem(self, album_item, album_name):
         # Update the album title with the new album name
-        # track_count = album_item.childCount()  # Number of songs in this album
+        # track_count = album_item.childCount()  # Number of songs on this album
         # album_item.setText(0, f"{album_name} ({track_count} tracks)")
 
         album_item.setText(0, album_name)

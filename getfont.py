@@ -80,39 +80,38 @@ class GetFont:
                 return "japanese"
         return None
 
-    def apply_fonts_to_text(self, text):  # new method, still needs fixes
-        if not self.fonts_loaded:
-            self.loadFonts()
+    # def apply_fonts_to_text(self, text):  # new method, still needs fixes
+    #     if not self.fonts_loaded:
+    #         self.loadFonts()
 
-        doc = QTextDocument()
-        cursor = QTextCursor(doc)
+    #     doc = QTextDocument()
+    #     cursor = QTextCursor(doc)
 
-        word = ''
-        for char in text:
-            if char.isalnum():  # If it's alphanumeric, treat it as part of a word
-                word += char
-            elif char in string.punctuation:  # Include punctuation as part of the word
-                word += char
-            else:  # If it's a space or separator, process the word
-                if word:
-                    # Detect language using the first character of the word
-                    language = self.detect_language(word[0]) or "english"
-                    cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
-                    cursor.insertText(word)
-                    word = ''  # Reset the word variable
-                cursor.insertText(char)  # Insert the separator (like space)
+    #     word = ''
+    #     for char in text:
+    #         if char.isalnum():  # If it's alphanumeric, treat it as part of a word
+    #             word += char
+    #         elif char in string.punctuation:  # Include punctuation as part of the word
+    #             word += char
+    #         else:  # If it's a space or separator, process the word
+    #             if word:
+    #                 # Detect language using the first character of the word
+    #                 language = self.detect_language(word[0]) or "english"
+    #                 cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
+    #                 cursor.insertText(word)
+    #                 word = ''  # Reset the word variable
+    #             cursor.insertText(char)  # Insert the separator (like space)
 
-        # Process any remaining word after the loop ends
-        if word:
-            # Detect language using the first character of the word
-            language = self.detect_language(word[0]) or "english"
-            cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
-            cursor.insertText(word)
+    #     # Process any remaining word after the loop ends
+    #     if word:
+    #         # Detect language using the first character of the word
+    #         language = self.detect_language(word[0]) or "english"
+    #         cursor.setCharFormat(self.formats.get(language, self.formats["english"]))
+    #         cursor.insertText(word)
 
-        return doc.toHtml()
+    #     return doc.toHtml()
 
-    """The old method
-        def apply_fonts_to_text(self, text):
+    def apply_fonts_to_text(self, text):
         if not self.fonts_loaded:
             self.loadFonts()
 
@@ -125,7 +124,6 @@ class GetFont:
             cursor.insertText(char)
 
         return doc.toHtml()
-    """
 
     def get_formatted_text(self, text):
         return self.apply_fonts_to_text(text)
