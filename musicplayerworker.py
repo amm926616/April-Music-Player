@@ -34,6 +34,9 @@ class MusicPlayerWorker(QObject):
     def pause(self):
         self.player.pause()
 
+    def stop(self):
+        self.player.stop()
+
     def position(self):
         return self.player.position()
 
