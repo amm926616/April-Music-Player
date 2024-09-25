@@ -31,7 +31,7 @@ from random import choice, shuffle
 from fontsettingdialog import FontSettingsWindow
 from tag_dialog import TagDialog
 from addnewdirectory import AddNewDirectory
-
+import threading
 
 def html_to_plain_text(html):
     doc = QTextDocument()
@@ -389,6 +389,12 @@ class MusicPlayerUI(QMainWindow):
                 self.on_off_lyrics(False)
             else:
                 self.on_off_lyrics(True)
+
+        elif event.key() == Qt.Key.Key_1 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            if self.player.thread.isRunning():
+                print("Music player's QThread is running.")
+            else:
+                print("Music player's QThread is not running.")
 
         elif event.key() == Qt.Key.Key_P and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.stop_song()

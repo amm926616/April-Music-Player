@@ -1,13 +1,8 @@
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtGui import QIcon
 import os
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QThread, QObject, pyqtSignal
 from easy_json import EasyJson
-
-
-def handle_buffer_status(percent_filled):
-    print(f"Buffer status: {percent_filled}%")
-
+from musicplayerworker import MusicPlayerWorker
 
 class MusicPlayer:
     def __init__(self, parent, play_pause_button, loop_playlist_button, repeat_button, shuffle_button,
@@ -18,12 +13,16 @@ class MusicPlayer:
         self.playRandomSong = playRandomSong
         self.file_name = None
         self.eop_text = "End Of Playlist"
-        self.player = QMediaPlayer()
-        self.audio_output = QAudioOutput()
-        self.player.setAudioOutput(self.audio_output)
-                
-        # Connect the buffer status signal to a custom method
-        self.player.bufferProgressChanged.connect(handle_buffer_status)
+        self.player = MusicPlayerWorker()  # Create a worker instance
+
+        self.thread = QThread()  # Create a QThread
+
+        # Move the worker to the thread
+        self.player.moveToThread(self.thread)
+
+        # Connect signals and slots
+        self.thread.started.connect(self.player.play)  # When the thread starts, the worker will play the song
+        self.thread.finished.connect(self.thread.deleteLater)  # Clean up when the thread is finished
 
         self.started_playing = False
         self.in_pause_state = False
@@ -34,13 +33,17 @@ class MusicPlayer:
         self.previous_loop_state = None      
         self.paused_position = 0.0
         
-        # Connect the mediaStatusChanged signal to a slot
-        self.player.mediaStatusChanged.connect(self.handle_media_status_changed)
         self.play_pause_button = play_pause_button
         self.loop_playlist_button = loop_playlist_button
         self.repeat_button = repeat_button
         self.shuffle_button = shuffle_button
-        self.script_path = os.path.dirname(os.path.abspath(__file__))   
+        self.script_path = os.path.dirname(os.path.abspath(__file__))
+
+    def play(self):
+        self.started_playing = True
+        self.update_music_file(self.file_name)
+        if not self.thread.isRunning():
+            self.thread.start()  # Start the thread to play the song in the background
 
     def save_playback_control_state(self):
         self.ej.edit_value("previous_loop", self.previous_loop_state)
@@ -150,11 +153,7 @@ class MusicPlayer:
 
     def update_music_file(self, file):
         self.file_name = file
-        self.player.setSource(QUrl.fromLocalFile(self.file_name))
-
-    def play(self):
-        self.started_playing = True
-        self.player.play()
+        self.player.setSource(self.file_name)
 
     def play_pause_music(self):  
         if self.started_playing:  # pause state activating
@@ -202,14 +201,3 @@ class MusicPlayer:
     def get_position(self):
         return self.player.position()
 
-    def handle_media_status_changed(self, status):
-        if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            if self.music_on_repeat:
-                # Restart playback            
-                self.player.setPosition(0)
-                self.player.play()                
-            else: 
-                if self.music_on_shuffle:
-                    self.playRandomSong()               
-                else:
-                    self.playNextSong()
