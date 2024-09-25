@@ -45,7 +45,7 @@ class SongTableWidget(QTableWidget):
 
     def save_currently_playing_song(self):
         currently_playing_song = self.parent.music_file
-        current_position_in_second = self.parent.player.get_current_time()
+        current_position_in_second = self.parent.music_player.get_current_time()
         data = {currently_playing_song: current_position_in_second}
         if currently_playing_song is None:
             return
@@ -189,9 +189,9 @@ class SongTableWidget(QTableWidget):
         return table_data
 
     def get_previous_song_object(self, clicking=False):
-        if self.parent.player.music_on_repeat and not clicking:
-            self.parent.player.player.setPosition(0)
-            self.parent.player.player.play()
+        if self.parent.music_player.music_on_repeat and not clicking:
+            self.parent.music_player.music_player.setPosition(0)
+            self.parent.music_player.music_player.play()
             return
 
         if self.song_playing_row is None:
@@ -204,15 +204,15 @@ class SongTableWidget(QTableWidget):
         if previous_row < 0:
             print("The row count is", self.rowCount())
             print("previous row is ", previous_row)
-            if self.parent.player.playlist_on_loop or self.parent.player.music_on_repeat:
+            if self.parent.music_player.playlist_on_loop or self.parent.music_player.music_on_repeat:
                 print("The row count is ", self.rowCount())
                 previous_row = self.rowCount()
-            elif self.parent.player.music_on_shuffle:
+            elif self.parent.music_player.music_on_shuffle:
                 self.parent.play_random_song()
             else:
                 self.parent.stop_song()
                 self.parent.lrcPlayer.media_lyric.setText(
-                    self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
+                    self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.music_player.eop_text))
 
                 # Check if the item exists
         item = self.item(previous_row, 0)
@@ -221,7 +221,7 @@ class SongTableWidget(QTableWidget):
             print("In previous song, the item is none")
             self.parent.stop_song()
             self.parent.lrcPlayer.media_lyric.setText(
-                self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
+                self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.music_player.eop_text))
             return
 
         if "Album Title:" in item.text():
@@ -236,9 +236,9 @@ class SongTableWidget(QTableWidget):
         return item
 
     def get_next_song_object(self, fromstart=False, clicking=None):
-        if self.parent.player.music_on_repeat and not clicking:
-            self.parent.player.player.setPosition(0)
-            self.parent.player.player.play()
+        if self.parent.music_player.music_on_repeat and not clicking:
+            self.parent.music_player.music_player.setPosition(0)
+            self.parent.music_player.music_player.play()
             return
 
         if self.song_playing_row is None:
@@ -252,14 +252,14 @@ class SongTableWidget(QTableWidget):
 
         # Ensure next_row is within bounds
         if next_row >= self.rowCount():
-            if self.parent.player.playlist_on_loop or self.parent.player.music_on_repeat:
+            if self.parent.music_player.playlist_on_loop or self.parent.music_player.music_on_repeat:
                 next_row = 0
-            elif self.parent.player.music_on_shuffle:
+            elif self.parent.music_player.music_on_shuffle:
                 self.parent.play_random_song()
             else:
                 self.parent.stop_song()
                 self.parent.lrcPlayer.media_lyric.setText(
-                    self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
+                    self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.music_player.eop_text))
 
                 # Check if the item exists
         item = self.item(next_row, 0)
@@ -267,7 +267,7 @@ class SongTableWidget(QTableWidget):
         if item is None:
             self.parent.stop_song()
             self.parent.lrcPlayer.media_lyric.setText(
-                self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.player.eop_text))
+                self.parent.lrcPlayer.media_font.get_formatted_text(self.parent.music_player.eop_text))
             return
 
         if "Album Title:" in item.text():
@@ -400,7 +400,7 @@ class SongTableWidget(QTableWidget):
 
         elif event.key() == Qt.Key.Key_0 or event.key() == Qt.Key.Key_Home:
             print("keyboard r pressing")
-            self.parent.player.player.setPosition(0)  # set position to start
+            self.parent.music_player.music_player.setPosition(0)  # set position to start
 
         elif event.key() == Qt.Key.Key_Down:
             super().keyPressEvent(

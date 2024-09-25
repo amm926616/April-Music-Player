@@ -27,7 +27,7 @@ def convert_time_to_seconds(time_str):
 
 
 class LRCSync:
-    def __init__(self, app, player, config_path, on_off_lyrics=None):
+    def __init__(self, app, music_player, config_path, on_off_lyrics=None):
         self.on_off_lyrics = on_off_lyrics
         self.app = app
         self.config_path = config_path
@@ -35,7 +35,7 @@ class LRCSync:
         self.lrc_display = None
         self.file = None
         self.music_file = None
-        self.player = player
+        self.music_player = music_player
         self.lyric_label = None
         self.lyrics = None
         self.lyrics_keys = None
@@ -68,10 +68,10 @@ class LRCSync:
 
     def disconnect_syncing(self):
         if self.lyric_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_display_lyric)
+            self.music_player.player.positionChanged.disconnect(self.update_display_lyric)
             self.lyric_sync_connected = False
         if self.media_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_media_lyric)
+            self.music_player.player.positionChanged.disconnect(self.update_media_lyric)
             self.media_sync_connected = False
 
     def update_file_and_parse(self, file):
@@ -212,7 +212,7 @@ class LRCSync:
             else:
                 self.lyric_label.setText(self.lrc_font.get_formatted_text("April Music Player"))
 
-            self.player.player.positionChanged.connect(self.update_display_lyric)
+            self.music_player.player.positionChanged.connect(self.update_display_lyric)
             self.lyric_sync_connected = True
         else:
             self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
@@ -229,7 +229,7 @@ class LRCSync:
         self.lrc_display = None
 
         if self.lyric_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_display_lyric)
+            self.music_player.player.positionChanged.disconnect(self.update_display_lyric)
             self.lyric_sync_connected = False
 
         event.accept()  # To accept the close event
@@ -237,15 +237,15 @@ class LRCSync:
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
-            self.player.seek_backward()
+            self.music_player.seek_backward()
 
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
-            self.player.seek_forward()
+            self.music_player.seek_forward()
 
         elif event.key() == Qt.Key.Key_Space:
             print("Space key pressed")
-            self.player.play_pause_music()
+            self.music_player.play_pause_music()
 
         elif event.key() == Qt.Key.Key_Up:
             print("UP key pressed")
@@ -256,24 +256,24 @@ class LRCSync:
             self.go_to_next_lyric()
 
         elif event.key() == Qt.Key.Key_D:
-            if self.player.in_pause_state:
-                self.player.play_pause_music()
-                self.player.in_pause_state = False
+            if self.music_player.in_pause_state:
+                self.music_player.play_pause_music()
+                self.music_player.in_pause_state = False
             self.go_to_the_start_of_current_lyric()
 
         elif event.key() == Qt.Key.Key_E:
             print("pressing e")
-            self.player.pause()
+            self.music_player.pause()
             self.createNoteTakingWindow()
 
         elif event.key() == Qt.Key.Key_Escape:
             self.lrc_display.close()
 
         elif event.key() == Qt.Key.Key_R:
-            if self.player.in_pause_state:
-                self.player.play_pause_music()
-                self.player.in_pause_state = False
-            self.player.player.setPosition(0)
+            if self.music_player.in_pause_state:
+                self.music_player.play_pause_music()
+                self.music_player.in_pause_state = False
+            self.music_player.player.setPosition(0)
 
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
@@ -282,16 +282,22 @@ class LRCSync:
             else:
                 self.lrc_display.showFullScreen()  # Enter full-screen mode
 
+        elif event.key() == Qt.Key.Key_Left and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.parent.play_previous_song()
+
+        elif event.key() == Qt.Key.Key_Left and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.parent.play_next_song()
+
         elif event.key() == Qt.Key.Key_I and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("disabled lyrics")
             if self.show_lyrics:
                 self.on_off_lyrics(False)
-                self.player.player.positionChanged.disconnect(self.update_display_lyric)
+                self.music_player.player.positionChanged.disconnect(self.update_display_lyric)
                 self.lyric_label.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
                 self.lyric_sync_connected = False
             else:
                 self.on_off_lyrics(True)
-                self.player.player.positionChanged.connect(self.update_display_lyric)
+                self.music_player.player.positionChanged.connect(self.update_display_lyric)
                 self.lyric_sync_connected = True
 
     def createNoteTakingWindow(self):
@@ -332,9 +338,9 @@ class LRCSync:
         play_pause_button = QPushButton("Play/Pause")
         forward_button = QPushButton("Forward Line")
 
-        prev_button.clicked.connect(self.player.seek_backward)
-        play_pause_button.clicked.connect(self.player.play_pause_music)
-        forward_button.clicked.connect(self.player.seek_forward)
+        prev_button.clicked.connect(self.music_player.seek_backward)
+        play_pause_button.clicked.connect(self.music_player.play_pause_music)
+        forward_button.clicked.connect(self.music_player.seek_forward)
 
         # Layout for buttons
         button_layout = QHBoxLayout()
@@ -351,7 +357,7 @@ class LRCSync:
             previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
             if not previous_lyric_index < 0:
                 previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
-                self.player.player.setPosition(int(previous_lyrics_key * 1000))
+                self.music_player.player.setPosition(int(previous_lyrics_key * 1000))
 
                 # fix the late to set current time due to slower sync time                                
                 self.current_lyrics_time = self.lyrics_keys[previous_lyric_index]
@@ -360,10 +366,10 @@ class LRCSync:
             else:
                 self.current_lyrics_time = self.lyrics_keys[-1]
                 previous_lyrics_key = self.lyrics_keys[-1]
-                self.player.player.setPosition(int(previous_lyrics_key * 1000))
+                self.music_player.player.setPosition(int(previous_lyrics_key * 1000))
 
-            if self.player.in_pause_state:
-                self.player.paused_position = int(previous_lyrics_key * 1000)
+            if self.music_player.in_pause_state:
+                self.music_player.paused_position = int(previous_lyrics_key * 1000)
 
     def go_to_next_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
@@ -375,7 +381,7 @@ class LRCSync:
             if not len(self.lyrics_keys) < (next_lyric_index + 1):
                 next_lyric_key = self.lyrics_keys[next_lyric_index]
                 print("next line, ", next_lyric_key)
-                self.player.player.setPosition(int(next_lyric_key * 1000))
+                self.music_player.player.setPosition(int(next_lyric_key * 1000))
 
                 # fix the late to set current time due to slower sync time                                                
                 self.current_lyrics_time = self.lyrics_keys[next_lyric_index]
@@ -383,13 +389,13 @@ class LRCSync:
             else:
                 self.current_lyrics_time = self.lyrics_keys[0]
                 next_lyric_key = self.lyrics_keys[0]
-                self.player.player.setPosition(int(next_lyric_key * 1000))
+                self.music_player.player.setPosition(int(next_lyric_key * 1000))
 
-            if self.player.in_pause_state:
-                self.player.paused_position = int(next_lyric_key * 1000)
+            if self.music_player.in_pause_state:
+                self.music_player.paused_position = int(next_lyric_key * 1000)
 
     def go_to_the_start_of_current_lyric(self):
-        self.player.player.setPosition(int(self.current_lyrics_time * 1000))
+        self.music_player.player.setPosition(int(self.current_lyrics_time * 1000))
 
     def parse_lrc(self):
         parse_thread = threading.Thread(target=self.parse_lrc_base)
@@ -422,7 +428,7 @@ class LRCSync:
 
     def get_current_lyric(self):
         if self.file is not None and self.lyrics:
-            self.current_time = self.player.get_current_time()
+            self.current_time = self.music_player.get_current_time()
 
             # Only update if the current time has moved beyond the update interval
             abs_value = abs(self.current_time - self.last_update_time)
@@ -468,8 +474,8 @@ class LRCSync:
     def sync_lyrics(self, file):
         self.update_file_and_parse(file)
         if self.media_sync_connected:
-            self.player.player.positionChanged.disconnect(self.update_media_lyric)
+            self.music_player.player.positionChanged.disconnect(self.update_media_lyric)
             self.media_sync_connected = False
 
-        self.player.player.positionChanged.connect(self.update_media_lyric)
+        self.music_player.player.positionChanged.connect(self.update_media_lyric)
         self.media_sync_connected = True

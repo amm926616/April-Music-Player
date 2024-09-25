@@ -200,10 +200,10 @@ class MusicPlayerUI(QMainWindow):
 
         self.music_file = None
         self.lrc_file = None
-        self.player = MusicPlayer(self, self.play_pause_button, self.loop_playlist_button, self.repeat_button,
-                                  self.shuffle_button, self.play_next_song, self.play_random_song)
+        self.music_player = MusicPlayer(self, self.play_pause_button, self.loop_playlist_button, self.repeat_button,
+                                        self.shuffle_button, self.play_next_song, self.play_random_song)
 
-        self.lrcPlayer = LRCSync(self, self.player, self.config_path, self.on_off_lyrics)
+        self.lrcPlayer = LRCSync(self, self.music_player, self.config_path, self.on_off_lyrics)
 
     @staticmethod
     def get_metadata(song_file: object):
@@ -391,7 +391,7 @@ class MusicPlayerUI(QMainWindow):
                 self.on_off_lyrics(True)
 
         elif event.key() == Qt.Key.Key_1 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            if self.player.thread.isRunning():
+            if self.music_player.thread.isRunning():
                 print("Music player's QThread is running.")
             else:
                 print("Music player's QThread is not running.")
@@ -438,15 +438,15 @@ class MusicPlayerUI(QMainWindow):
 
         elif event.key() == Qt.Key.Key_1 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("F1 button pressed")
-            self.player.toggle_loop_playlist()
+            self.music_player.toggle_loop_playlist()
 
         elif event.key() == Qt.Key.Key_2 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("F2 button pressed")
-            self.player.toggle_repeat()
+            self.music_player.toggle_repeat()
 
         elif event.key() == Qt.Key.Key_3 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             print("F3 button pressed")
-            self.player.toggle_shuffle()
+            self.music_player.toggle_shuffle()
 
         else:
             # For other keys, use the default behavior            
@@ -454,7 +454,7 @@ class MusicPlayerUI(QMainWindow):
 
     def exit_app(self):
         self.songTableWidget.save_table_data()
-        self.player.save_playback_control_state()
+        self.music_player.save_playback_control_state()
         sys.exit()
 
     def toggle_add_directories(self):
@@ -485,7 +485,7 @@ class MusicPlayerUI(QMainWindow):
             self.lrcPlayer.show_lyrics = False
             self.show_lyrics_action.setChecked(False)
             if self.lrcPlayer.media_sync_connected:
-                self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)
+                self.music_player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)
                 self.lrcPlayer.media_sync_connected = False
             self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("Lyrics Disabled"))
             self.lrcPlayer.current_index = 0
@@ -739,8 +739,8 @@ class MusicPlayerUI(QMainWindow):
         self.central_widget.setLayout(main_layout)
 
         # Initialize the table widget
-        self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.player.seek_forward,
-                                               self.player.seek_backward, self.play_pause, self.config_path)
+        self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.music_player.seek_forward,
+                                               self.music_player.seek_backward, self.play_pause, self.config_path)
 
         self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)
@@ -788,13 +788,13 @@ class MusicPlayerUI(QMainWindow):
         self.search_bar.returnPressed.connect(self.filterSongs)
 
         self.loop_playlist_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "loop-playlist.ico")))
-        self.loop_playlist_button.clicked.connect(self.player.toggle_loop_playlist)
+        self.loop_playlist_button.clicked.connect(self.music_player.toggle_loop_playlist)
 
         self.repeat_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "repeat.ico")))
-        self.repeat_button.clicked.connect(self.player.toggle_repeat)
+        self.repeat_button.clicked.connect(self.music_player.toggle_repeat)
 
         self.shuffle_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "shuffle.ico")))
-        self.shuffle_button.clicked.connect(self.player.toggle_shuffle)
+        self.shuffle_button.clicked.connect(self.music_player.toggle_shuffle)
 
         self.playback_management_layout = QHBoxLayout()
         self.playback_management_layout.addWidget(self.loop_playlist_button)
@@ -809,7 +809,7 @@ class MusicPlayerUI(QMainWindow):
         if self.ej.get_value("music_directories") is None:
             self.addnewdirectory.add_directory()
 
-        self.player.setup_playback_control_state()
+        self.music_player.setup_playback_control_state()
 
     def setupMediaPlayerWidget(self, right_layout):
         # Create a widget to hold the media player components
@@ -874,7 +874,7 @@ class MusicPlayerUI(QMainWindow):
             self.play_pause()
 
     def update_slider(self, position):
-        self.update_progress_label(self.player.player.position())
+        self.update_progress_label(self.music_player.player.position())
         self.slider.setValue(position)
 
     def update_slider_range(self, duration):
@@ -889,7 +889,7 @@ class MusicPlayerUI(QMainWindow):
     def update_progress_label(self, position):
         # Calculate current time and total time
         current_time = format_time(position // 1000)  # Convert from ms to seconds
-        total_time = format_time(self.player.get_duration() // 1000)  # Total duration in seconds
+        total_time = format_time(self.music_player.get_duration() // 1000)  # Total duration in seconds
 
         duration_string = f"[{current_time}/{total_time}]"
         self.duration_label.setText(duration_string)
@@ -904,12 +904,12 @@ class MusicPlayerUI(QMainWindow):
         self.slider_layout.addWidget(self.slider)
         self.slider_layout.addWidget(self.duration_label)
         self.slider.keyPressEvent = self.slider_key_event
-        self.slider.setRange(0, self.player.get_duration())
+        self.slider.setRange(0, self.music_player.get_duration())
         self.slider.setValue(0)
 
         # Connect the slider to the player's position
-        self.player.player.positionChanged.connect(self.update_slider)
-        self.player.player.durationChanged.connect(self.update_slider_range)
+        self.music_player.player.positionChanged.connect(self.update_slider)
+        self.music_player.player.durationChanged.connect(self.update_slider_range)
         self.slider.sliderMoved.connect(self.update_player_from_slider)
 
         self.lrcPlayer.media_lyric.doubleClicked.connect(self.activate_lrc_display)
@@ -1043,7 +1043,7 @@ class MusicPlayerUI(QMainWindow):
     def cleanDetails(self):
         # clear the remaining from previous play
         self.lrcPlayer.file = None
-        self.player.player.stop()
+        self.music_player.player.stop()
         self.track_display.setText("No Track Playing")
         self.image_display.clear()
         self.song_details.clear()
@@ -1092,8 +1092,8 @@ class MusicPlayerUI(QMainWindow):
     def song_initializing_stuff(self):
         self.update_information()
         self.get_lrc_file()
-        self.player.update_music_file(self.music_file)
-        self.player.default_pause_state()
+        self.music_player.update_music_file(self.music_file)
+        self.music_player.default_pause_state()
         self.play_song()
 
     def get_random_song_list(self):
@@ -1122,7 +1122,7 @@ class MusicPlayerUI(QMainWindow):
         self.current_playing_random_song_index = 0
 
     def play_previous_song(self):
-        if self.player.music_on_shuffle:
+        if self.music_player.music_on_shuffle:
             self.current_playing_random_song_index -= 1
             if self.current_playing_random_song_index < 1:
                 self.current_playing_random_song_index = len(self.random_song_list) - 1
@@ -1137,7 +1137,7 @@ class MusicPlayerUI(QMainWindow):
             self.handleRowDoubleClick(next_song)
             return
 
-        if self.player.music_on_shuffle:
+        if self.music_player.music_on_shuffle:
             self.current_playing_random_song_index += 1
             if self.current_playing_random_song_index > len(self.random_song_list) - 1:
                 self.current_playing_random_song_index = 0
@@ -1159,7 +1159,7 @@ class MusicPlayerUI(QMainWindow):
             self.current_playing_random_song_index += 1
 
             if self.current_playing_random_song_index > len(self.random_song_list) - 1:
-                self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text(self.player.eop_text))
+                self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text(self.music_player.eop_text))
                 return
 
         if from_shortcut:
@@ -1205,13 +1205,13 @@ class MusicPlayerUI(QMainWindow):
             self.hidden_rows = False
 
     def stop_song(self):
-        if self.player.started_playing:
-            self.player.player.stop()
+        if self.music_player.started_playing:
+            self.music_player.player.stop()
             self.lrcPlayer.started_player = False
             self.lrcPlayer.disconnect_syncing()
             self.play_pause_button.setIcon(QIcon(os.path.join(self.script_path, "media-icons", "play.ico")))
             self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text("April Music Player"))
-            self.player.started_playing = False
+            self.music_player.started_playing = False
 
     def play_song(self):
         # current for checking lrc on/off state and then play song
@@ -1220,39 +1220,39 @@ class MusicPlayerUI(QMainWindow):
             self.lrcPlayer.sync_lyrics(self.lrc_file)
         else:
             if self.lrcPlayer.media_sync_connected:
-                self.player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)
+                self.music_player.player.positionChanged.disconnect(self.lrcPlayer.update_media_lyric)
                 self.lrcPlayer.media_sync_connected = False
 
-        self.player.started_playing = True
-        self.player.play()
+        self.music_player.started_playing = True
+        self.music_player.play()
 
         if self.saved_position:
-            self.player.player.setPosition(int(self.saved_position))
+            self.music_player.player.setPosition(int(self.saved_position))
         else:
-            self.player.player.setPosition(int(0))
+            self.music_player.player.setPosition(int(0))
 
     def seekBack(self):
-        self.player.seek_backward()
+        self.music_player.seek_backward()
 
     def seekForward(self):
-        self.player.seek_forward()
+        self.music_player.seek_forward()
 
     def play_pause(self):
         # for checking eop then calling button changing method for play/pause
         current_text = html_to_plain_text(self.lrcPlayer.media_lyric.text())
-        if current_text == self.player.eop_text:
-            if self.player.music_on_shuffle:
+        if current_text == self.music_player.eop_text:
+            if self.music_player.music_on_shuffle:
                 self.random_song_list = self.get_random_song_list()
                 self.current_playing_random_song_index = 0
                 self.play_random_song(user_clicking=True)
             else:
                 self.play_next_song(True)
         else:
-            self.player.play_pause_music()
+            self.music_player.play_pause_music()
 
     def update_player_from_slider(self, position):
         # Set the media player position when the slider is moved
-        self.player.player.setPosition(position)
+        self.music_player.player.setPosition(position)
 
     def get_lrc_file(self):
         if self.music_file.endswith(".ogg"):

@@ -94,7 +94,7 @@ class NoteTaking:
                 # Fetch the existing notes for the current file
                 cursor.execute('''
                     SELECT json_notes FROM notes WHERE lrc_filename = ?
-                ''', (self.lrcSync.player.file_name,))
+                ''', (self.lrcSync.music_player.file_name,))
 
                 row = cursor.fetchone()
                 if row:
@@ -116,7 +116,7 @@ class NoteTaking:
                 cursor.execute('''
                     REPLACE INTO notes (lrc_filename, json_notes)
                     VALUES (?, ?)
-                ''', (self.lrcSync.player.file_name, json_notes))
+                ''', (self.lrcSync.music_player.file_name, json_notes))
 
                 conn.commit()
 
@@ -144,7 +144,7 @@ class NoteTaking:
                 cursor.execute('''
                     SELECT json_notes FROM notes
                     WHERE lrc_filename = ?
-                ''', (self.lrcSync.player.file_name,))
+                ''', (self.lrcSync.music_player.file_name,))
 
                 row = cursor.fetchone()
 
@@ -224,7 +224,7 @@ class NoteTaking:
         return is_full_screen_mode
 
     def noteWindowClose(self, event):
-        self.lrcSync.player.play_pause_music()
+        self.lrcSync.music_player.play_pause_music()
         # Clear the text box
         self.textBox.clear()
         event.accept()
