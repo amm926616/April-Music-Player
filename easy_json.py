@@ -61,6 +61,7 @@ class EasyJson:
             "sync_threshold": 0.3,
             "lyrics_color": "white",
             "show_lyrics": True,
+            "play_song_at_startup": False,
             "shuffle": False,
             "repeat": False,
             "loop": False,

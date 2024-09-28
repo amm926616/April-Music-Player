@@ -7,7 +7,7 @@ import json
 
 class SongTableWidget(QTableWidget):
     def __init__(self, parent=None, rowDoubleClick=None, seekRight=None, seekLeft=None, play_pause=None,
-                 config_path=None):
+                 config_path=None, screenheight=None):
         self.parent = parent
         self.rowDoubleClick = rowDoubleClick
         self.seekRight = seekRight
@@ -25,8 +25,16 @@ class SongTableWidget(QTableWidget):
         # Always show the vertical scrollbar
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
 
+        background_image = "700x700.png"
+
+        if screenheight > 1200:
+            background_image = "900x900.png"
+        elif 1080 <= screenheight < 1200:
+            background_image = "700x700.png"
+        elif 700 <= screenheight < 800:
+            background_image = "500x500.png"
         # Set the background image on the viewport (the visible area of the table)        
-        svg_file = os.path.join(self.parent.script_path, "icons", "resized.png")
+        svg_file = os.path.join(self.parent.script_path, "icons", background_image)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
