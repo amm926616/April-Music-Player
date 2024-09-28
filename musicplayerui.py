@@ -398,6 +398,9 @@ class MusicPlayerUI(QMainWindow):
             else:
                 self.on_off_lyrics(True)
 
+        elif event.key() == Qt.Key.Key_F11:
+            self.toggle_fullscreen()
+
         elif event.key() == Qt.Key.Key_1 and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             if self.music_player.thread.isRunning():
                 print("Music player's QThread is running.")
@@ -1302,6 +1305,12 @@ class MusicPlayerUI(QMainWindow):
             album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file,
                                             self.screen_size.height())
             album_window.exec()
+
+    def toggle_fullscreen(self):
+        if self.isFullScreen():
+            self.showMaximized()
+        else:
+            self.showFullScreen()
 
     def extract_and_set_album_art(self):
         audio_file = File(self.music_file)
