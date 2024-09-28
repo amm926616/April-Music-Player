@@ -176,8 +176,11 @@ class MusicPlayerUI(QMainWindow):
         self.random_song = None
         self.saved_position = None
 
+        # Screen size
+        self.screen_size = self.app.primaryScreen().geometry()
+
         # Getting image size from primary screen geometry
-        self.image_size = int(self.app.primaryScreen().geometry().width() / 5)  # extract image size from main window
+        self.image_size = int(self.screen_size.width() / 5)  # extract image size from main window
 
         if platform.system() == "Windows":
             self.config_path = os.path.join(os.getenv('APPDATA'), 'April Music Player')
@@ -313,6 +316,11 @@ class MusicPlayerUI(QMainWindow):
         return metadata
 
     def play_last_played_song(self):
+        if self.ej.get_value("play_song_at_startup"):
+            pass 
+        else:
+            return
+        
         last_play_file_data = self.ej.get_value("last_played_song")
         if last_play_file_data:
             for file, position in last_play_file_data.items():
@@ -495,7 +503,14 @@ class MusicPlayerUI(QMainWindow):
 
     def show_font_settings(self):
         self.font_settings_window.exec()
-
+        
+    def trigger_play_song_at_startup(self, checked):        
+        print(checked)
+        if checked:
+            self.ej.edit_value("play_song_at_startup", True)
+        else:
+            self.ej.edit_value("play_song_at_startup", False) 
+        
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
@@ -535,12 +550,20 @@ class MusicPlayerUI(QMainWindow):
         self.font_settings_action.triggered.connect(self.show_font_settings)
 
         self.font_settings_window = FontSettingsWindow(self)
+        
+        
+        # Play song at startup action
+        self.play_song_at_startup = QAction("Play Song at startup", self)
+        self.play_song_at_startup.setCheckable(True)
+        self.play_song_at_startup.setChecked(self.ej.get_value("play_song_at_startup"))
+        self.play_song_at_startup.triggered.connect(self.trigger_play_song_at_startup)
 
         # These are main menus in the menu bar
         file_menu = menubar.addMenu("File")
         settings_menu = menubar.addMenu("Settings")
         help_menu = menubar.addMenu("Help")
-
+        
+        settings_menu.addAction(self.play_song_at_startup)
         settings_menu.addAction(self.show_lyrics_action)
         settings_menu.addAction(self.font_settings_action)
 
@@ -740,7 +763,8 @@ class MusicPlayerUI(QMainWindow):
 
         # Initialize the table widget
         self.songTableWidget = SongTableWidget(self, self.handleRowDoubleClick, self.music_player.seek_forward,
-                                               self.music_player.seek_backward, self.play_pause, self.config_path)
+                                               self.music_player.seek_backward, self.play_pause, self.config_path,
+                                               self.screen_size.height())
 
         self.songTableWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.songTableWidget.customContextMenuRequested.connect(self.show_context_menu)
@@ -1200,8 +1224,8 @@ class MusicPlayerUI(QMainWindow):
             self.restore_table()
             self.songTableWidget.setFocus()
             self.songTableWidget.scroll_to_current_row()
-            simulate_keypress(self.songTableWidget, Qt.Key.Key_G)  # only imitation of key press work. Direct calling the method doesn't
-            # work. IDk why.
+            simulate_keypress(self.songTableWidget, Qt.Key.Key_G)  # only imitation of key press work.
+            # Direct calling the method doesn't work. IDk why.
             self.hidden_rows = False
 
     def stop_song(self):
@@ -1275,7 +1299,8 @@ class MusicPlayerUI(QMainWindow):
         elif self.image_display.text() == "No Album Art Found":
             return
         else:
-            album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file)
+            album_window = AlbumImageWindow(self, self.passing_image, self.icon_path, self.music_file,
+                                            self.screen_size.height())
             album_window.exec()
 
     def extract_and_set_album_art(self):

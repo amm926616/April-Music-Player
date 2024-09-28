@@ -5,19 +5,19 @@ import os
 
 
 class AlbumImageWindow(QDialog):
-    def __init__(self, parent=None, image=None, icon=None, imageName=None):
+    def __init__(self, parent=None, image=None, icon=None, imageName=None, screenheight=None):
         super().__init__(parent)
         # Resize the image while maintaining aspect ratio
-        screen_size = self.parent().screen().availableGeometry()
+        self.screenheight = screenheight
 
         # Default value for size
         size = 640
 
-        if screen_size.height() > 1200:
+        if self.screenheight > 1200:
             size = 1200
-        elif 1080 <= screen_size.height() < 1200:
+        elif 1080 <= self.screenheight < 1200:
             size = 1000
-        elif 700 <= screen_size.height() < 800:
+        elif 700 <= self.screenheight < 800:
             size = 700
 
         new_width = size
