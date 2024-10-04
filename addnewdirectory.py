@@ -100,8 +100,11 @@ class AddNewDirectory(QDialog):
                 QMessageBox.information(self, "Directory Exists", "This directory is already added.")
 
     def load_all_directories(self):
+        print("inside load all directories")
         """Simulate loading all directories (this is where backend logic will go)."""
         selected_dirs = [cb.text() for cb in self.scroll_area_widget.findChildren(QCheckBox) if cb.isChecked()]
+        print("This is all the directories added")        
+        print(selected_dirs)
         if selected_dirs:
             self.parent.albumTreeWidget.loadSongsToCollection(self.directories, loadAgain=True)
         else:

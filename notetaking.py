@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QLabel
-from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor, QIcon
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel
+from PyQt6.QtGui import QKeyEvent, QFont, QTextCharFormat, QTextCursor
 from PyQt6.QtCore import Qt
 from getfont import GetFont
 import sqlite3
@@ -43,22 +43,25 @@ class NoteTaking:
         cursor.select(QTextCursor.SelectionType.Document)  # Use QTextCursor.SelectionType.Document
         cursor.mergeCharFormat(format_char)
         self.textBox.setTextCursor(cursor)
+        
+        # Save button
+        saveButton = QPushButton("Save")
+        saveButton.clicked.connect(self.saveToDatabase)     
+        
+        textEditorLayout = QVBoxLayout()
+        textEditorLayout.addWidget(self.textBox)
+        textEditorLayout.addWidget(saveButton)
 
         self.current_lyric_label = QLabel()
         self.layout.addWidget(self.current_lyric_label)
-        self.layout.addWidget(self.textBox)
-
-        # Save button
-        saveButton = QPushButton("Save")
-        saveButton.clicked.connect(self.saveToDatabase)
-        self.layout.addWidget(saveButton)
+        self.layout.addLayout(textEditorLayout)
 
         self.window.setLayout(self.layout)
 
     def initialize_database(self):
         if self.conn:
             self.conn.close()  # Close the previous connection if it exists
-        self.conn = sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db"))
+        self.conn = sqlite3.connect(os.path.join(self.lrcSync.config_path, "databases", "notes.db"))
         self.cursor = self.conn.cursor()
 
         # Create the table for storing notes for lyrics if it doesn't exist
@@ -88,7 +91,7 @@ class NoteTaking:
     def push_note_to_database(self, compressed_html_base64):
         try:
             # Connect to the SQLite database
-            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db")) as conn:
+            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "databases", "notes.db")) as conn:
                 cursor = conn.cursor()
 
                 # Fetch the existing notes for the current file
@@ -137,7 +140,7 @@ class NoteTaking:
         # Load existing notes
         try:
             # Connect to the SQLite database
-            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "notes.db")) as conn:
+            with sqlite3.connect(os.path.join(self.lrcSync.config_path, "databases", "notes.db")) as conn:
                 cursor = conn.cursor()
 
                 # Query to fetch JSON notes based on file_path

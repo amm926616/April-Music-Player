@@ -1,57 +1,71 @@
-#! /usr/bin/env python
-
-import sys, os, platform
+import inspect
+import os
+import platform
 import sqlite3
-
-from PyQt6 import QtWidgets, QtGui, QtCore
 from PyQt6.QtCore import Qt  # for shortcuts
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (QMessageBox, QVBoxLayout, QLineEdit, QPushButton, QFormLayout,
+                             QTextEdit, QDialog)
 
 
-class VocabularyManager(QtWidgets.QWidget):
-    def __init__(self):
+class VocabularyManager(QDialog):
+    def __init__(self, parent=None):
         super().__init__()
+        self.cursor = None
+        self.conn = None
+        self.result_text = None
+        self.view_button = None
+        self.delete_button = None
+        self.add_button = None
+        self.search_button = None
+        self.meaning_input = None
+        self.word_input = None
+        self.icon_path = None
+        self.os_name = None
+        self.db_path = None
+        self.parent = parent
+        print("inside dictionary class")
         self.setup()
         self.initUI()
         self.initDB()
 
     def setup(self):
         self.os_name = platform.system()
-        current_directory = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.dirname(os.path.abspath(__file__))
 
-        self.icon_path = os.path.join(current_directory, "resources", "icon.png")
-
-        if (self.os_name == "Linux"):
-            db_dir = os.path.join(os.environ['HOME'], '.config', 'sqlite_personal_dictionary')
+        self.icon_path = os.path.join(script_path, "icons", "dictionary.png")
+        db_dir = ""
+        if self.os_name == "Linux":
+            db_dir = os.path.join(os.environ['HOME'], '.config', 'april-music-player')
             os.makedirs(db_dir, exist_ok=True)
 
-        elif (self.os_name == "Windows"):
-            db_dir = os.path.join(os.environ['USERPROFILE'], 'AppData', 'Local', 'sqlite-personal-dictionary')
+        elif self.os_name == "Windows":
+            db_dir = os.path.join(os.environ['USERPROFILE'], 'AppData', 'April Music Player')
             os.makedirs(db_dir, exist_ok=True)
 
-        self.db_path = os.path.join(db_dir, 'vocabulary.db')
+        self.db_path = os.path.join(db_dir, 'databases', 'vocabulary.db')
 
     def initUI(self):
         self.setWindowTitle('Personal Dictionary')
 
         # The icon
-        self.setWindowIcon(QtGui.QIcon(self.icon_path))
+        self.setWindowIcon(QIcon(self.icon_path))
 
         # Make the window always on top
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
 
         # Layouts
-        layout = QtWidgets.QVBoxLayout()
-        form_layout = QtWidgets.QFormLayout()
+        layout = QVBoxLayout()
+        form_layout = QFormLayout()
 
         # Widgets
-        self.word_input = QtWidgets.QLineEdit()
-        self.meaning_input = QtWidgets.QLineEdit()
-        self.add_button = QtWidgets.QPushButton('Add Entry')
-        self.search_button = QtWidgets.QPushButton('Search Entry')
-        self.delete_button = QtWidgets.QPushButton('Delete Entry')
-        self.view_button = QtWidgets.QPushButton('View All Entries')
-        self.result_text = QtWidgets.QTextEdit()
+        self.word_input = QLineEdit()
+        self.meaning_input = QLineEdit()
+        self.add_button = QPushButton('Add Entry')
+        self.search_button = QPushButton('Search Entry')
+        self.delete_button = QPushButton('Delete Entry')
+        self.view_button = QPushButton('View All Entries')
+        self.result_text = QTextEdit()
         self.result_text.setReadOnly(True)
 
         # Layouts
@@ -72,9 +86,9 @@ class VocabularyManager(QtWidgets.QWidget):
         self.delete_button.clicked.connect(self.delete_entry)
         self.view_button.clicked.connect(self.view_all_entries)
 
-        # Connect returnPressed signal to the search_entry method
-        self.word_input.returnPressed.connect(self.search_entry)
-        self.meaning_input.returnPressed.connect(self.add_entry)
+        # # Connect returnPressed signal to the search_entry method
+        # self.word_input.returnPressed.connect(self.search_entry)
+        # self.meaning_input.returnPressed.connect(self.add_entry)
 
     def initDB(self):
         self.conn = sqlite3.connect(self.db_path)
@@ -89,18 +103,60 @@ class VocabularyManager(QtWidgets.QWidget):
         self.conn.commit()
 
     def add_entry(self):
+        print("inside add entry")
+        # Get the frame of the caller
+        caller_frame = inspect.currentframe().f_back
+        # Get file name and line number of the caller
+        caller_info = inspect.getframeinfo(caller_frame)
+        print(f"Called from File: {caller_info.filename}, Line: {caller_info.lineno}")
+
         word = self.word_input.text().strip()
         meaning = self.meaning_input.text().strip()
-        if word != "" and meaning != "":
-            self.cursor.execute('INSERT INTO vocabulary (word, meaning) VALUES (?, ?)', (word, meaning))
-            self.conn.commit()
-            self.result_text.setText(f'Added: {word} - {meaning}')
+
+        if word and meaning:
+            # Check if the exact word and meaning combination already exists
+            self.cursor.execute('SELECT 1 FROM vocabulary WHERE word = ? AND meaning = ?', (word, meaning))
+            result = self.cursor.fetchone()
+            if result:
+                # If the meaning exists, notify the user
+                self.result_text.setText(
+                    f'The meaning "{meaning}" for the word "{word}" already exists in the dictionary.')
+                print(result)
+                print(type(result))
+            else:
+                # If the entry does not exist, add it to the database
+                self.cursor.execute('INSERT INTO vocabulary (word, meaning) VALUES (?, ?)', (word, meaning))
+                self.conn.commit()
+                self.result_text.setText(f'Added: {word} - {meaning}')
+        else:
+            # Notify the user if either the word or meaning is empty
+            self.result_text.setText('Please provide both word and meaning.')
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.search_entry()
+
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.delete_entry()
+
+        elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            if self.word_input.hasFocus():
+                self.search_entry()
+            elif self.meaning_input.hasFocus():
+                self.add_entry()
+
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_W:
+            print("pressed ctrl + w")
+            self.close()  # You can use sys.exit() here if you want to exit the entire app
+
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_W:
+            self.close()
+
+        # Handle Exit key (example: Esc key)
+        elif event.key() == Qt.Key.Key_Escape:
+            print("Escape pressed, exiting application")
+            self.close()  # You can use sys.exit() here if you want to exit the entire app
+
         else:
             super().keyPressEvent(event)
 
@@ -126,18 +182,22 @@ class VocabularyManager(QtWidgets.QWidget):
             self.result_text.setText('Please provide both word and meaning.')
 
     def search_entry(self):
+        print("inside search entry")
         word = self.word_input.text().strip()
+
+        if not word:
+            return
 
         self.cursor.execute('SELECT meaning FROM vocabulary WHERE word = ?', (word,))
         base_results = self.cursor.fetchall()
 
-        syllables = [word[i:i+1] for i in range(len(word))]  # Each character as a syllable
+        syllables = [word[i:i + 1] for i in range(len(word))]  # Each character as a syllable
         related_results = {syllable: [] for syllable in syllables}
 
         combinations = []
         if len(syllables) > 2:
             for i in range(1, len(syllables)):
-                combination = ''.join(syllables[:i+1])
+                combination = ''.join(syllables[:i + 1])
                 combinations.append(combination)
 
         remove_list = [" ", "하", "다", "하다", "를", "을"]
@@ -178,16 +238,12 @@ class VocabularyManager(QtWidgets.QWidget):
     def view_all_entries(self):
         self.cursor.execute('SELECT word, meaning FROM vocabulary')
         entries = self.cursor.fetchall()
-        display_text = '\n'.join([f'{i+1}. {word}: {meaning}' for i, (word, meaning) in enumerate(entries)])
+        display_text = '\n'.join([f'{i + 1}. {word}: {meaning}' for i, (word, meaning) in enumerate(entries)])
         self.result_text.setText(display_text)
 
     def closeEvent(self, event):
-        self.conn.close()
+        self.parent.music_player.play_pause_music()
+        # Clear the text box
+        self.word_input.clear()
+        self.meaning_input.clear()
         event.accept()
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    ex = VocabularyManager()
-    ex.show()
-    sys.exit(app.exec())

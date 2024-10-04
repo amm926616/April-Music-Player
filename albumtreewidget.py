@@ -167,7 +167,7 @@ class AlbumTreeWidget(QWidget):
     def initialize_database(self):
         if self.conn:
             self.conn.close()  # Close the previous connection if it exists
-        self.conn = sqlite3.connect(os.path.join(self.config_path, "songs.db"))
+        self.conn = sqlite3.connect(os.path.join(self.config_path, "databases", "songs.db"))
         self.cursor = self.conn.cursor()
 
         # Create the table for storing song metadata if it doesn't exist
@@ -194,10 +194,9 @@ class AlbumTreeWidget(QWidget):
             self.tree_widget.clear()
             self.parent.media_files.clear()
             self.parent.cleanDetails()
-            directories = self.parent.ej.get_value("music_directories")
-
-        if not directories:
-            return
+            
+            if not directories:
+                directories = self.parent.ej.get_value("music_directories")
 
         self.parent.media_files.clear()  # clean the remaining files first
 

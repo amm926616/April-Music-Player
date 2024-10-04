@@ -3,13 +3,11 @@ from base64 import b64decode
 import os
 import sys
 import platform
-from collections import defaultdict
 from PyQt6.QtGui import QAction, QIcon, QFont, QFontDatabase, QAction, QCursor, QKeyEvent, QActionGroup, QColor, \
     QPainter, QPixmap, QPainterPath, QTextDocument
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, QSystemTrayIcon, QMenu, QWidgetAction,
-    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog, QScrollArea, QSizePolicy,
-    QAbstractItemView
+    QLabel, QPushButton, QSlider, QLineEdit, QTableWidget, QFileDialog, QScrollArea, QSizePolicy,
 )
 from PyQt6.QtCore import Qt, QCoreApplication, QRectF
 from mutagen import File
@@ -20,6 +18,7 @@ from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.wave import WAVE
+from pikepdf import Dictionary
 from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
@@ -31,7 +30,7 @@ from random import choice, shuffle
 from fontsettingdialog import FontSettingsWindow
 from tag_dialog import TagDialog
 from addnewdirectory import AddNewDirectory
-import threading
+
 
 def html_to_plain_text(html):
     doc = QTextDocument()
@@ -190,7 +189,7 @@ class MusicPlayerUI(QMainWindow):
         # Ensure the directory exists
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
 
-        self.config_file = os.path.join(self.config_path, "config.json")
+        self.config_file = os.path.join(self.config_path, "configs", "config.json")
 
         self.ej = EasyJson()
         lrc_font_size = int(self.height() * 0.11)
@@ -206,7 +205,7 @@ class MusicPlayerUI(QMainWindow):
         self.music_player = MusicPlayer(self, self.play_pause_button, self.loop_playlist_button, self.repeat_button,
                                         self.shuffle_button, self.play_next_song, self.play_random_song)
 
-        self.lrcPlayer = LRCSync(self, self.music_player, self.config_path, self.on_off_lyrics)
+        self.lrcPlayer = LRCSync(self, self.music_player, self.config_path, self.on_off_lyrics, self.showMaximized)
 
     @staticmethod
     def get_metadata(song_file: object):
@@ -405,7 +404,7 @@ class MusicPlayerUI(QMainWindow):
             if self.music_player.thread.isRunning():
                 print("Music player's QThread is running.")
             else:
-                print("Music player's QThread is not running.")
+                print("Music player's QThread is not running.")            
 
         elif event.key() == Qt.Key.Key_P and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.stop_song()
@@ -908,6 +907,7 @@ class MusicPlayerUI(QMainWindow):
         self.slider.setRange(0, duration)
 
     def activate_lrc_display(self):
+        self.hide()
         if self.lrcPlayer.lrc_display is not None:
             pass
         else:

@@ -1,6 +1,7 @@
 import bisect
 import re
 import os
+import sys
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout, QApplication
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon, QKeyEvent
@@ -10,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from notetaking import NoteTaking
 from clickable_label import ClickableLabel
 import threading
+from dictionary import VocabularyManager
 
 
 def extract_time_and_lyric(line):
@@ -27,7 +29,8 @@ def convert_time_to_seconds(time_str):
 
 
 class LRCSync:
-    def __init__(self, app, music_player, config_path, on_off_lyrics=None):
+    def __init__(self, app, music_player, config_path, on_off_lyrics=None, uishowMaximized=None):
+        self.uiShowMaximized = uishowMaximized
         self.on_off_lyrics = on_off_lyrics
         self.app = app
         self.config_path = config_path
@@ -45,6 +48,7 @@ class LRCSync:
         self.media_lyric.setWordWrap(True)
         self.lrc_font = GetFont(int(self.ej.get_value("lrc_font_size")))
         self.show_lyrics = self.ej.get_value("show_lyrics")
+        self.dictionary = None
 
         if self.show_lyrics:
             self.current_lyric = "April Music Player"
@@ -224,6 +228,7 @@ class LRCSync:
         self.lrc_display.exec()
 
     def closeEvent(self, event):
+        self.uiShowMaximized()
         print("QDialog closed")
         self.lyric_label = None
         self.lrc_display = None
@@ -238,6 +243,12 @@ class LRCSync:
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
             self.music_player.seek_backward()
+            
+        elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.music_player.pause()  # pause the music first  
+            if self.dictionary is None:
+                self.dictionary = VocabularyManager(self)                      
+            self.dictionary.exec()
 
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")

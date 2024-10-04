@@ -16,7 +16,7 @@ class SongTableWidget(QTableWidget):
         self.song_playing_row = None
         self.files_on_playlist = []
         self.config_path = config_path
-        self.json_file = os.path.join(self.config_path, "table_data.json")
+        self.json_file = os.path.join(self.config_path, "configs", "table_data.json")
         super().__init__(parent)
 
         # Hide the vertical header (row numbers)
@@ -33,15 +33,16 @@ class SongTableWidget(QTableWidget):
             background_image = "700x700.png"
         elif 700 <= screenheight < 800:
             background_image = "500x500.png"
+                        
         # Set the background image on the viewport (the visible area of the table)        
-        svg_file = os.path.join(self.parent.script_path, "icons", background_image)
+        background_image_path = os.path.join(self.parent.script_path, "icons", background_image)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            svg_file = svg_file.replace("\\", "/")  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
+            svg_file = background_image_path.replace("\\", "/")  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
 
         self.viewport().setStyleSheet(f"""
-            background-image: url({svg_file});
+            background-image: url({background_image_path});
             background-repeat: no-repeat;
             background-position: center;
             background-size: fill;  /* Ensures the SVG fits within the viewport */
