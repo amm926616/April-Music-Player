@@ -12,11 +12,16 @@ class EasyJson:
 
         config_file = os.path.join(self.config_path, "configs", "config.json")
         self.config_file = config_file
-
         self.script_path = os.path.dirname(os.path.abspath(__file__))
 
         # Load the JSON data once at initialization
         self.data = self._load_json()
+
+    def setupBackgroundImage(self):
+        self.edit_value("background_image", os.path.join(self.script_path, "background-images", "default.jpg"))
+
+    def setupLyricsColor(self):
+        self.edit_value("lyrics_color", "white")
 
     def _load_json(self):
         """Load the JSON file and return the data as a dictionary."""
