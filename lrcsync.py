@@ -247,7 +247,7 @@ class LRCSync:
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.music_player.pause()  # pause the music first  
             if self.dictionary is None:
-                self.dictionary = VocabularyManager(self)                      
+                self.dictionary = VocabularyManager()
             self.dictionary.exec()
 
         elif event.key() == Qt.Key.Key_Right:
@@ -426,7 +426,8 @@ class LRCSync:
                     for line in file:
                         time_str, lyric = extract_time_and_lyric(line)
                         if time_str and lyric:
-                            time_in_seconds = convert_time_to_seconds(time_str)
+                            time_in_seconds = convert_time_to_seconds(time_str) - self.early_sync_time  # early sync
+                            # 0.2 second
                             lyrics_dict[time_in_seconds] = lyric
 
                 if lyrics_dict:
