@@ -2,6 +2,8 @@ import json
 import os
 import platform
 
+"""The class is still not functioning wrong but I will keep the update implement."""
+
 
 class EasyJson:
     def __init__(self):
@@ -62,6 +64,7 @@ class EasyJson:
             "chinese_font": os.path.join(self.script_path, "fonts/NotoSerifKR-ExtraBold.ttf"),
             "lrc_font_size": lrc_font_size,
             "sync_threshold": 0.3,
+            "early_sync_time": 0.2,
             "lyrics_color": "white",
             "show_lyrics": True,
             "play_song_at_startup": False,
