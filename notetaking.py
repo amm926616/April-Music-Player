@@ -129,7 +129,7 @@ class NoteTaking:
     def createUI(self):
         # update current lyric label
         self.current_lyric_label.setText(
-            self.lyric_label_font.get_formatted_text(f"Current Lyric: {self.lrcSync.current_lyric}"))
+            self.lyric_label_font.get_formatted_text(f"Current Lyric: {self.lrcSync.current_lyric_text}"))
         self.current_lyric_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse)  # make it selectable
 

@@ -126,6 +126,7 @@ class MusicPlayerUI(QMainWindow):
         super().__init__()
 
         # Define the config path
+        self.play_song_at_startup = None
         self.threshold_actions = None
         self.search_bar_layout = None
         self.script_path = os.path.dirname(os.path.abspath(__file__))
@@ -138,7 +139,7 @@ class MusicPlayerUI(QMainWindow):
         self.prev_song_button = None
         self.playback_management_layout = None
         self.albumTreeWidget = None
-        self.addnewdirectory = AddNewDirectory(self)
+        self.add_new_directory = AddNewDirectory(self)
         self.color_actions = None
         self.font_settings_window = None
         self.font_settings_action = None
@@ -316,10 +317,10 @@ class MusicPlayerUI(QMainWindow):
 
     def play_last_played_song(self):
         if self.ej.get_value("play_song_at_startup"):
-            pass 
+            pass
         else:
             return
-        
+
         last_play_file_data = self.ej.get_value("last_played_song")
         if last_play_file_data:
             for file, position in last_play_file_data.items():
@@ -404,7 +405,7 @@ class MusicPlayerUI(QMainWindow):
             if self.music_player.thread.isRunning():
                 print("Music player's QThread is running.")
             else:
-                print("Music player's QThread is not running.")            
+                print("Music player's QThread is not running.")
 
         elif event.key() == Qt.Key.Key_P and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.stop_song()
@@ -468,7 +469,7 @@ class MusicPlayerUI(QMainWindow):
         sys.exit()
 
     def toggle_add_directories(self):
-        self.addnewdirectory.exec()
+        self.add_new_directory.exec()
 
     def set_default_background_image(self):
         self.ej.setupBackgroundImage()
@@ -487,7 +488,7 @@ class MusicPlayerUI(QMainWindow):
                 return
 
             self.lrcPlayer.media_lyric.setText(
-                self.lrcPlayer.media_font.get_formatted_text(self.lrcPlayer.current_lyric))
+                self.lrcPlayer.media_font.get_formatted_text(self.lrcPlayer.current_lyric_text))
 
         else:
             print("in disabling")
@@ -505,14 +506,14 @@ class MusicPlayerUI(QMainWindow):
 
     def show_font_settings(self):
         self.font_settings_window.exec()
-        
-    def trigger_play_song_at_startup(self, checked):        
+
+    def trigger_play_song_at_startup(self, checked):
         print(checked)
         if checked:
             self.ej.edit_value("play_song_at_startup", True)
         else:
-            self.ej.edit_value("play_song_at_startup", False) 
-        
+            self.ej.edit_value("play_song_at_startup", False)
+
     def createMenuBar(self):
         # this is the menubar that will hold all together
         menubar = self.menuBar()
@@ -552,8 +553,7 @@ class MusicPlayerUI(QMainWindow):
         self.font_settings_action.triggered.connect(self.show_font_settings)
 
         self.font_settings_window = FontSettingsWindow(self)
-        
-        
+
         # Play song at startup action
         self.play_song_at_startup = QAction("Play Song at startup", self)
         self.play_song_at_startup.setCheckable(True)
@@ -564,7 +564,7 @@ class MusicPlayerUI(QMainWindow):
         file_menu = menubar.addMenu("File")
         settings_menu = menubar.addMenu("Settings")
         help_menu = menubar.addMenu("Help")
-        
+
         settings_menu.addAction(self.play_song_at_startup)
         settings_menu.addAction(self.show_lyrics_action)
         settings_menu.addAction(self.font_settings_action)
@@ -833,7 +833,7 @@ class MusicPlayerUI(QMainWindow):
 
         left_layout.addLayout(self.search_bar_layout)
         if self.ej.get_value("music_directories") is None:
-            self.addnewdirectory.add_directory()
+            self.add_new_directory.add_directory()
 
         self.music_player.setup_playback_control_state()
 
@@ -1186,7 +1186,8 @@ class MusicPlayerUI(QMainWindow):
             self.current_playing_random_song_index += 1
 
             if self.current_playing_random_song_index > len(self.random_song_list) - 1:
-                self.lrcPlayer.media_lyric.setText(self.lrcPlayer.media_font.get_formatted_text(self.music_player.eop_text))
+                self.lrcPlayer.media_lyric.setText(
+                    self.lrcPlayer.media_font.get_formatted_text(self.music_player.eop_text))
                 return
 
         if from_shortcut:
