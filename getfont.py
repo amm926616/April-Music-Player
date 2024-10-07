@@ -112,6 +112,7 @@ class GetFont:
     #     return doc.toHtml()
 
     def apply_fonts_to_text(self, text):
+        text = str(text)
         if not self.fonts_loaded:
             self.loadFonts()
 

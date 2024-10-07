@@ -18,7 +18,6 @@ from mutagen.oggvorbis import OggVorbis
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.wave import WAVE
-from pikepdf import Dictionary
 from album_image_window import AlbumImageWindow
 from lrcsync import LRCSync
 from musicplayer import MusicPlayer
@@ -657,8 +656,7 @@ class MusicPlayerUI(QMainWindow):
         print(f"Selected color: {selected_color}")
         self.ej.edit_value("lyrics_color", selected_color.lower())
 
-        # Method to update sync threshold
-
+    # Method to update sync threshold
     def set_sync_threshold(self):
         selected_threshold = self.ej.get_value("sync_threshold")
         for threshold, action in self.threshold_actions.items():
