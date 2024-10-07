@@ -51,17 +51,17 @@ class LRCSync:
         self.dictionary = None
 
         if self.show_lyrics:
-            self.current_lyric = "April Music Player"
+            self.current_lyric_text = "April Music Player"
         else:
-            self.current_lyric = "Lyrics Disabled"
+            self.current_lyric_text = "Lyrics Disabled"
 
-        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
+        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric_text))
 
         self.lyric_sync_connected = None
         self.media_sync_connected = None
         self.current_lyrics_time = 0.0
         self.last_update_time = 0.0  # Initialize with 0 or None
-        self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds    
+        self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds
         self.script_path = os.path.dirname(os.path.abspath(__file__))
         self.current_index = 0
 
@@ -212,7 +212,7 @@ class LRCSync:
 
         if self.show_lyrics:
             if self.started_player:
-                self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
+                self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric_text))
             else:
                 self.lyric_label.setText(self.lrc_font.get_formatted_text("April Music Player"))
 
@@ -243,9 +243,9 @@ class LRCSync:
         if event.key() == Qt.Key.Key_Left:
             print("left key pressed")
             self.music_player.seek_backward()
-            
+
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.music_player.pause()  # pause the music first  
+            self.music_player.pause()  # pause the music first
             if self.dictionary is None:
                 self.dictionary = VocabularyManager()
             self.dictionary.exec()
@@ -370,9 +370,9 @@ class LRCSync:
                 previous_lyrics_key = self.lyrics_keys[previous_lyric_index]
                 self.music_player.player.setPosition(int(previous_lyrics_key * 1000))
 
-                # fix the late to set current time due to slower sync time                                
+                # fix the late to set current time due to slower sync time
                 self.current_lyrics_time = self.lyrics_keys[previous_lyric_index]
-                self.current_lyric = self.lyrics[self.current_lyrics_time]
+                self.current_lyric_text = self.lyrics[self.current_lyrics_time]
 
             else:
                 self.current_lyrics_time = self.lyrics_keys[-1]
@@ -384,7 +384,7 @@ class LRCSync:
 
     def go_to_next_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
-            if self.current_lyric == "(Instrumental Intro)":
+            if self.current_lyric_text == "(Instrumental Intro)":
                 next_lyric_index = 0
             else:
                 next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
@@ -394,9 +394,9 @@ class LRCSync:
                 print("next line, ", next_lyric_key)
                 self.music_player.player.setPosition(int(next_lyric_key * 1000))
 
-                # fix the late to set current time due to slower sync time                                                
+                # fix the late to set current time due to slower sync time
                 self.current_lyrics_time = self.lyrics_keys[next_lyric_index]
-                self.current_lyric = self.lyrics[self.current_lyrics_time]
+                self.current_lyric_text = self.lyrics[self.current_lyrics_time]
             else:
                 self.current_lyrics_time = self.lyrics_keys[0]
                 next_lyric_key = self.lyrics_keys[0]
@@ -426,8 +426,7 @@ class LRCSync:
                     for line in file:
                         time_str, lyric = extract_time_and_lyric(line)
                         if time_str and lyric:
-                            time_in_seconds = convert_time_to_seconds(time_str) - self.early_sync_time  # early sync
-                            # 0.2 second
+                            time_in_seconds = convert_time_to_seconds(time_str)
                             lyrics_dict[time_in_seconds] = lyric
 
                 if lyrics_dict:
@@ -456,32 +455,32 @@ class LRCSync:
             if index == 0:
                 if self.current_time < self.lyrics_keys[0]:  # for instrument section before first lyric
                     self.current_lyrics_time = self.lyrics_keys[0]
-                    self.current_lyric = "(Instrumental Intro)"
+                    self.current_lyric_text = "(Instrumental Intro)"
                 else:
                     # If the current time is before the first lyric
                     self.current_lyrics_time = self.lyrics_keys[0]
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]
+                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
 
             else:
                 if index >= len(self.lyrics_keys):
                     # If the current time is after the last lyric
                     self.current_lyrics_time = self.lyrics_keys[-1]
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]
+                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
                 else:
                     # Otherwise, the correct lyric is at the previous index
                     self.current_lyrics_time = self.lyrics_keys[index - 1]
-                    self.current_lyric = self.lyrics[self.current_lyrics_time]
+                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
 
         else:
-            self.current_lyric = "No Lyrics Found on the Disk"
+            self.current_lyric_text = "No Lyrics Found on the Disk"
 
     def update_media_lyric(self):
         self.get_current_lyric()
-        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric))
+        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric_text))
 
     def update_display_lyric(self):
         if self.lyric_label is not None:
-            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric))
+            self.lyric_label.setText(self.lrc_font.get_formatted_text(self.current_lyric_text))
 
     def sync_lyrics(self, file):
         self.update_file_and_parse(file)
