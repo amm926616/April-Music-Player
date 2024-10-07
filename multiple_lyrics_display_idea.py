@@ -1,54 +1,71 @@
-import sys
 from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint
 from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout
+import sys
 
 
 class LyricsDisplay(QDialog):
-    def __init__(self, lyrics, parent=None):
+    def __init__(self, lyrics_list, parent=None):
         super().__init__(parent)
+        self.at_margin_index = None
+        self.during_animation = False
         self.setWindowTitle("Lyrics Display")
         self.setFixedSize(400, 300)
-        self.lyrics = lyrics
+        self.lyrics = lyrics_list
         self.current_index = 0
+        self.animations = []  # Store active animations
+        self.animation_duration = 200  # the animation duration in milliseconds
 
         # Create a QVBoxLayout to arrange the labels vertically
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setLayout(self.layout)
 
-        # Initialize three labels for displaying the previous, current, and next lyrics
-        self.previous_label = QLabel(self.lyrics[self.current_index - 1] if self.current_index > 0 else "")
-        self.current_label = QLabel(self.lyrics[self.current_index])
-        self.next_label = QLabel(
-            self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
+        # Initialize five labels for displaying lyrics context
+        self.label1 = QLabel("")  # Top-most label
+        self.label2 = QLabel(self.lyrics[self.current_index - 1] if self.current_index > 0 else "")  # Previous
+        self.label3 = QLabel(self.lyrics[self.current_index])  # Current
+        self.label4 = QLabel(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
+        # Next
+        self.label5 = QLabel(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")
+        # Bottom-most
 
         # Set styles for the labels
         self.update_labels_style()
 
         # Add labels to the layout
-        self.layout.addWidget(self.previous_label)
-        self.layout.addWidget(self.current_label)
-        self.layout.addWidget(self.next_label)
+        self.layout.addWidget(self.label1)
+        self.layout.addWidget(self.label2)
+        self.layout.addWidget(self.label3)
+        self.layout.addWidget(self.label4)
+        self.layout.addWidget(self.label5)
 
         self.set_initial_positions()
 
     def set_initial_positions(self):
-        """Set the initial positions of the previous, current, and next labels."""
+        """Set the initial positions of all five labels."""
         # Manually set the positions of each label within the dialog
-        self.previous_label.move(105, 50)  # Top position
-        self.current_label.move(105, 137)  # Center position
-        self.next_label.move(105, 224)     # Bottom position
+        self.label1.move(QPoint(105, 20))   # Top-most position
+        self.label2.move(QPoint(105, 75))   # Previous position
+        self.label3.move(QPoint(105, 137))  # Current position
+        self.label4.move(QPoint(105, 199))  # Next position
+        self.label5.move(QPoint(105, 261))  # Bottom-most position
 
     def update_labels_style(self):
-        """Set styles for the previous, current, and next labels."""
-        self.previous_label.setStyleSheet("color: gray; font-size: 16px;")
-        self.previous_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        """Set styles for the five labels."""
+        self.label1.setStyleSheet("color: gray; font-size: 16px;")
+        self.label1.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.current_label.setStyleSheet("color: red; font-size: 18px; font-weight: bold;")
-        self.current_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label2.setStyleSheet("color: gray; font-size: 16px;")
+        self.label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.next_label.setStyleSheet("color: gray; font-size: 16px;")
-        self.next_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label3.setStyleSheet("color: red; font-size: 20px; font-weight: bold;")
+        self.label3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.label4.setStyleSheet("color: gray; font-size: 16px;")
+        self.label4.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.label5.setStyleSheet("color: gray; font-size: 16px;")
+        self.label5.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def keyPressEvent(self, event):
         """
@@ -56,109 +73,142 @@ class LyricsDisplay(QDialog):
         - Up arrow: move lyrics down.
         - Down arrow: move lyrics up.
         """
-        if event.key() == Qt.Key.Key_Up:
-            self.move_lyrics(direction="down")
-        elif event.key() == Qt.Key.Key_Down:
-            self.move_lyrics(direction="up")
+        if event.key() == Qt.Key.Key_Down:
+            self.move_lyrics(key_press="down")
+        elif event.key() == Qt.Key.Key_Up:
+            self.move_lyrics(key_press="up")
         else:
             super().keyPressEvent(event)
 
-    def move_lyrics(self, direction="up"):
+    def move_lyrics(self, key_press="up"):
         """
         Move the lyrics up or down based on the direction.
         Update the labels accordingly and animate the change.
         """
-        # Create the animations
-        anim_current = QPropertyAnimation(self.current_label, b"pos")
-        anim_previous = QPropertyAnimation(self.previous_label, b"pos")
-        anim_next = QPropertyAnimation(self.next_label, b"pos")
+        if self.during_animation:
+            if self.at_margin_index:
+                self.during_animation = False
+            else:
+                return
 
-        # Extract the positions of the labels
-        previous_pos = self.current_label.pos()
-        current_pos = self.current_label.pos()
-        next_pos = self.current_label.pos()
+        self.during_animation = True  # Set flag to indicate animation is in progress
 
-        print("previous pos ", previous_pos)
-        print("current pos", current_pos)
-        print("next pos", next_pos)
+        self.animations.clear()
 
-        # Set the starting positions for all animations
-        anim_current.setStartValue(current_pos)
-        anim_previous.setStartValue(previous_pos)
-        anim_next.setStartValue(next_pos)
+        # Determine end positions based on the movement direction
+        if key_press == "up":
+            print("pressed up")
+            print("during animation state ", self.during_animation)
+            if not self.current_index > 0:
+                self.at_margin_index = True
+                return
+            self.at_margin_index = False
+            self.label3.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from current
+            self.label2.setStyleSheet("color: red; font-size: 22px; font-weight: bold;")  # Highlight above label
 
-        # Determine the end positions based on the movement direction
-        if direction == "up" and self.current_index + 1 < len(self.lyrics):
-            print("direction up")
-            # Move the current label to the top position
-            anim_current.setEndValue(self.previous_label.pos())
+            # Set animation parameters for moving labels
+            self.create_animations(direction="up")
+            self.current_index -= 1  # Move to the previous lyric
 
-            # Move the next label to the center position
-            anim_next.setEndValue(self.current_label.pos())
+        elif key_press == "down":
+            print("pressed down")
+            print("during animation state ", self.during_animation)
+            if not self.current_index + 1 < len(self.lyrics):
+                self.at_margin_index = True
+                return
+            self.at_margin_index = False
+            self.label3.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from current
+            self.label4.setStyleSheet("color: red; font-size: 22px; font-weight: bold;")  # Highlight below label
 
-            # Previous label stays in its current position
-            anim_previous.setEndValue(self.previous_label.pos())
+            # Set animation parameters for moving labels
+            self.create_animations(direction="down")
+            self.current_index += 1  # Move to the next lyric
 
-            # Update the current index and labels after movement
-            self.current_index += 1
+        # Connect the finished signal to reset the animation flag
+        self.animations[-1].finished.connect(lambda: self.reset_animation_flag())
 
-        elif direction == "down" and self.current_index > 0:
-            print("direction down")
-            # Move the current label to the bottom position
-            anim_current.setEndValue(self.next_label.pos())
+    def reset_animation_flag(self):
+        """ Reset the animation flag once animations are complete. """
+        self.during_animation = False
 
-            # Move the previous label to the center position
-            anim_previous.setEndValue(self.current_label.pos())
+    def create_animations(self, direction):
+        """Create and start animations for the labels moving up or down."""
+        # Create animations for all 5 labels
+        anim_label1 = QPropertyAnimation(self.label1, b"pos")
+        anim_label2 = QPropertyAnimation(self.label2, b"pos")
+        anim_label3 = QPropertyAnimation(self.label3, b"pos")
+        anim_label4 = QPropertyAnimation(self.label4, b"pos")
+        anim_label5 = QPropertyAnimation(self.label5, b"pos")
 
-            # Next label stays in its current position
-            anim_next.setEndValue(self.next_label.pos())
+        # Set the start positions for all labels
+        anim_label1.setStartValue(self.label1.pos())
+        anim_label2.setStartValue(self.label2.pos())
+        anim_label3.setStartValue(self.label3.pos())
+        anim_label4.setStartValue(self.label4.pos())
+        anim_label5.setStartValue(self.label5.pos())
 
-            # Update the current index and labels after movement
-            self.current_index -= 1
+        # Define animation durations
+        anim_label1.setDuration(self.animation_duration)
+        anim_label2.setDuration(self.animation_duration)
+        anim_label3.setDuration(self.animation_duration)
+        anim_label4.setDuration(self.animation_duration)
+        anim_label5.setDuration(self.animation_duration)
 
-        else:
-            return
+        # Define the end positions based on direction
+        if direction == "up":
+            # Move labels up
+            anim_label1.setEndValue(self.label2.pos())
+            anim_label2.setEndValue(self.label3.pos())
+            anim_label3.setEndValue(self.label4.pos())
+            anim_label4.setEndValue(self.label5.pos())
+            anim_label5.setEndValue(QPoint(105, 305))  # Move label5 off the view
 
-        # Set the duration for all animations
-        anim_current.setDuration(3000)
-        anim_previous.setDuration(3000)
-        anim_next.setDuration(3000)
+            # Connect animation completion to update labels
+            anim_label4.finished.connect(lambda: self.update_lyrics_after_movement("up"))
+        elif direction == "down":
+            # Move labels down
+            anim_label1.setEndValue(QPoint(105, -20))  # Move label1 off the view
+            anim_label2.setEndValue(self.label1.pos())
+            anim_label3.setEndValue(self.label2.pos())
+            anim_label4.setEndValue(self.label3.pos())
+            anim_label5.setEndValue(self.label4.pos())
 
-        # Start all animations
-        anim_current.start()
-        anim_previous.start()
-        anim_next.start()
+            # Connect animation completion to update labels
+            anim_label4.finished.connect(lambda: self.update_lyrics_after_movement("down"))
 
-        # Update the styles after moving the lyrics
-        self.update_lyrics_after_movement()
-        self.update_labels_style()
+        # Add animations to the list and start them
+        self.animations.extend([anim_label1, anim_label2, anim_label3, anim_label4, anim_label5])
+        self.during_animation = True
+        for anim in self.animations:
+            anim.start()
 
-    def update_lyrics_after_movement(self):
-        """Update the lyrics' text based on the current index."""
-        self.previous_label.setText(self.lyrics[self.current_index - 1] if self.current_index > 0 else "")
-        self.current_label.setText(self.lyrics[self.current_index])
-        self.next_label.setText(
-            self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
+    def update_lyrics_after_movement(self, direction):
+        self.during_animation = False
+        """
+        Update the lyrics after the animation has finished.
+        """
+        # Update the label styles
+        if direction == "up":
+            self.label2.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from above label
+        elif direction == "down":
+            self.label4.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from below label
+
+        self.label3.setStyleSheet("color: red; font-size: 20px; font-weight: bold;")  # Reapply highlight to current
+
+        # Update text for each label based on the current index
+        self.label1.setText(self.lyrics[self.current_index - 2] if self.current_index - 2 >= 0 else "")
+        self.label2.setText(self.lyrics[self.current_index - 1] if self.current_index - 1 >= 0 else "")
+        self.label3.setText(self.lyrics[self.current_index])
+        self.label4.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
+        self.label5.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")
+
+        # Reset positions after the animation completes
+        self.set_initial_positions()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-
-    lyrics_list = [
-        "First line of the song",
-        "Second line of the song",
-        "Third line of the song",
-        "Fourth line of the song",
-        "Fifth line of the song",
-        "Sixth line of the song",
-        "Seventh line of the song",
-        "Eighth line of the song",
-        "Ninth line of the song",
-        "Tenth line of the song"
-    ]
-
-    # Create an instance of the LyricsDisplay dialog
-    dialog = LyricsDisplay(lyrics_list)
-    dialog.show()
-
+    lyrics = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10"]
+    window = LyricsDisplay(lyrics)
+    window.show()
     sys.exit(app.exec())
