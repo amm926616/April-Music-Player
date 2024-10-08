@@ -36,10 +36,11 @@ class SongTableWidget(QTableWidget):
                         
         # Set the background image on the viewport (the visible area of the table)        
         background_image_path = os.path.join(self.parent.script_path, "icons", background_image)
+        print(background_image_path)
 
         # Check if the OS is Windows
         if os.name == 'nt':  # 'nt' stands for Windows
-            svg_file = background_image_path.replace("\\", "/")  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
+            background_image_path = background_image_path.replace("\\", "/")  # တော်တော်သောက်လုပ်ရှပ်တဲ့ window
 
         self.viewport().setStyleSheet(f"""
             background-image: url({background_image_path});
