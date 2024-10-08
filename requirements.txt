@@ -3,5 +3,4 @@ fuzzywuzzy==0.18.0
 mutagen==1.47.0
 Pillow==10.4.0
 PyQt6==6.7.1
-PyQt6_sip==13.8.0
-Requests==2.32.3
+PyQt6_sip==13.6.0

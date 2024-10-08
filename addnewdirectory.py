@@ -32,7 +32,7 @@ class AddNewDirectory(QDialog):
         # "Select All" checkbox
         self.select_all_checkbox = QCheckBox("Select All")
         self.are_all_checkboxes_checked()
-        self.select_all_checkbox.checkStateChanged.connect(self.select_all_directories)
+        self.select_all_checkbox.stateChanged.connect(self.select_all_directories)
 
         # Scroll area for directories
         self.scroll_area = QScrollArea()
@@ -57,7 +57,7 @@ class AddNewDirectory(QDialog):
             for directory, value in self.directories.items():
                 checkbox = QCheckBox(directory)
                 checkbox.setChecked(value)
-                checkbox.checkStateChanged.connect(self.update_folder_status)
+                checkbox.stateChanged.connect(self.update_folder_status)
                 self.scroll_area_layout.addWidget(checkbox)
 
     def are_all_checkboxes_checked(self):
@@ -93,7 +93,7 @@ class AddNewDirectory(QDialog):
                 self.ej.edit_value("music_directories", self.directories)
                 checkbox = QCheckBox(directory)
                 checkbox.setChecked(True)
-                checkbox.checkStateChanged.connect(self.update_folder_status)
+                checkbox.stateChanged.connect(self.update_folder_status)
                 self.are_all_checkboxes_checked()
                 self.scroll_area_layout.addWidget(checkbox)
             else:
