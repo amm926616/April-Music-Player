@@ -78,6 +78,7 @@ class LRCSync:
         self.last_update_time = 0.0  # Initialize with 0 or None
         self.update_interval = float(self.ej.get_value("sync_threshold"))  # Minimum interval in seconds
         self.script_path = os.path.dirname(os.path.abspath(__file__))
+        self.previous_index = 0
         self.current_index = 0
 
         # Construct the full path to the icon file
@@ -352,8 +353,11 @@ class LRCSync:
 
     def set_initial_positions(self):
         """Set the initial positions of all five labels."""
-        # Optionally set vertical spacing or positioning attributes if needed.
-        # This method can be adjusted to add padding or spacing as required.
+        self.lyric_label1.move(QPoint(105, 20))   # Top-most position
+        self.lyric_label2.move(QPoint(105, 75))   # Previous position
+        self.lyric_label3.move(QPoint(105, 137))  # Current position
+        self.lyric_label4.move(QPoint(105, 199))  # Next position
+        self.lyric_label5.move(QPoint(105, 261))  # Bottom-most position
 
     def setup_lyrics_labels(self, main_layout):
         # Create and configure self.lyric_label1
@@ -418,28 +422,14 @@ class LRCSync:
             self.ej.setupLyricsColor()
             lyrics_color = self.ej.get_value("lyrics_color")
 
-        # Convert the lyrics color to a QColor object
-        main_color = QColor(lyrics_color)
-        gray_color = QColor(128, 128, 128)  # Standard gray
-
-        # Calculate a mixed color between the main color and gray
-        # Mixing by averaging RGB values
-        mixed_red = (main_color.red() + gray_color.red()) // 2
-        mixed_green = (main_color.green() + gray_color.green()) // 2
-        mixed_blue = (main_color.blue() + gray_color.blue()) // 2
-
-        # Create the tint gray color
-        tint_gray = QColor(mixed_red, mixed_green, mixed_blue)
-
-        # Convert QColor back to hex string for stylesheet
-        tint_gray_hex = tint_gray.name()
+        gray = "gray"
 
         # Set the colors for each lyric label
-        self.lyric_label1.setStyleSheet(f"color: {tint_gray_hex};")
-        self.lyric_label2.setStyleSheet(f"color: {tint_gray_hex};")
+        self.lyric_label1.setStyleSheet(f"color: {gray};")
+        self.lyric_label2.setStyleSheet(f"color: {gray};")
         self.lyric_label3.setStyleSheet(f"color: {lyrics_color};")  # Highlight main lyric
-        self.lyric_label4.setStyleSheet(f"color: {tint_gray_hex};")
-        self.lyric_label5.setStyleSheet(f"color: {tint_gray_hex};")
+        self.lyric_label4.setStyleSheet(f"color: {gray};")
+        self.lyric_label5.setStyleSheet(f"color: {gray};")
 
         self.set_label_initial_positions()
 
@@ -612,8 +602,13 @@ class LRCSync:
         self.media_lyric.setText(self.media_font.get_formatted_text(self.lyric_label3_text))
 
     def update_display_lyric(self):
-        if previous_index != current_index:
-            self.create_animations(direction="down")
+        if self.current_index == self.previous_index:
+            # Skip update if the current index hasn't changed
+            return
+        # else:
+        #     self.create_animations(direction="down")
+
+        # Update the text for each label only if the index has changed
         if self.lyric_label1 is not None:
             self.lyric_label1.setText(self.lrc_font.get_formatted_text(self.lyric_label1_text))
         if self.lyric_label2 is not None:
@@ -624,6 +619,9 @@ class LRCSync:
             self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyric_label4_text))
         if self.lyric_label5 is not None:
             self.lyric_label5.setText(self.lrc_font.get_formatted_text(self.lyric_label5_text))
+
+        # Update the previous index after labels have been updated
+        self.previous_index = self.current_index
 
     def create_animations(self, direction):
         """Create and start animations for the labels moving up or down."""
@@ -688,14 +686,14 @@ class LRCSync:
         elif direction == "down":
             self.lyric_label4.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from below label
 
-        self.lyric_label3.setStyleSheet("color: red; font-size: 20px; font-weight: bold;")  # Reapply highlight to current
+        self.lyric_label3.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")  # Reapply highlight to current
 
         # Update text for each label based on the current index
-        self.lyric_label1.setText(self.lyrics[self.current_index - 2] if self.current_index - 2 >= 0 else "")
-        self.lyric_label2.setText(self.lyrics[self.current_index - 1] if self.current_index - 1 >= 0 else "")
-        self.lyric_label3.setText(self.lyrics[self.current_index])
-        self.lyric_label4.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
-        self.lyric_label5.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")
+        self.lyric_label1.setText(self.lyrics.get(self.current_index - 2, "") if self.current_index - 2 >= 0 else "")
+        self.lyric_label2.setText(self.lyrics.get(self.current_index - 1, "") if self.current_index - 1 >= 0 else "")
+        self.lyric_label3.setText(self.lyrics.get(self.current_index, ""))
+        self.lyric_label4.setText(self.lyrics.get(self.current_index + 1, "") if self.current_index + 1 < len(self.lyrics) else "")
+        self.lyric_label5.setText(self.lyrics.get(self.current_index + 2, "") if self.current_index + 2 < len(self.lyrics) else "")
 
         # Reset positions after the animation completes
         self.set_initial_positions()
