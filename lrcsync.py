@@ -206,6 +206,8 @@ class LRCSync:
         dialog_width = int(parent.width() * 0.9)
         dialog_height = int(parent.height() * 0.8)
 
+        self.lrc_display.setFixedSize(dialog_width, dialog_height)
+
         # Calculate the top-left position of the dialog relative to the parent widget
         relative_x = int((parent.width() - dialog_width) / 2)
         relative_y = int((parent.height() - dialog_height) / 2)
