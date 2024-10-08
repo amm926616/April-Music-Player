@@ -29,6 +29,9 @@ def convert_time_to_seconds(time_str):
 
 class LRCSync:
     def __init__(self, parent, music_player, config_path, on_off_lyrics=None, ui_show_maximized=None):
+        self.dialog_width = None
+        self.dialog_height = None
+        self.first_time_update_text = True
         self.during_animation = False
         self.animations = []
         self.animation_duration = 200
@@ -206,14 +209,14 @@ class LRCSync:
         self.lrc_display.setWindowIcon(QIcon(self.icon_path))
 
         # Calculate the width and height of the dialog
-        dialog_width = int(parent.width() * 0.9)
-        dialog_height = int(parent.height() * 0.8)
+        self.dialog_width = int(parent.width() * 0.9)
+        self.dialog_height = int(parent.height() * 0.8)
 
         self.lrc_display.setFixedSize(dialog_width, dialog_height)
 
         # Calculate the top-left position of the dialog relative to the parent widget
-        relative_x = int((parent.width() - dialog_width) / 2)
-        relative_y = int((parent.height() - dialog_height) / 2)
+        relative_x = int((parent.width() - self.dialog_width) / 2)
+        relative_y = int((parent.height() - self.dialog_height) / 2)
 
         # Convert the relative position to global screen coordinates
         global_position = parent.mapToGlobal(parent.rect().topLeft())
@@ -223,7 +226,8 @@ class LRCSync:
         position_y = global_position.y() + relative_y
 
         # Set the geometry of the dialog
-        self.lrc_display.setGeometry(position_x, position_y, dialog_width, dialog_height)
+        self.lrc_display.setGeometry(position_x, position_y, self.dialog_width, self.dialog_height)
+        self.lrc_display.setFixedSize(self.dialog_width, self.dialog_height)
 
         main_layout = QVBoxLayout(self.lrc_display)
         self.setup_lyrics_labels(main_layout)
@@ -362,7 +366,6 @@ class LRCSync:
         self.lyric_label5.move(QPoint(105, 261))  # Bottom-most position
 
     def setup_lyrics_labels(self, main_layout):
-        # Create and configure self.lyric_label1
         self.lyric_label1 = QLabel()
         self.lyric_label1.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lyric_label1.setWordWrap(True)
@@ -397,52 +400,52 @@ class LRCSync:
         self.lyric_label5.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lyric_label5.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        self.set_label_initial_positions()
+        self.lyric_labels = [QLabel() for _ in range(5)]
+        for i, label in enumerate(self.lyric_labels):
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            label.setWordWrap(True)
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        # Add widgets to a vertical layout with minimal spacing
+        # Add labels to vertical layout with minimal spacing
         vertical_layout = QVBoxLayout()
-        vertical_layout.setSpacing(5)  # Set spacing to control distance between labels
+        vertical_layout.setSpacing(5)
+        for label in self.lyric_labels:
+            vertical_layout.addWidget(label)
 
-        # Add the labels to the layout
-        vertical_layout.addWidget(self.lyric_label1)
-        vertical_layout.addWidget(self.lyric_label2)
-        vertical_layout.addWidget(self.lyric_label3)
-        vertical_layout.addWidget(self.lyric_label4)
-        vertical_layout.addWidget(self.lyric_label5)
-
-        # Set alignment for the entire layout
         vertical_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Add the vertical layout to the main layout
         main_layout.addLayout(vertical_layout)
 
-        #  for lyrics color
-        # Assume lyrics_color is a string like "#FF0000" (red)
-        lyrics_color = self.ej.get_value("lyrics_color")
+        # Assign the main label to a variable for easier access
+        self.lyric_label3 = self.lyric_labels[3]  # The main lyric label in the center
 
-        if not lyrics_color:
-            self.ej.setupLyricsColor()
-            lyrics_color = self.ej.get_value("lyrics_color")
+        # Create a placeholder for current and previous animations
+        self.current_animation = None
 
-        gray = "gray"
+    def scroll_lyrics(self, direction="up"):
+        """
+        Scroll the lyrics in the specified direction ("up" or "down").
+        """
+        animation_duration = 1000  # 1 second duration for smooth scrolling
+        if self.current_animation and self.current_animation.state() == QPropertyAnimation.State.Running:
+            self.current_animation.stop()  # Stop any ongoing animation
 
-        # Set the colors for each lyric label
-        self.lyric_label1.setStyleSheet(f"color: {gray};")
-        self.lyric_label2.setStyleSheet(f"color: {gray};")
-        self.lyric_label3.setStyleSheet(f"color: {lyrics_color};")  # Highlight main lyric
-        self.lyric_label4.setStyleSheet(f"color: {gray};")
-        self.lyric_label5.setStyleSheet(f"color: {gray};")
+        # Create a new animation for the layout's geometry
+        self.current_animation = QPropertyAnimation(self.lyric_label3, b"geometry")
+        start_rect = self.lyric_label3.geometry()
 
-        self.set_label_initial_positions()
+        if direction == "up":
+            end_rect = QRect(start_rect.left(), start_rect.top() - start_rect.height(), start_rect.width(),
+                             start_rect.height())
+        else:  # direction == "down"
+            end_rect = QRect(start_rect.left(), start_rect.top() + start_rect.height(), start_rect.width(),
+                             start_rect.height())
 
-    def set_label_initial_positions(self):
-        """Set the initial positions of all five labels."""
-        # Manually set the positions of each label within the dialog
-        self.lyric_label1.move(QPoint(105, 20))   # Top-most position
-        self.lyric_label2.move(QPoint(105, 75))   # Previous position
-        self.lyric_label3.move(QPoint(105, 137))  # Current position
-        self.lyric_label4.move(QPoint(105, 199))  # Next position
-        self.lyric_label5.move(QPoint(105, 261))  # Bottom-most position
+        self.current_animation.setStartValue(start_rect)
+        self.current_animation.setEndValue(end_rect)
+        self.current_animation.setDuration(animation_duration)
+        self.current_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Smooth easing
+        self.current_animation.start()
 
     def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
@@ -605,10 +608,11 @@ class LRCSync:
 
     def update_display_lyric(self):
         if self.current_index == self.previous_index:
-            # Skip update if the current index hasn't changed
-            return
-        # else:
-        #     self.create_animations(direction="down")
+            if self.first_time_update_text:
+                self.first_time_update_text = False
+                pass
+            else:
+                return
 
         # Update the text for each label only if the index has changed
         if self.lyric_label1 is not None:
@@ -621,6 +625,11 @@ class LRCSync:
             self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyric_label4_text))
         if self.lyric_label5 is not None:
             self.lyric_label5.setText(self.lrc_font.get_formatted_text(self.lyric_label5_text))
+
+        # Set the position of lyric_label3 to always remain at a fixed vertical position
+        if self.lyric_label3 is not None:
+            fixed_y_position = 100  # Set the vertical position you want to lock
+            self.lyric_label3.move(self.lyric_label3.x(), fixed_y_position)
 
         # Update the previous index after labels have been updated
         self.previous_index = self.current_index
