@@ -57,18 +57,18 @@ class LRCSync:
         self.show_lyrics = self.ej.get_value("show_lyrics")
         self.dictionary = None
 
-        self.lyrics_0_text = None
-        self.current_lyric_text = None
-        self.next_lyric_text = None
-        self.previous_lyric_text = None
-        self.lyrics_4_text = None
+        self.lyric_label1_text = None
+        self.lyric_label3_text = None
+        self.lyric_label4_text = None
+        self.lyric_label2_text = None
+        self.lyric_label5_text = None
 
         if self.show_lyrics:
-            self.current_lyric_text = "April Music Player"
+            self.lyric_label3_text = "April Music Player"
         else:
-            self.current_lyric_text = "Lyrics Disabled"
+            self.lyric_label3_text = "Lyrics Disabled"
 
-        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric_text))
+        self.media_lyric.setText(self.media_font.get_formatted_text(self.lyric_label3_text))
 
         self.lyric_sync_connected = None
         self.media_sync_connected = None
@@ -225,7 +225,7 @@ class LRCSync:
 
         if self.show_lyrics:
             if self.started_player:
-                self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.current_lyric_text))
+                self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.lyric_label3_text))
             else:
                 self.lyric_label2.setText(self.lrc_font.get_formatted_text("April Music Player"))
 
@@ -420,7 +420,7 @@ class LRCSync:
 
     def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
-            if self.current_lyric_text == "(Instrumental Intro)":
+            if self.lyric_label3_text == "(Instrumental Intro)":
                 previous_lyric_index = 0
                 self.go_to_the_start_of_current_lyric()
             else:
@@ -432,7 +432,7 @@ class LRCSync:
 
                 # fix the late to set current time due to slower sync time
                 self.current_lyrics_time = self.lyrics_keys[previous_lyric_index]
-                self.current_lyric_text = self.lyrics[self.current_lyrics_time]
+                self.lyric_label3_text = self.lyrics[self.current_lyrics_time]
 
             else:
                 self.current_lyrics_time = self.lyrics_keys[-1]
@@ -444,7 +444,7 @@ class LRCSync:
 
     def go_to_next_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
-            if self.current_lyric_text == "(Instrumental Intro)":
+            if self.lyric_label3_text == "(Instrumental Intro)":
                 next_lyric_index = 0
             else:
                 next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
@@ -456,7 +456,7 @@ class LRCSync:
 
                 # fix the late to set current time due to slower sync time
                 self.current_lyrics_time = self.lyrics_keys[next_lyric_index]
-                self.current_lyric_text = self.lyrics[self.current_lyrics_time]
+                self.lyric_label3_text = self.lyrics[self.current_lyrics_time]
             else:
                 self.current_lyrics_time = self.lyrics_keys[0]
                 next_lyric_key = self.lyrics_keys[0]
@@ -499,80 +499,94 @@ class LRCSync:
 
     def get_current_lyric(self):
         if self.file is not None and self.lyrics:
+            print("Inside if condition in get_current_lyric")
+
             self.current_time = self.music_player.get_current_time()
+            abs_time_diff = abs(self.current_time - self.last_update_time)
 
-            # Only update if the current time has moved beyond the update interval
-            abs_value = abs(self.current_time - self.last_update_time)
-            if abs_value < self.update_interval:
-                return  # Skip updating if within the interval
+            # Skip update if within the update interval
+            if abs_time_diff < self.update_interval:
+                return
 
-            self.last_update_time = self.current_time  # Update the last updated time
+            self.last_update_time = self.current_time  # Update last time
 
-            # Use binary search to find the correct lyrics time
+            # Use binary search to find the correct lyric index
             index = bisect.bisect_right(self.lyrics_keys, self.current_time)
-            self.current_index = index  # pass it for lyric index in note-taking
+            self.current_index = index  # for note-taking
 
             if index == 0:
-                print("inside index 0")
-                if self.current_time < self.lyrics_keys[0]:  # for instrument section before first lyric
-                    print("not hit the first lyrics yet")
-                    self.current_lyrics_time = self.lyrics_keys[0]
-                    self.current_lyric_text = "(Instrumental Intro)"
-                    self.previous_lyric_text = ""
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[0]]
-                    self.lyrics_0_text = ""
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[1]]
+                # If before the first lyric
+                if self.current_time < self.lyrics_keys[0]:
+                    print("Before the first lyric")
+                    self.set_lyrics_for_intro()
                 else:
-                    print("after hitting the first lyrics")
-                    # If the current time is before the first lyric
-                    self.previous_lyric_text = "(Instrumental Intro)"
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[1]]
-                    self.current_lyrics_time = self.lyrics_keys[0]
-                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
-                    self.lyrics_0_text = ""
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[2]]
-
+                    print("After the first lyric")
+                    self.set_lyrics_for_first_entry()
             else:
+                # If after the first lyric or in between lyrics
                 if index >= len(self.lyrics_keys):
-                    # If the current time is after the last lyric
-                    previous_index = int(len(self.lyrics_keys) - 1)
-                    self.previous_lyric_text = self.lyrics[self.lyrics_keys[previous_index]]
-                    self.current_lyrics_time = self.lyrics_keys[-1]
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[1]]
-                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
-                    self.lyrics_0_text = self.lyrics[self.lyrics_keys[previous_index - 1]]
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[2]]
+                    self.set_lyrics_for_after_last()
                 else:
-                    # Otherwise, the correct lyric is at the previous index
-                    self.previous_lyric_text = self.lyrics[self.lyrics_keys[index - 2]]
-                    self.current_lyrics_time = self.lyrics_keys[index - 1]
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[index]]
-                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
-                    self.lyrics_0_text = self.lyrics[self.lyrics_keys[index - 3]]
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[int(index + 1)]]
-
+                    self.set_lyrics_for_middle(index)
         else:
-            self.lyrics_0_text = ""
-            self.previous_lyric_text = ""
-            self.current_lyric_text = "No Lyrics Found on the Disk"
-            self.next_lyric_text = ""
-            self.lyrics_4_text = ""
+            print("No lyrics found, setting empty lyrics")
+            self.reset_lyrics()
+
+    def set_lyrics_for_intro(self):
+        self.current_lyrics_time = self.lyrics_keys[0]
+        self.lyric_label1_text = ""
+        self.lyric_label2_text = ""
+        self.lyric_label3_text = "(Instrumental Intro)"
+        self.lyric_label4_text = self.lyrics[self.lyrics_keys[0]]
+        self.lyric_label5_text = self.lyrics[self.lyrics_keys[1]]
+
+    def set_lyrics_for_first_entry(self):
+        self.current_lyrics_time = self.lyrics_keys[0]
+        self.lyric_label1_text = ""
+        self.lyric_label2_text = "(Instrumental Intro)"
+        self.lyric_label3_text = self.lyrics[self.current_lyrics_time]
+        self.lyric_label4_text = self.lyrics[self.lyrics_keys[1]]
+        self.lyric_label5_text = self.lyrics[self.lyrics_keys[2]]
+
+    def set_lyrics_for_after_last(self):
+        previous_index = len(self.lyrics_keys) - 1
+        self.current_lyrics_time = self.lyrics_keys[-1]
+        self.lyric_label1_text = self.lyrics[self.lyrics_keys[previous_index - 1]]
+        self.lyric_label2_text = self.lyrics[self.lyrics_keys[previous_index]]
+        self.lyric_label3_text = self.lyrics[self.current_lyrics_time]
+        self.lyric_label4_text = self.lyrics[self.lyrics_keys[1]]
+        self.lyric_label5_text = ""
+
+    def set_lyrics_for_middle(self, index):
+        self.current_lyrics_time = self.lyrics_keys[index - 1]
+        self.lyric_label1_text = self.lyrics[self.lyrics_keys[index - 3]] if index - 3 >= 0 else ""
+        self.lyric_label2_text = self.lyrics[self.lyrics_keys[index - 2]] if index - 2 >= 0 else ""
+        self.lyric_label3_text = self.lyrics[self.current_lyrics_time]
+        self.lyric_label4_text = self.lyrics[self.lyrics_keys[index]] if index < len(self.lyrics_keys) else ""
+        self.lyric_label5_text = self.lyrics[self.lyrics_keys[index + 1]] if index + 1 < len(self.lyrics_keys) else ""
+
+    def reset_lyrics(self):
+        self.lyric_label1_text = ""
+        self.lyric_label2_text = ""
+        self.lyric_label3_text = "No Lyrics Found on the Disk"
+        self.lyric_label4_text = ""
+        self.lyric_label5_text = ""
 
     def update_media_lyric(self):
         self.get_current_lyric()
-        self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric_text))
+        self.media_lyric.setText(self.media_font.get_formatted_text(self.lyric_label3_text))
 
     def update_display_lyric(self):
         if self.lyric_label0 is not None:
-            self.lyric_label0.setText(self.lrc_font.get_formatted_text(self.lyrics_0_text))
+            self.lyric_label0.setText(self.lrc_font.get_formatted_text(self.lyric_label1_text))
         if self.lyric_label2 is not None:
-            self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.current_lyric_text))
+            self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.lyric_label3_text))
         if self.lyric_label1 is not None:
-            self.lyric_label1.setText(self.lrc_font.get_formatted_text(self.previous_lyric_text))
+            self.lyric_label1.setText(self.lrc_font.get_formatted_text(self.lyric_label2_text))
         if self.lyric_label3 is not None:
-            self.lyric_label3.setText(self.lrc_font.get_formatted_text(self.next_lyric_text))
+            self.lyric_label3.setText(self.lrc_font.get_formatted_text(self.lyric_label4_text))
         if self.lyric_label4 is not None:
-            self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyrics_4_text))
+            self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyric_label5_text))
 
     def sync_lyrics(self, file):
         self.update_file_and_parse(file)
