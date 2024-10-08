@@ -3,7 +3,7 @@ import re
 import os
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout, QApplication, QSizePolicy
 from PyQt6.QtCore import Qt, QPoint, QPropertyAnimation
-from PyQt6.QtGui import QIcon, QKeyEvent
+from PyQt6.QtGui import QIcon, QKeyEvent, QColor
 from getfont import GetFont
 from easy_json import EasyJson
 from PIL import Image, ImageDraw, ImageFont
@@ -411,18 +411,35 @@ class LRCSync:
         main_layout.addLayout(vertical_layout)
 
         #  for lyrics color
+        # Assume lyrics_color is a string like "#FF0000" (red)
         lyrics_color = self.ej.get_value("lyrics_color")
 
         if not lyrics_color:
             self.ej.setupLyricsColor()
             lyrics_color = self.ej.get_value("lyrics_color")
 
-        #  setting colors for each lyric label
-        self.lyric_label1.setStyleSheet("color: gray")
-        self.lyric_label2.setStyleSheet("color: gray")
-        self.lyric_label3.setStyleSheet(f"color: {lyrics_color};")
-        self.lyric_label4.setStyleSheet("color: gray")
-        self.lyric_label5.setStyleSheet("color: gray")
+        # Convert the lyrics color to a QColor object
+        main_color = QColor(lyrics_color)
+        gray_color = QColor(128, 128, 128)  # Standard gray
+
+        # Calculate a mixed color between the main color and gray
+        # Mixing by averaging RGB values
+        mixed_red = (main_color.red() + gray_color.red()) // 2
+        mixed_green = (main_color.green() + gray_color.green()) // 2
+        mixed_blue = (main_color.blue() + gray_color.blue()) // 2
+
+        # Create the tint gray color
+        tint_gray = QColor(mixed_red, mixed_green, mixed_blue)
+
+        # Convert QColor back to hex string for stylesheet
+        tint_gray_hex = tint_gray.name()
+
+        # Set the colors for each lyric label
+        self.lyric_label1.setStyleSheet(f"color: {tint_gray_hex};")
+        self.lyric_label2.setStyleSheet(f"color: {tint_gray_hex};")
+        self.lyric_label3.setStyleSheet(f"color: {lyrics_color};")  # Highlight main lyric
+        self.lyric_label4.setStyleSheet(f"color: {tint_gray_hex};")
+        self.lyric_label5.setStyleSheet(f"color: {tint_gray_hex};")
 
         self.set_label_initial_positions()
 
@@ -536,10 +553,11 @@ class LRCSync:
                 if self.current_time < self.lyrics_keys[0]:
                     print("Before the first lyric")
                     self.set_lyrics_for_intro()
-                else:
-                    print("After the first lyric")
-                    self.set_lyrics_for_first_entry()
+            elif index == 1:
+                print("After the first lyric")
+                self.set_lyrics_for_first_entry()
             else:
+                print("The index is ", index)
                 # If after the first lyric or in between lyrics
                 if index >= len(self.lyrics_keys):
                     self.set_lyrics_for_after_last()
@@ -594,7 +612,8 @@ class LRCSync:
         self.media_lyric.setText(self.media_font.get_formatted_text(self.lyric_label3_text))
 
     def update_display_lyric(self):
-        self.create_animations(direction="down")
+        if previous_index != current_index:
+            self.create_animations(direction="down")
         if self.lyric_label1 is not None:
             self.lyric_label1.setText(self.lrc_font.get_formatted_text(self.lyric_label1_text))
         if self.lyric_label2 is not None:
