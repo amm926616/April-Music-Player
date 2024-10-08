@@ -2,8 +2,9 @@ import bisect
 import re
 import os
 import sys
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout, QApplication, QSizePolicy
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtWidgets import QLabel, QDialog, QVBoxLayout, QApplication, QSizePolicy, \
+    QGridLayout
+from PyQt6.QtCore import Qt, QPoint, QPropertyAnimation, QRect
 from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
 from easy_json import EasyJson
@@ -29,10 +30,15 @@ def convert_time_to_seconds(time_str):
 
 
 class LRCSync:
-    def __init__(self, app, music_player, config_path, on_off_lyrics=None, ui_show_maximized=None):
+    def __init__(self, parent, music_player, config_path, on_off_lyrics=None, ui_show_maximized=None):
+        self.parent = parent
+        self.labels = []
+        self.grid_layout = None
+        self.previous_index = 0
+        self.animation_duration = 500
+        self.initial_positions = None
         self.uiShowMaximized = ui_show_maximized
         self.on_off_lyrics = on_off_lyrics
-        self.app = app
         self.config_path = config_path
         self.ej = EasyJson()
         self.lrc_display = None
@@ -57,11 +63,11 @@ class LRCSync:
         self.show_lyrics = self.ej.get_value("show_lyrics")
         self.dictionary = None
 
-        self.lyrics_0_text = None
+        self.first_lyric_text = None
         self.current_lyric_text = None
         self.next_lyric_text = None
         self.previous_lyric_text = None
-        self.lyrics_4_text = None
+        self.last_lyric_text = None
 
         if self.show_lyrics:
             self.current_lyric_text = "April Music Player"
@@ -132,7 +138,7 @@ class LRCSync:
         draw = ImageDraw.Draw(final_image)
 
         # Load a custom font with a specific size
-        font_size = int(self.app.height() * 0.06)  # Set your desired font size here
+        font_size = int(self.parent.height() * 0.06)  # Set your desired font size here
         font_path = os.path.join(self.script_path, "fonts",
                                  "Sexy Beauty.ttf")  # Replace with the path to your .ttf font file
         font = ImageFont.truetype(font_path, font_size)  # Load the font with the specified size
@@ -219,8 +225,6 @@ class LRCSync:
 
         # Set the geometry of the dialog
         self.lrc_display.setGeometry(position_x, position_y, dialog_width, dialog_height)
-
-        # Set fix sized display to solve screen distortion in lyrics updates
         self.lrc_display.setFixedSize(dialog_width, dialog_height)
 
         main_layout = QVBoxLayout(self.lrc_display)
@@ -262,14 +266,17 @@ class LRCSync:
             print("left key pressed")
             self.music_player.seek_backward()
 
+        elif event.key() == Qt.Key.Key_Y and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.animate_labels()
+
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.music_player.pause()  # pause the music first
             if self.dictionary is None:
-                self.dictionary = VocabularyManager()
+                self.dictionary = VocabularyManager(parent=self)
             self.dictionary.exec()
 
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.app.exit_app()
+            self.parent.exit_app()
 
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
@@ -302,10 +309,7 @@ class LRCSync:
             self.lrc_display.close()
 
         elif event.key() == Qt.Key.Key_R:
-            if self.music_player.in_pause_state:
-                self.music_player.play_pause_music()
-                self.music_player.in_pause_state = False
-            self.music_player.player.setPosition(0)
+            self.restart_music()
 
         elif event.key() == Qt.Key.Key_F:
             print("pressed F")
@@ -332,6 +336,13 @@ class LRCSync:
                 self.music_player.player.positionChanged.connect(self.update_display_lyric)
                 self.lyric_sync_connected = True
 
+    def restart_music(self):
+        print("restart music hits")
+        if self.music_player.in_pause_state:
+            self.music_player.play_pause_music()
+            self.music_player.in_pause_state = False
+        self.music_player.player.setPosition(0)
+
     def createNoteTakingWindow(self):
         self.notetaking.createUI()
 
@@ -348,11 +359,6 @@ class LRCSync:
 
         # Return the result
         return is_full_screen_mode
-
-    def set_initial_positions(self):
-        """Set the initial positions of all five labels."""
-        # Optionally set vertical spacing or positioning attributes if needed.
-        # This method can be adjusted to add padding or spacing as required.
 
     def setup_lyrics_labels(self, main_layout):
         # Create and configure self.lyric_label1
@@ -390,21 +396,24 @@ class LRCSync:
         self.lyric_label4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lyric_label4.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
+        self.labels.extend(
+            [self.lyric_label0, self.lyric_label1, self.lyric_label2, self.lyric_label3, self.lyric_label4])
+
         # Add widgets to a vertical layout with minimal spacing
-        vertical_layout = QVBoxLayout()
+        self.grid_layout = QGridLayout()
 
         # Add the labels to the layout
-        vertical_layout.addWidget(self.lyric_label0)
-        vertical_layout.addWidget(self.lyric_label1)
-        vertical_layout.addWidget(self.lyric_label2)
-        vertical_layout.addWidget(self.lyric_label3)
-        vertical_layout.addWidget(self.lyric_label4)
+        self.grid_layout.addWidget(self.lyric_label0, 0, 0)
+        self.grid_layout.addWidget(self.lyric_label1, 1, 0)
+        self.grid_layout.addWidget(self.lyric_label2, 2, 0)
+        self.grid_layout.addWidget(self.lyric_label3, 3, 0)
+        self.grid_layout.addWidget(self.lyric_label4, 4, 0)
 
         # Set alignment for the entire layout
-        vertical_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Add the vertical layout to the main layout
-        main_layout.addLayout(vertical_layout)
+        main_layout.addLayout(self.grid_layout)
 
         #  for lyrics color
         lyrics_color = self.ej.get_value("lyrics_color")
@@ -420,12 +429,74 @@ class LRCSync:
         self.lyric_label3.setStyleSheet("color: gray")
         self.lyric_label4.setStyleSheet("color: gray")
 
+    def animate_labels(self):
+        print("Inside animate_labels")
+
+        # Create animations for each label
+        animations = []
+
+        # Define the final Y positions for each label after the animation
+        end_positions = [
+            QPoint(self.lyric_label0.x(), self.lyric_label0.y() - self.lyric_label0.height() * 2),
+            QPoint(self.lyric_label1.x(), self.lyric_label1.y() - self.lyric_label1.height()),
+            QPoint(self.lyric_label2.x(), self.lyric_label2.y()),
+            QPoint(self.lyric_label3.x(), self.lyric_label3.y() + self.lyric_label3.height()),
+            QPoint(self.lyric_label4.x(), self.lyric_label4.y() + self.lyric_label4.height())
+        ]
+
+        for i, label in enumerate(
+                [self.lyric_label0, self.lyric_label1, self.lyric_label2, self.lyric_label3, self.lyric_label4]):
+            anim = QPropertyAnimation(label, b"geometry")
+            anim.setDuration(self.animation_duration)
+            anim.setStartValue(label.geometry())  # Use geometry instead of pos
+            anim.setEndValue(QRect(end_positions[i], label.size()))  # Animate to the new position
+
+            animations.append(anim)
+
+        # Start all animations
+        for anim in animations:
+            anim.start()
+
+        # # Connect the finished signal of the last animation to reset the grid positions
+        # animations[-1].finished.connect(self.reset_grid_positions)
+
+    def reset_grid_positions(self):
+        """Restore labels to their original grid positions."""
+        # Clear the grid layout
+        for label in [self.lyric_label0, self.lyric_label1, self.lyric_label2, self.lyric_label3, self.lyric_label4]:
+            self.grid_layout.removeWidget(label)
+
+        # Re-add labels to the grid layout in their original positions
+        self.grid_layout.addWidget(self.lyric_label0, 0, 0)
+        self.grid_layout.addWidget(self.lyric_label1, 1, 0)
+        self.grid_layout.addWidget(self.lyric_label2, 2, 0)
+        self.grid_layout.addWidget(self.lyric_label3, 3, 0)
+        self.grid_layout.addWidget(self.lyric_label4, 4, 0)
+
+        # Optionally, reset text or perform other updates as needed
+        # Example: self.lyric_label0.setText("Original Lyric 0")
+
+        # Ensure the layout is updated
+        self.grid_layout.update()
+
+    def update_lyrics_after_movement(self):
+        # Update text for each label based on the current index
+        self.lyric_label0.setText(self.lyrics[self.current_index - 2] if self.current_index - 2 >= 0 else "")
+        self.lyric_label1.setText(self.lyrics[self.current_index - 1] if self.current_index - 1 >= 0 else "")
+        self.lyric_label2.setText(self.lyrics[self.current_index])
+        self.lyric_label3.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics)
+                                  else "")
+        self.lyric_label4.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics)
+                                  else "")
+
     def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
-            if self.current_lyric_text == "(Instrumental Intro)":
-                previous_lyric_index = 0
-                self.go_to_the_start_of_current_lyric()
+            if self.current_lyric_text == self.lyrics[self.lyrics_keys[0]]:
+                self.restart_music()
+                return
             else:
+                if self.current_lyrics_time == 0.0:
+                    self.current_lyrics_time = self.lyrics_keys[0]
                 previous_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) - 1
 
             if not previous_lyric_index < 0:
@@ -450,6 +521,10 @@ class LRCSync:
                 next_lyric_index = 0
             else:
                 next_lyric_index = self.lyrics_keys.index(self.current_lyrics_time) + 1
+
+            if self.current_lyric_text == self.lyrics[self.lyrics_keys[-1]]:
+                self.restart_music()
+                return
 
             if not len(self.lyrics_keys) < (next_lyric_index + 1):
                 next_lyric_key = self.lyrics_keys[next_lyric_index]
@@ -500,6 +575,7 @@ class LRCSync:
                 self.lyrics = None
 
     def get_current_lyric(self):
+        # Ensure that we have a valid file and lyrics before proceeding
         if self.file is not None and self.lyrics:
             self.current_time = self.music_player.get_current_time()
 
@@ -512,61 +588,68 @@ class LRCSync:
 
             # Use binary search to find the correct lyrics time
             index = bisect.bisect_right(self.lyrics_keys, self.current_time)
-            self.current_index = index  # pass it for lyric index in note-taking
+            self.current_index = index  # Store the current lyric index for note-taking
 
+            # Initialize text variables
+            self.first_lyric_text = ""
+            self.last_lyric_text = ""
+
+            # Handle the case when the index is at the beginning
             if index == 0:
-                print("inside index 0")
-                if self.current_time < self.lyrics_keys[0]:  # for instrument section before first lyric
-                    print("not hit the first lyrics yet")
-                    self.current_lyrics_time = self.lyrics_keys[0]
+                if self.current_time < self.lyrics_keys[0]:  # For instrumental section before first lyric
                     self.current_lyric_text = "(Instrumental Intro)"
                     self.previous_lyric_text = ""
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[0]]
-                    self.lyrics_0_text = ""
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[1]]
-                else:
-                    print("after hitting the first lyrics")
-                    # If the current time is before the first lyric
-                    self.previous_lyric_text = "(Instrumental Intro)"
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[1]]
-                    self.current_lyrics_time = self.lyrics_keys[0]
-                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
-                    self.lyrics_0_text = ""
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[2]]
+                    self.next_lyric_text = self.lyrics.get(self.lyrics_keys[0], "")
+
+            elif index == 1:
+                # Before the first lyric but not before the first time
+                self.previous_lyric_text = "(Instrumental Intro)"
+                self.current_lyrics_time = self.lyrics_keys[0]
+                self.current_lyric_text = self.lyrics.get(self.current_lyrics_time, "")
+                self.next_lyric_text = self.lyrics.get(self.lyrics_keys[1], "")
+
+            # Handle the case when we have lyrics
+            elif index < len(self.lyrics_keys):
+                self.current_lyrics_time = self.lyrics_keys[index - 1]
+                self.current_lyric_text = self.lyrics.get(self.current_lyrics_time, "")
+                self.previous_lyric_text = self.lyrics.get(self.lyrics_keys[index - 2], "")
+                self.next_lyric_text = self.lyrics.get(self.lyrics_keys[index], "")
+
+                # Safely retrieve surrounding lyrics, if available
+                if index - 3 >= 0:
+                    self.first_lyric_text = self.lyrics.get(self.lyrics_keys[index - 3], "")
+                if index + 1 < len(self.lyrics_keys):
+                    self.last_lyric_text = self.lyrics.get(self.lyrics_keys[index + 1], "")
 
             else:
-                if index >= len(self.lyrics_keys):
-                    # If the current time is after the last lyric
-                    previous_index = int(len(self.lyrics_keys) - 1)
-                    self.previous_lyric_text = self.lyrics[self.lyrics_keys[previous_index]]
-                    self.current_lyrics_time = self.lyrics_keys[-1]
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[1]]
-                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
-                    self.lyrics_0_text = self.lyrics[self.lyrics_keys[previous_index - 1]]
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[2]]
-                else:
-                    # Otherwise, the correct lyric is at the previous index
-                    self.previous_lyric_text = self.lyrics[self.lyrics_keys[index - 2]]
-                    self.current_lyrics_time = self.lyrics_keys[index - 1]
-                    self.next_lyric_text = self.lyrics[self.lyrics_keys[index]]
-                    self.current_lyric_text = self.lyrics[self.current_lyrics_time]
-                    self.lyrics_0_text = self.lyrics[self.lyrics_keys[index - 3]]
-                    self.lyrics_4_text = self.lyrics[self.lyrics_keys[int(index + 1)]]
+                # If the current time is after the last lyric
+                self.previous_lyric_text = self.lyrics.get(self.lyrics_keys[-1], "")
+                self.current_lyrics_time = self.lyrics_keys[-1]
+                self.current_lyric_text = self.lyrics.get(self.current_lyrics_time, "")
+                self.next_lyric_text = ""
+                self.first_lyric_text = self.lyrics.get(self.lyrics_keys[-2], "")
 
         else:
-            self.lyrics_0_text = ""
+            # Handle the case when no valid lyrics are found
+            self.first_lyric_text = ""
             self.previous_lyric_text = ""
             self.current_lyric_text = "No Lyrics Found on the Disk"
             self.next_lyric_text = ""
-            self.lyrics_4_text = ""
+            self.last_lyric_text = ""
 
     def update_media_lyric(self):
         self.get_current_lyric()
         self.media_lyric.setText(self.media_font.get_formatted_text(self.current_lyric_text))
 
     def update_display_lyric(self):
+        if self.previous_index == self.current_index:
+            print("skipping to update text")
+            return
+        else:
+            self.animate_labels()
+
         if self.lyric_label0 is not None:
-            self.lyric_label0.setText(self.lrc_font.get_formatted_text(self.lyrics_0_text))
+            self.lyric_label0.setText(self.lrc_font.get_formatted_text(self.first_lyric_text))
         if self.lyric_label2 is not None:
             self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.current_lyric_text))
         if self.lyric_label1 is not None:
@@ -574,7 +657,9 @@ class LRCSync:
         if self.lyric_label3 is not None:
             self.lyric_label3.setText(self.lrc_font.get_formatted_text(self.next_lyric_text))
         if self.lyric_label4 is not None:
-            self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyrics_4_text))
+            self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.last_lyric_text))
+
+        self.previous_index = self.current_index
 
     def sync_lyrics(self, file):
         self.update_file_and_parse(file)
