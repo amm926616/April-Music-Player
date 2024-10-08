@@ -203,7 +203,6 @@ class LyricsDisplay(QDialog):
         # Reset positions after the animation completes
         self.set_initial_positions()
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     lyrics = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10"]
