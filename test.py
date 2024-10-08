@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, QPropertyAnimation, QPoint
-from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout
+from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout, QSizePolicy
 import sys
 
 
@@ -9,7 +9,6 @@ class LyricsDisplay(QDialog):
         self.at_margin_index = None
         self.during_animation = False
         self.setWindowTitle("Lyrics Display")
-        self.setFixedSize(400, 300)
         self.lyrics = lyrics_list
         self.current_index = 0
         self.animations = []  # Store active animations
@@ -24,8 +23,10 @@ class LyricsDisplay(QDialog):
         self.label1 = QLabel("")  # Top-most label
         self.label2 = QLabel(self.lyrics[self.current_index - 1] if self.current_index > 0 else "")  # Previous
         self.label3 = QLabel(self.lyrics[self.current_index])  # Current
-        self.label4 = QLabel(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")  # Next
-        self.label5 = QLabel(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")  # Bottom-most
+        self.label4 = QLabel(
+            self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")  # Next
+        self.label5 = QLabel(
+            self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")  # Bottom-most
 
         # Set styles for the labels
         self.update_labels_style()
@@ -42,8 +43,8 @@ class LyricsDisplay(QDialog):
     def set_initial_positions(self):
         """Set the initial positions of all five labels."""
         # Manually set the positions of each label within the dialog
-        self.label1.move(QPoint(105, 20))   # Top-most position
-        self.label2.move(QPoint(105, 75))   # Previous position
+        self.label1.move(QPoint(105, 20))  # Top-most position
+        self.label2.move(QPoint(105, 75))  # Previous position
         self.label3.move(QPoint(105, 137))  # Current position
         self.label4.move(QPoint(105, 199))  # Next position
         self.label5.move(QPoint(105, 261))  # Bottom-most position
@@ -52,18 +53,28 @@ class LyricsDisplay(QDialog):
         """Set styles for the five labels."""
         self.label1.setStyleSheet("color: gray; font-size: 16px;")
         self.label1.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label1.setWordWrap(True)
+        self.label1.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.label2.setStyleSheet("color: gray; font-size: 16px;")
         self.label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label2.setWordWrap(True)
+        self.label2.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.label3.setStyleSheet("color: red; font-size: 20px; font-weight: bold;")
         self.label3.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label3.setWordWrap(True)
+        self.label3.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.label4.setStyleSheet("color: gray; font-size: 16px;")
         self.label4.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label4.setWordWrap(True)
+        self.label4.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.label5.setStyleSheet("color: gray; font-size: 16px;")
         self.label5.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label5.setWordWrap(True)
+        self.label5.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
     def keyPressEvent(self, event):
         """
@@ -203,9 +214,30 @@ class LyricsDisplay(QDialog):
         # Reset positions after the animation completes
         self.set_initial_positions()
 
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    lyrics = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6", "Line 7", "Line 8", "Line 9", "Line 10"]
+    lyrics = [
+        "In the city of dreams, where the stars light up the night sky, we find ourselves wandering through the bustling streets, chasing the echoes of laughter and the whispers of hope that linger in the air. Each corner we turn reveals a new adventure waiting to unfold, and with every step, we write our own story in the fabric of this vibrant world.",
+
+        "We chase our hopes, reaching for the heights as the melodies of life serenade us, guiding our hearts like a gentle breeze. In this dance of fate, we twirl and spin, our spirits intertwined, and as we lose ourselves in the rhythm, we become one with the music that resonates within our souls.",
+
+        "With every heartbeat, we dance to the sound of our dreams taking flight, as the melody of love envelops us in its warm embrace. Each note is a reminder of the moments we've cherished, the friendships we've forged, and the love that has carried us through the storms, lighting our path like a beacon in the darkest of nights.",
+
+        "In this melody of life, where love is found, we savor every whispered secret carried on the breeze, the promises made under the shimmering stars, and the laughter that rings out like a symphony in the silence. These moments become the threads that weave our tapestry of memories, vibrant and alive, telling the tales of our journey.",
+
+        "Every challenge we face only serves to strengthen our resolve, for the road may be long, and the nights may be cold, but together we are strong. Hand in hand, we rise above the doubts that threaten to hold us back, embracing the uncertainty with courage and hope, knowing that we are never truly alone on this path.",
+
+        "Through the laughter and the tears, we find our way, navigating the highs and lows with grace. Each setback becomes a stepping stone, propelling us forward into the unknown, where new horizons await and the promise of tomorrow fills us with anticipation and excitement.",
+
+        "As we explore the depths of our hearts, we discover that the journey itself is the destination. The memories we create, the love we share, and the bonds we build are the treasures that enrich our lives, reminding us of the beauty that exists in the simplest of moments.",
+
+        "And so, we stand at the crossroads of dreams and reality, ready to take the leap into the great unknown. With our eyes fixed on the stars above, we embrace the adventure that lies ahead, knowing that every step we take is a testament to our strength and resilience.",
+
+        "The road may twist and turn, but we remain steadfast in our pursuit of happiness, guided by the light of our dreams. For in this journey of life, we learn that the greatest gift we can give ourselves is the freedom to dream, to love, and to live fully, without hesitation or fear.",
+
+        "In the end, as the sun sets on another day, we look back with gratitude for the experiences that have shaped us. With hearts full of hope and eyes set on the horizon, we carry the lessons learned, ready to embrace whatever comes next, for the story of our lives is still being written."
+    ]
     window = LyricsDisplay(lyrics)
     window.show()
     sys.exit(app.exec())
