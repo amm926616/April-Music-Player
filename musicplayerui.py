@@ -487,7 +487,7 @@ class MusicPlayerUI(QMainWindow):
                 return
 
             self.lrcPlayer.media_lyric.setText(
-                self.lrcPlayer.media_font.get_formatted_text(self.lrcPlayer.current_lyric_text))
+                self.lrcPlayer.media_font.get_formatted_text(self.lrcPlayer.lyric_label3_text))
 
         else:
             print("in disabling")
