@@ -1,9 +1,8 @@
 import bisect
 import re
 import os
-import sys
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QLabel, QDialog, QVBoxLayout, QApplication, QSizePolicy
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, QPropertyAnimation
 from PyQt6.QtGui import QIcon, QKeyEvent
 from getfont import GetFont
 from easy_json import EasyJson
@@ -29,10 +28,13 @@ def convert_time_to_seconds(time_str):
 
 
 class LRCSync:
-    def __init__(self, app, music_player, config_path, on_off_lyrics=None, ui_show_maximized=None):
+    def __init__(self, parent, music_player, config_path, on_off_lyrics=None, ui_show_maximized=None):
+        self.during_animation = False
+        self.animations = []
+        self.animation_duration = 200
         self.uiShowMaximized = ui_show_maximized
         self.on_off_lyrics = on_off_lyrics
-        self.app = app
+        self.parent = parent
         self.config_path = config_path
         self.ej = EasyJson()
         self.lrc_display = None
@@ -41,11 +43,11 @@ class LRCSync:
         self.music_player = music_player
 
         # lyrics labels
-        self.lyric_label0 = None
         self.lyric_label1 = None
         self.lyric_label2 = None
         self.lyric_label3 = None
         self.lyric_label4 = None
+        self.lyric_label5 = None
 
         self.lyrics = None
         self.lyrics_keys = None
@@ -132,7 +134,7 @@ class LRCSync:
         draw = ImageDraw.Draw(final_image)
 
         # Load a custom font with a specific size
-        font_size = int(self.app.height() * 0.06)  # Set your desired font size here
+        font_size = int(self.parent.height() * 0.06)  # Set your desired font size here
         font_path = os.path.join(self.script_path, "fonts",
                                  "Sexy Beauty.ttf")  # Replace with the path to your .ttf font file
         font = ImageFont.truetype(font_path, font_size)  # Load the font with the specified size
@@ -227,14 +229,14 @@ class LRCSync:
 
         if self.show_lyrics:
             if self.started_player:
-                self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.lyric_label3_text))
+                self.lyric_label5.setText(self.lrc_font.get_formatted_text(self.lyric_label3_text))
             else:
-                self.lyric_label2.setText(self.lrc_font.get_formatted_text("April Music Player"))
+                self.lyric_label5.setText(self.lrc_font.get_formatted_text("April Music Player"))
 
             self.music_player.player.positionChanged.connect(self.update_display_lyric)
             self.lyric_sync_connected = True
         else:
-            self.lyric_label2.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
+            self.lyric_label5.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
 
         # Properly connect the close event
         self.lrc_display.closeEvent = self.closeEvent
@@ -248,6 +250,8 @@ class LRCSync:
         self.lyric_label1 = None
         self.lyric_label2 = None
         self.lyric_label3 = None
+        self.lyric_label4 = None
+        self.lyric_label5 = None
         self.lrc_display = None
 
         if self.lyric_sync_connected:
@@ -268,7 +272,7 @@ class LRCSync:
             self.dictionary.exec()
 
         elif event.key() == Qt.Key.Key_Q and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.app.exit_app()
+            self.parent.exit_app()
 
         elif event.key() == Qt.Key.Key_Right:
             print("right key pressed")
@@ -324,7 +328,7 @@ class LRCSync:
             if self.show_lyrics:
                 self.on_off_lyrics(False)
                 self.music_player.player.positionChanged.disconnect(self.update_display_lyric)
-                self.lyric_label2.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
+                self.lyric_label5.setText(self.lrc_font.get_formatted_text("Lyrics Disabled"))
                 self.lyric_sync_connected = False
             else:
                 self.on_off_lyrics(True)
@@ -355,27 +359,20 @@ class LRCSync:
 
     def setup_lyrics_labels(self, main_layout):
         # Create and configure self.lyric_label1
-        self.lyric_label0 = QLabel()
-        self.lyric_label0.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.lyric_label0.setWordWrap(True)
-        self.lyric_label0.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lyric_label0.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-
-        # Create and configure self.lyric_label1
         self.lyric_label1 = QLabel()
         self.lyric_label1.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lyric_label1.setWordWrap(True)
         self.lyric_label1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lyric_label1.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        # Create and configure self.lyric_label2
+        # Create and configure self.lyric_label1
         self.lyric_label2 = QLabel()
         self.lyric_label2.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lyric_label2.setWordWrap(True)
         self.lyric_label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lyric_label2.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        # Create and configure self.lyric_label3
+        # Create and configure self.lyric_label2
         self.lyric_label3 = QLabel()
         self.lyric_label3.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lyric_label3.setWordWrap(True)
@@ -389,16 +386,25 @@ class LRCSync:
         self.lyric_label4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lyric_label4.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
+        # Create and configure self.lyric_label3
+        self.lyric_label5 = QLabel()
+        self.lyric_label5.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.lyric_label5.setWordWrap(True)
+        self.lyric_label5.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lyric_label5.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        self.set_label_initial_positions()
+
         # Add widgets to a vertical layout with minimal spacing
         vertical_layout = QVBoxLayout()
         vertical_layout.setSpacing(5)  # Set spacing to control distance between labels
 
         # Add the labels to the layout
-        vertical_layout.addWidget(self.lyric_label0)
         vertical_layout.addWidget(self.lyric_label1)
         vertical_layout.addWidget(self.lyric_label2)
         vertical_layout.addWidget(self.lyric_label3)
         vertical_layout.addWidget(self.lyric_label4)
+        vertical_layout.addWidget(self.lyric_label5)
 
         # Set alignment for the entire layout
         vertical_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -414,11 +420,22 @@ class LRCSync:
             lyrics_color = self.ej.get_value("lyrics_color")
 
         #  setting colors for each lyric label
-        self.lyric_label0.setStyleSheet("color: gray")
         self.lyric_label1.setStyleSheet("color: gray")
-        self.lyric_label2.setStyleSheet(f"color: {lyrics_color};")
-        self.lyric_label3.setStyleSheet("color: gray")
+        self.lyric_label2.setStyleSheet("color: gray")
+        self.lyric_label3.setStyleSheet(f"color: {lyrics_color};")
         self.lyric_label4.setStyleSheet("color: gray")
+        self.lyric_label5.setStyleSheet("color: gray")
+
+        self.set_label_initial_positions()
+
+    def set_label_initial_positions(self):
+        """Set the initial positions of all five labels."""
+        # Manually set the positions of each label within the dialog
+        self.lyric_label1.move(QPoint(105, 20))   # Top-most position
+        self.lyric_label2.move(QPoint(105, 75))   # Previous position
+        self.lyric_label3.move(QPoint(105, 137))  # Current position
+        self.lyric_label4.move(QPoint(105, 199))  # Next position
+        self.lyric_label5.move(QPoint(105, 261))  # Bottom-most position
 
     def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
@@ -579,16 +596,92 @@ class LRCSync:
         self.media_lyric.setText(self.media_font.get_formatted_text(self.lyric_label3_text))
 
     def update_display_lyric(self):
-        if self.lyric_label0 is not None:
-            self.lyric_label0.setText(self.lrc_font.get_formatted_text(self.lyric_label1_text))
-        if self.lyric_label2 is not None:
-            self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.lyric_label3_text))
+        self.create_animations(direction="down")
         if self.lyric_label1 is not None:
-            self.lyric_label1.setText(self.lrc_font.get_formatted_text(self.lyric_label2_text))
+            self.lyric_label1.setText(self.lrc_font.get_formatted_text(self.lyric_label1_text))
+        if self.lyric_label2 is not None:
+            self.lyric_label2.setText(self.lrc_font.get_formatted_text(self.lyric_label2_text))
         if self.lyric_label3 is not None:
-            self.lyric_label3.setText(self.lrc_font.get_formatted_text(self.lyric_label4_text))
+            self.lyric_label3.setText(self.lrc_font.get_formatted_text(self.lyric_label3_text))
         if self.lyric_label4 is not None:
-            self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyric_label5_text))
+            self.lyric_label4.setText(self.lrc_font.get_formatted_text(self.lyric_label4_text))
+        if self.lyric_label5 is not None:
+            self.lyric_label5.setText(self.lrc_font.get_formatted_text(self.lyric_label5_text))
+
+    def create_animations(self, direction):
+        """Create and start animations for the labels moving up or down."""
+        # Create animations for all 5 labels
+        anim_label1 = QPropertyAnimation(self.lyric_label1, b"pos")
+        anim_label2 = QPropertyAnimation(self.lyric_label2, b"pos")
+        anim_label3 = QPropertyAnimation(self.lyric_label3, b"pos")
+        anim_label4 = QPropertyAnimation(self.lyric_label4, b"pos")
+        anim_label5 = QPropertyAnimation(self.lyric_label5, b"pos")
+
+        # Set the start positions for all labels
+        anim_label1.setStartValue(self.lyric_label1.pos())
+        anim_label2.setStartValue(self.lyric_label2.pos())
+        anim_label3.setStartValue(self.lyric_label3.pos())
+        anim_label4.setStartValue(self.lyric_label4.pos())
+        anim_label5.setStartValue(self.lyric_label5.pos())
+
+        # Define animation durations
+        anim_label1.setDuration(self.animation_duration)
+        anim_label2.setDuration(self.animation_duration)
+        anim_label3.setDuration(self.animation_duration)
+        anim_label4.setDuration(self.animation_duration)
+        anim_label5.setDuration(self.animation_duration)
+
+        # Define the end positions based on direction
+        if direction == "up":
+            # Move labels up
+            anim_label1.setEndValue(self.lyric_label2.pos())
+            anim_label2.setEndValue(self.lyric_label3.pos())
+            anim_label3.setEndValue(self.lyric_label4.pos())
+            anim_label4.setEndValue(self.lyric_label5.pos())
+            anim_label5.setEndValue(QPoint(105, 305))  # Move label5 off the view
+
+            # Connect animation completion to update labels
+            anim_label3.finished.connect(lambda: self.update_lyrics_after_movement("up"))
+
+        elif direction == "down":
+            # Move labels down
+            anim_label1.setEndValue(QPoint(105, -20))  # Move label1 off the view
+            anim_label2.setEndValue(self.lyric_label1.pos())
+            anim_label3.setEndValue(self.lyric_label2.pos())
+            anim_label4.setEndValue(self.lyric_label3.pos())
+            anim_label5.setEndValue(self.lyric_label4.pos())
+
+            # Connect animation completion to update labels
+            anim_label3.finished.connect(lambda: self.update_lyrics_after_movement("down"))
+
+        # Add animations to the list and start them
+        self.animations.extend([anim_label1, anim_label2, anim_label3, anim_label4, anim_label5])
+        self.during_animation = True
+        for anim in self.animations:
+            anim.start()
+
+    def update_lyrics_after_movement(self, direction):
+        self.during_animation = False
+        """
+        Update the lyrics after the animation has finished.
+        """
+        # Update the label styles
+        if direction == "up":
+            self.lyric_label2.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from above label
+        elif direction == "down":
+            self.lyric_label4.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from below label
+
+        self.lyric_label3.setStyleSheet("color: red; font-size: 20px; font-weight: bold;")  # Reapply highlight to current
+
+        # Update text for each label based on the current index
+        self.lyric_label1.setText(self.lyrics[self.current_index - 2] if self.current_index - 2 >= 0 else "")
+        self.lyric_label2.setText(self.lyrics[self.current_index - 1] if self.current_index - 1 >= 0 else "")
+        self.lyric_label3.setText(self.lyrics[self.current_index])
+        self.lyric_label4.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
+        self.lyric_label5.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")
+
+        # Reset positions after the animation completes
+        self.set_initial_positions()
 
     def sync_lyrics(self, file):
         self.update_file_and_parse(file)
