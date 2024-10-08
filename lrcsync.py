@@ -220,6 +220,9 @@ class LRCSync:
         # Set the geometry of the dialog
         self.lrc_display.setGeometry(position_x, position_y, dialog_width, dialog_height)
 
+        # Set fix sized display to solve screen distortion in lyrics updates
+        self.lrc_display.setFixedSize(dialog_width, dialog_height)
+
         main_layout = QVBoxLayout(self.lrc_display)
         self.setup_lyrics_labels(main_layout)
 
@@ -389,7 +392,6 @@ class LRCSync:
 
         # Add widgets to a vertical layout with minimal spacing
         vertical_layout = QVBoxLayout()
-        vertical_layout.setSpacing(5)  # Set spacing to control distance between labels
 
         # Add the labels to the layout
         vertical_layout.addWidget(self.lyric_label0)
