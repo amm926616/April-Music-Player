@@ -90,10 +90,6 @@ class LyricsDisplay(QDialog):
             super().keyPressEvent(event)
 
     def move_lyrics(self, key_press="up"):
-        """
-        Move the lyrics up or down based on the direction.
-        Update the labels accordingly and animate the change.
-        """
         if self.during_animation:
             if self.at_margin_index:
                 self.during_animation = False
@@ -106,8 +102,6 @@ class LyricsDisplay(QDialog):
 
         # Determine end positions based on the movement direction
         if key_press == "up":
-            print("pressed up")
-            print("during animation state ", self.during_animation)
             if not self.current_index > 0:
                 self.at_margin_index = True
                 return
@@ -115,13 +109,11 @@ class LyricsDisplay(QDialog):
             self.label3.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from current
             self.label2.setStyleSheet("color: red; font-size: 22px; font-weight: bold;")  # Highlight above label
 
-            # Set animation parameters for moving labels
+            # Update the labels before moving
             self.create_animations(direction="up")
             self.current_index -= 1  # Move to the previous lyric
 
         elif key_press == "down":
-            print("pressed down")
-            print("during animation state ", self.during_animation)
             if not self.current_index + 1 < len(self.lyrics):
                 self.at_margin_index = True
                 return
@@ -129,7 +121,7 @@ class LyricsDisplay(QDialog):
             self.label3.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from current
             self.label4.setStyleSheet("color: red; font-size: 22px; font-weight: bold;")  # Highlight below label
 
-            # Set animation parameters for moving labels
+            # Update the labels before moving
             self.create_animations(direction="down")
             self.current_index += 1  # Move to the next lyric
 
@@ -192,10 +184,7 @@ class LyricsDisplay(QDialog):
             anim.start()
 
     def update_lyrics_after_movement(self, direction):
-        self.during_animation = False
-        """
-        Update the lyrics after the animation has finished.
-        """
+        """Update the lyrics after the animation has finished."""
         # Update the label styles
         if direction == "up":
             self.label2.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from above label
@@ -211,9 +200,8 @@ class LyricsDisplay(QDialog):
         self.label4.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
         self.label5.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")
 
-        # Reset positions after the animation completes
-        self.set_initial_positions()
-
+        # Set positions after the animation completes
+        self.set_initial_positions()  # This should be moved to before the animation starts
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

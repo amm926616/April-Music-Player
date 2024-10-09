@@ -31,9 +31,10 @@ def convert_time_to_seconds(time_str):
 
 class LRCSync:
     def __init__(self, parent, music_player, config_path, on_off_lyrics=None, ui_show_maximized=None):
+        self.first_time_lyric = True
         self.parent = parent
         self.labels = []
-        self.grid_layout = None
+        self.main_layout = None
         self.previous_index = 0
         self.animation_duration = 500
         self.initial_positions = None
@@ -400,20 +401,20 @@ class LRCSync:
             [self.lyric_label0, self.lyric_label1, self.lyric_label2, self.lyric_label3, self.lyric_label4])
 
         # Add widgets to a vertical layout with minimal spacing
-        self.grid_layout = QGridLayout()
+        self.main_layout = QVBoxLayout()
 
         # Add the labels to the layout
-        self.grid_layout.addWidget(self.lyric_label0, 0, 0)
-        self.grid_layout.addWidget(self.lyric_label1, 1, 0)
-        self.grid_layout.addWidget(self.lyric_label2, 2, 0)
-        self.grid_layout.addWidget(self.lyric_label3, 3, 0)
-        self.grid_layout.addWidget(self.lyric_label4, 4, 0)
+        self.main_layout.addWidget(self.lyric_label0)
+        self.main_layout.addWidget(self.lyric_label1)
+        self.main_layout.addWidget(self.lyric_label2)
+        self.main_layout.addWidget(self.lyric_label3)
+        self.main_layout.addWidget(self.lyric_label4)
 
         # Set alignment for the entire layout
-        self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Add the vertical layout to the main layout
-        main_layout.addLayout(self.grid_layout)
+        main_layout.addLayout(self.main_layout)
 
         #  for lyrics color
         lyrics_color = self.ej.get_value("lyrics_color")
@@ -429,65 +430,110 @@ class LRCSync:
         self.lyric_label3.setStyleSheet("color: gray")
         self.lyric_label4.setStyleSheet("color: gray")
 
-    def animate_labels(self):
-        print("Inside animate_labels")
+    def create_animations(self, direction):
+        """Create and start animations for the labels moving up or down."""
+        # Create animations for all 5 labels
 
-        # Create animations for each label
-        animations = []
+        self.animations = []
 
-        # Define the final Y positions for each label after the animation
-        end_positions = [
-            QPoint(self.lyric_label0.x(), self.lyric_label0.y() - self.lyric_label0.height() * 2),
-            QPoint(self.lyric_label1.x(), self.lyric_label1.y() - self.lyric_label1.height()),
-            QPoint(self.lyric_label2.x(), self.lyric_label2.y()),
-            QPoint(self.lyric_label3.x(), self.lyric_label3.y() + self.lyric_label3.height()),
-            QPoint(self.lyric_label4.x(), self.lyric_label4.y() + self.lyric_label4.height())
-        ]
+        anim_label0 = QPropertyAnimation(self.lyric_label0, b"pos")
+        anim_label1 = QPropertyAnimation(self.lyric_label1, b"pos")
+        anim_label2 = QPropertyAnimation(self.lyric_label2, b"pos")
+        anim_label3 = QPropertyAnimation(self.lyric_label3, b"pos")
+        anim_label4 = QPropertyAnimation(self.lyric_label4, b"pos")
 
-        for i, label in enumerate(
-                [self.lyric_label0, self.lyric_label1, self.lyric_label2, self.lyric_label3, self.lyric_label4]):
-            anim = QPropertyAnimation(label, b"geometry")
-            anim.setDuration(self.animation_duration)
-            anim.setStartValue(label.geometry())  # Use geometry instead of pos
-            anim.setEndValue(QRect(end_positions[i], label.size()))  # Animate to the new position
+        # Set the start positions for all labels
+        anim_label0.setStartValue(self.lyric_label0.pos())
+        anim_label1.setStartValue(self.lyric_label1.pos())
+        anim_label2.setStartValue(self.lyric_label2.pos())
+        anim_label3.setStartValue(self.lyric_label3.pos())
+        anim_label4.setStartValue(self.lyric_label4.pos())
 
-            animations.append(anim)
+        # Define animation durations
+        anim_label0.setDuration(self.animation_duration)
+        anim_label1.setDuration(self.animation_duration)
+        anim_label2.setDuration(self.animation_duration)
+        anim_label3.setDuration(self.animation_duration)
+        anim_label4.setDuration(self.animation_duration)
 
-        # Start all animations
-        for anim in animations:
+        # Define the end positions based on direction
+        if direction == "up":
+            # Move labels up
+            anim_label0.setEndValue(self.lyric_label1.pos())
+            anim_label1.setEndValue(self.lyric_label2.pos())
+            anim_label2.setEndValue(self.lyric_label3.pos())
+            anim_label3.setEndValue(self.lyric_label4.pos())
+            anim_label4.setEndValue(QPoint(105, 305))  # Move label5 off the view
+
+            # Connect animation completion to update labels
+            anim_label4.finished.connect(lambda: self.update_lyrics_after_movement("up"))
+        elif direction == "down":
+            # Move labels down
+            anim_label0.setEndValue(QPoint(105, -20))  # Move label1 off the view
+            anim_label1.setEndValue(self.lyric_label0.pos())
+            anim_label2.setEndValue(self.lyric_label1.pos())
+            anim_label3.setEndValue(self.lyric_label2.pos())
+            anim_label4.setEndValue(self.lyric_label3.pos())
+
+            # Connect animation completion to update labels
+            anim_label0.finished.connect(lambda: self.update_lyrics_after_movement("down"))
+
+        # Add animations to the list and start them
+        self.animations.extend([anim_label0, anim_label1, anim_label2, anim_label3, anim_label4])
+        for anim in self.animations:
             anim.start()
-
-        # # Connect the finished signal of the last animation to reset the grid positions
-        # animations[-1].finished.connect(self.reset_grid_positions)
 
     def reset_grid_positions(self):
         """Restore labels to their original grid positions."""
         # Clear the grid layout
         for label in [self.lyric_label0, self.lyric_label1, self.lyric_label2, self.lyric_label3, self.lyric_label4]:
-            self.grid_layout.removeWidget(label)
+            self.main_layout.removeWidget(label)
 
         # Re-add labels to the grid layout in their original positions
-        self.grid_layout.addWidget(self.lyric_label0, 0, 0)
-        self.grid_layout.addWidget(self.lyric_label1, 1, 0)
-        self.grid_layout.addWidget(self.lyric_label2, 2, 0)
-        self.grid_layout.addWidget(self.lyric_label3, 3, 0)
-        self.grid_layout.addWidget(self.lyric_label4, 4, 0)
+        self.main_layout.addWidget(self.lyric_label0, 0, 0)
+        self.main_layout.addWidget(self.lyric_label1, 1, 0)
+        self.main_layout.addWidget(self.lyric_label2, 2, 0)
+        self.main_layout.addWidget(self.lyric_label3, 3, 0)
+        self.main_layout.addWidget(self.lyric_label4, 4, 0)
 
         # Optionally, reset text or perform other updates as needed
         # Example: self.lyric_label0.setText("Original Lyric 0")
 
         # Ensure the layout is updated
-        self.grid_layout.update()
+        self.main_layout.update()
 
-    def update_lyrics_after_movement(self):
-        # Update text for each label based on the current index
-        self.lyric_label0.setText(self.lyrics[self.current_index - 2] if self.current_index - 2 >= 0 else "")
-        self.lyric_label1.setText(self.lyrics[self.current_index - 1] if self.current_index - 1 >= 0 else "")
-        self.lyric_label2.setText(self.lyrics[self.current_index])
-        self.lyric_label3.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics)
-                                  else "")
-        self.lyric_label4.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics)
-                                  else "")
+    def update_lyrics_after_movement(self, direction):
+        """
+        Update the lyrics after the animation has finished.
+        """
+
+        # Adjust styles based on the direction of movement
+        if direction == "up":
+            self.lyric_label2.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from above label
+        elif direction == "down":
+            self.lyric_label4.setStyleSheet("color: gray; font-size: 16px;")  # Remove highlight from below label
+
+        # Reapply highlight to the current label
+        self.lyric_label3.setStyleSheet("color: red; font-size: 20px; font-weight: bold;")
+
+        # # Safely update text for each label based on the current index
+        # self.lyric_label0.setText(self.lyrics[self.current_index - 2] if self.current_index - 2 >= 0 else "")
+        # self.lyric_label1.setText(self.lyrics[self.current_index - 1] if self.current_index - 1 >= 0 else "")
+        # self.lyric_label2.setText(self.lyrics[self.current_index] if self.current_index < len(self.lyrics) else "")
+        # self.lyric_label3.setText(self.lyrics[self.current_index + 1] if self.current_index + 1 < len(self.lyrics) else "")
+        # self.lyric_label4.setText(self.lyrics[self.current_index + 2] if self.current_index + 2 < len(self.lyrics) else "")
+
+        # Reset positions after the animation completes
+        self.set_initial_positions()
+
+    def set_initial_positions(self):
+        """Set the initial positions of all five labels."""
+        # Manually set the positions of each label within the dialog
+        self.lyric_label0.move(QPoint(105, 20))  # Top-most position
+        self.lyric_label1.move(QPoint(105, 75))  # Previous position
+        self.lyric_label2.move(QPoint(105, 137))  # Current position
+        self.lyric_label3.move(QPoint(105, 199))  # Next position
+        self.lyric_label4.move(QPoint(105, 261))  # Bottom-most position
 
     def go_to_previous_lyric(self):
         if self.lyrics and self.lyric_sync_connected:
@@ -643,10 +689,14 @@ class LRCSync:
 
     def update_display_lyric(self):
         if self.previous_index == self.current_index:
-            print("skipping to update text")
-            return
+            if self.first_time_lyric:
+                self.first_time_lyric = False
+                pass
+            else:
+                print("skipping to update text")
+                return
         else:
-            self.animate_labels()
+            self.create_animations(direction="down")
 
         if self.lyric_label0 is not None:
             self.lyric_label0.setText(self.lrc_font.get_formatted_text(self.first_lyric_text))
