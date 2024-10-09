@@ -166,6 +166,7 @@ class LyricsDisplay(QDialog):
 
             # Connect animation completion to update labels
             anim_label4.finished.connect(lambda: self.update_lyrics_after_movement("up"))
+
         elif direction == "down":
             # Move labels down
             anim_label1.setEndValue(QPoint(105, -20))  # Move label1 off the view
