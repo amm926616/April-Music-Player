@@ -69,14 +69,14 @@ class LRCSync:
         self.show_lyrics = self.ej.get_value("show_lyrics")
         self.dictionary = None
 
-        self.first_lyric_text = None
-        self.current_lyric_text = None
-        self.next_lyric_text = None
-        self.previous_lyric_text = None
-        self.last_lyric_text = None
+        self.first_lyric_text = ""
+        self.current_lyric_text = ""
+        self.next_lyric_text = ""
+        self.previous_lyric_text = ""
+        self.last_lyric_text = ""
 
         if self.show_lyrics:
-            self.current_lyric_text = "April Music Player"
+            self.current_lyric_text = "(Instrumental Intro)"
         else:
             self.current_lyric_text = "Lyrics Disabled"
 
@@ -187,7 +187,7 @@ class LRCSync:
         if file is None:
             self.lrc_display.setWindowTitle("LRC Display")
 
-        image_path = self.ej.get_value("background_image")
+        image_path = self.ej.get_value("background_imagfe")
 
         # Check if the image path is not set or the file does not exist
         if not image_path or not os.path.exists(image_path):
@@ -431,7 +431,7 @@ class LRCSync:
 
         # self.set_initial_positions()
 
-    def update_lyrics_after_movement(self, direction):
+    def update_lyrics_after_animation(self, direction):
         """
         Update the lyrics after the animation has finished.
         """
@@ -447,18 +447,6 @@ class LRCSync:
                                         f" font-weight: bold;")
 
         self.update_labels_text()
-
-        # Reset positions after the animation completes
-        self.set_initial_positions()
-
-    def set_initial_positions(self):
-        """Set the initial positions of all five labels."""
-        # Manually set the positions of each label within the dialog
-        self.lyric_label0.move(QPoint(105, 20))  # Top-most position
-        self.lyric_label1.move(QPoint(105, 75))  # Previous position
-        self.lyric_label2.move(QPoint(105, 137))  # Current position
-        self.lyric_label3.move(QPoint(105, 199))  # Next position
-        self.lyric_label4.move(QPoint(105, 261))  # Bottom-most position
 
     def go_to_previous_lyric(self, direction="up"):
         if self.lyrics and self.lyric_sync_connected:
@@ -560,10 +548,6 @@ class LRCSync:
             # Use binary search to find the correct lyrics time
             index = bisect.bisect_right(self.lyrics_keys, self.current_time)
             self.current_index = index  # Store the current lyric index for note-taking
-
-            # Initialize text variables
-            self.first_lyric_text = ""
-            self.last_lyric_text = ""
 
             # Handle the case when the index is at the beginning
             if index == 0:
@@ -675,7 +659,7 @@ class LRCSync:
             anim_label4.setEndValue(QPoint(105, 305))  # Move label5 off the view
 
             # Connect animation completion to update labels
-            anim_label4.finished.connect(lambda: self.update_lyrics_after_movement("up"))
+            anim_label4.finished.connect(lambda: self.update_lyrics_after_animation("up"))
 
         elif direction == "down":
             print("the larger font size is ", self.larger_font_size)
@@ -691,7 +675,7 @@ class LRCSync:
             anim_label4.setEndValue(self.lyric_label3.pos())
 
             # Connect animation completion to update labels
-            anim_label0.finished.connect(lambda: self.update_lyrics_after_movement("down"))
+            anim_label0.finished.connect(lambda: self.update_lyrics_after_animation("down"))
 
         # Add animations to the list and start them
         self.animations.extend([anim_label0, anim_label1, anim_label2, anim_label3, anim_label4])
